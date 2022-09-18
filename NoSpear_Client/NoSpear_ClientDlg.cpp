@@ -27,6 +27,9 @@ int slen = sizeof(sockaddr_in);
 #define new DEBUG_NEW
 #endif
 
+CString pathName;
+CString fileName;
+
 struct ST_WSA_INITIALIZER
 {
 	ST_WSA_INITIALIZER(void)
@@ -207,7 +210,8 @@ void CNoSpearClientDlg::OnBnClickedselectfile()
 	CFileDialog dlg(TRUE, _T("*.dat"), NULL, OFN_HIDEREADONLY | OFN_FILEMUSTEXIST, szFilter);
 
 	if (IDOK == dlg.DoModal())	{
-		CString pathName = dlg.GetPathName();
+		pathName = dlg.GetPathName();
+		fileName = dlg.GetFileName();
 		UpdateData(TRUE);
 		manual_file_path = pathName;
 		UpdateData(FALSE);
@@ -268,14 +272,22 @@ void CNoSpearClientDlg::OnBnClickeduploadfile()
 		return;
 	}
 
+	int nameLength = fileName.GetLength();
+	char namebuf[4];
+	memcpy(namebuf, &nameLength, 4);
+	sx->s_ssend(namebuf, 4);
+
+	sx->s_ssend((LPSTR)(LPCTSTR)fileName, nameLength*2);
+
 	//Issue : 서버에서 바로 처음 세션이 끊기는 현상
 	//이 이슈 CMD 말고 VS에서 돌리니까 발생 안함... 뭐지?
-	char buffer[1024];
+	char buffer[4096];
 	int read_size = 0;
-	while ((read_size = fread(buffer, 1, 1024, fp)) != 0) {
+	while ((read_size = fread(buffer, 1, 4096, fp)) != 0) {
 		sx->s_ssend(buffer, read_size);
 	}
 	fclose(fp);
 	closesocket(s);
 	delete(sx);
 }
+	
