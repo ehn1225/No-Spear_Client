@@ -7,7 +7,28 @@
 #include "NoSpear_Client.h"
 #include "NoSpear_ClientDlg.h"
 #include "afxdialogex.h"
+#include <wininet.h>
+#define STRICT
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include <stdio.h>
+#include <process.h>
+#include <commctrl.h>
 
+#include "ssl.h"
+
+SOCKET s;
+SSL_SOCKET* sx = 0;
+sockaddr_in dA, aa;
+int slen = sizeof(sockaddr_in);
+
+#pragma warning(disable:4996)
+#pragma comment(lib,"ws2_32.lib")
+#pragma comment(lib,"Crypt32.lib")
+#pragma comment(lib,"Secur32.lib")
+
+
+#pragma comment(lib, "wininet.lib")
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -186,7 +207,6 @@ void CNoSpearClientDlg::OnBnClickedselectfile()
 	}
 }
 
-
 void CNoSpearClientDlg::OnBnClickeduploadfile()
 {
 	// Manual Diagnose
@@ -198,10 +218,60 @@ void CNoSpearClientDlg::OnBnClickeduploadfile()
 
 	if (!bRet) {
 		AfxMessageBox(_T("파일을 찾을 수 없습니다"));
-	}
-	else {
-		AfxMessageBox(_T("파일 찾았으니 업로드 \"해줘\""));
+		return;
 	}
 
+	//SSL Socket Send
+	InitCommonControls();
+	OleInitialize(0);
+	WSADATA wData;
+	WSAStartup(MAKEWORD(2, 2), &wData);
+
+	hostent* hp;
+	unsigned long inaddr;
+
+	memset(&dA, 0, sizeof(dA));
+	dA.sin_family = AF_INET;
+	inaddr = inet_addr("127.0.0.1"); //Server IPv4 Address
+	if (inaddr != INADDR_NONE)
+		memcpy(&dA.sin_addr, &inaddr, sizeof(inaddr));
+	else
+	{
+		hp = gethostbyname("localhost"); //Server Domain Name
+		if (!hp)
+		{
+			AfxMessageBox(_T("Remote System not found!"));
+			return;
+		}
+		memcpy(&dA.sin_addr, hp->h_addr, hp->h_length);
+	}
+	dA.sin_port = htons(1234); //Server Listen Port
+	s = socket(AF_INET, SOCK_STREAM, 0);
+	if (connect(s, (sockaddr*)&dA, slen) < 0)
+	{
+		AfxMessageBox(_T("Cannot connect"));
+		return;
+	}
+
+	getpeername(s, (sockaddr*)&aa, &slen);
+
+	sx = new SSL_SOCKET(s, 0);
+	sx->ClientInit();
+
+	FILE* fp = _wfopen(manual_file_path, L"rb");
+	if (fp == NULL) {
+		AfxMessageBox(_T("파일열기 실패"));
+		return;
+	}
+	char c = 0;
+	//_beginthread(r, 4096, 0);
+
+	while ((c = fgetc(fp)) != EOF) {
+		int rval = 0;
+		rval = sx->s_ssend(&c, 1);
+	}
+
+	fclose(fp);
+	closesocket(s);
 
 }

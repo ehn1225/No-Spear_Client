@@ -1,4 +1,5 @@
 ﻿// pch.cpp: 미리 컴파일된 헤더에 해당하는 소스 파일
+#define _CRT_SECURE_NO_WARNINGS
 
 #include "pch.h"
 
