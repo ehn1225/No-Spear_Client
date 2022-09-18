@@ -1,20 +1,16 @@
 ﻿
 // NoSpear_ClientDlg.cpp: 구현 파일
-//
-
 #include "pch.h"
 #include "framework.h"
 #include "NoSpear_Client.h"
 #include "NoSpear_ClientDlg.h"
 #include "afxdialogex.h"
 #include <wininet.h>
-#define STRICT
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <stdio.h>
 #include <process.h>
 #include <commctrl.h>
-
 #include "ssl.h"
 
 SOCKET s;
@@ -26,13 +22,27 @@ int slen = sizeof(sockaddr_in);
 #pragma comment(lib,"ws2_32.lib")
 #pragma comment(lib,"Crypt32.lib")
 #pragma comment(lib,"Secur32.lib")
-
-
 #pragma comment(lib, "wininet.lib")
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
 
+struct ST_WSA_INITIALIZER
+{
+	ST_WSA_INITIALIZER(void)
+	{
+		InitCommonControls();
+		OleInitialize(0);
+		WSAData wsaData;
+		WSAStartup(MAKEWORD(2, 2), &wsaData);
+	}
+	~ST_WSA_INITIALIZER(void)
+	{
+		WSACleanup();
+	}
+};
+
+static ST_WSA_INITIALIZER g_WsaInitializer;
 
 // 응용 프로그램 정보에 사용되는 CAboutDlg 대화 상자입니다.
 
@@ -127,6 +137,7 @@ BOOL CNoSpearClientDlg::OnInitDialog()
 
 	// TODO: 여기에 추가 초기화 작업을 추가합니다.
 
+
 	return TRUE;  // 포커스를 컨트롤에 설정하지 않으면 TRUE를 반환합니다.
 }
 
@@ -185,11 +196,7 @@ void CNoSpearClientDlg::OnBnClickedOk()
 {
 	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
 	CDialogEx::OnOK();
-	AfxMessageBox(_T("RUN"));
 }
-
-
-
 
 void CNoSpearClientDlg::OnBnClickedselectfile()
 {
@@ -222,10 +229,7 @@ void CNoSpearClientDlg::OnBnClickeduploadfile()
 	}
 
 	//SSL Socket Send
-	InitCommonControls();
-	OleInitialize(0);
-	WSADATA wData;
-	WSAStartup(MAKEWORD(2, 2), &wData);
+	//https://www.codeproject.com/Articles/24379/SSL-Convert-your-Plain-Sockets-to-SSL-Sockets-in-a
 
 	hostent* hp;
 	unsigned long inaddr;
@@ -245,7 +249,7 @@ void CNoSpearClientDlg::OnBnClickeduploadfile()
 		}
 		memcpy(&dA.sin_addr, hp->h_addr, hp->h_length);
 	}
-	dA.sin_port = htons(1234); //Server Listen Port
+	dA.sin_port = htons(42524); //Server Listen Port
 	s = socket(AF_INET, SOCK_STREAM, 0);
 	if (connect(s, (sockaddr*)&dA, slen) < 0)
 	{
@@ -263,15 +267,15 @@ void CNoSpearClientDlg::OnBnClickeduploadfile()
 		AfxMessageBox(_T("파일열기 실패"));
 		return;
 	}
-	char c = 0;
-	//_beginthread(r, 4096, 0);
 
-	while ((c = fgetc(fp)) != EOF) {
-		int rval = 0;
-		rval = sx->s_ssend(&c, 1);
+	//Issue : 서버에서 바로 처음 세션이 끊기는 현상
+	//이 이슈 CMD 말고 VS에서 돌리니까 발생 안함... 뭐지?
+	char buffer[1024];
+	int read_size = 0;
+	while ((read_size = fread(buffer, 1, 1024, fp)) != 0) {
+		sx->s_ssend(buffer, read_size);
 	}
-
 	fclose(fp);
 	closesocket(s);
-
+	delete(sx);
 }

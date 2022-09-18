@@ -39,4 +39,5 @@ private:
 	CString manual_file_path;
 public:
 	afx_msg void OnBnClickeduploadfile();
+	afx_msg void OnBnClickedtest();
 };
