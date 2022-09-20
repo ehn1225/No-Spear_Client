@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <process.h>
 #include <commctrl.h>
+#include <iostream>
 #include "ssl.h"
 
 SOCKET s;
@@ -19,22 +20,38 @@ int slen = sizeof(sockaddr_in);
 
 void r(void*){
 	// Receiving Thread
-	// Uncomment the commented lines to allow logging
 
-	char* filename;
-	char namebuf[4];
-	int nameLength = 0;
+	unsigned int length = 0;
+	////sx->s_recv(tmp, 4);
+	recv(s, (char *)&length, 4, 0);
+	length = ntohl(length);
+	printf("file length : %d\n", length);
 
-	sx->s_recv(namebuf, 4);
-	memcpy(&nameLength, namebuf, 4);
+	char* filename = (char*)malloc(sizeof(char) * (length + 2));
+	//sx->s_recv((char*)filename, nameLength*2);
+	recv(s, filename, length, 0);
+	filename[length] = '\0';
 
-	filename = new char(sizeof(char) * ((nameLength*2) + 1));
-	sx->s_recv(filename, nameLength*2);
-	wchar_t* filename2;
-	filename2 = (wchar_t*)filename;
-	//memset(filename, '\0', nameLength * 2);
-	FILE* fp = _wfopen(filename2, L"a+b");
+	wchar_t strUnicode[256] = { 0, };
+	char strUTF8[256] = { 0, };
+	int nLen = MultiByteToWideChar(CP_UTF8, 0, filename, length, NULL, NULL);
+	MultiByteToWideChar(CP_UTF8, 0, filename, length, strUnicode, nLen);
+	std::wcout << strUnicode << std::endl;
 
+	char hash[65] = { 0, };
+	//sx->s_recv(hash, 64);
+	recv(s, hash, 64, 0);
+	hash[64] = '\0';
+
+	std::cout << hash << std::endl;
+	return;
+	/*const wchar_t filename2 = L"jello.cjd";
+	FILE* fp = _wfopen(filename2, L"wb");
+	if (fp == NULL) {
+		printf("Can't Write file!");
+		exit(0);
+	}
+	
 	char buffer[4096];
 
 	for (;;){
@@ -51,14 +68,13 @@ void r(void*){
 			fclose(fp);
 			exit(0);
 			}
-		//putc(c,stdout);
-		//fputc(c,fp);
+
 		fwrite(buffer, 1, rval, fp);
 	}
 
 	fclose(fp);
-	
-}
+	*/
+} 
 
 void Loop()
 	{
