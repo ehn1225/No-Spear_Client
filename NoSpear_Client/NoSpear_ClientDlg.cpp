@@ -220,9 +220,11 @@ void CNoSpearClientDlg::OnBnClickedButton1()
 	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
 	UpdateData(TRUE);
 	NOSPEAR_FILE file = NOSPEAR_FILE(manual_file_path);
-	CString tmp(file.Getfilehash());
-	AfxMessageBox(file.Getfilename());
-	AfxMessageBox(file.Getfilepath());
-	AfxMessageBox(tmp);
+
+	std::string utf8_filename = CW2A(file.Getfilename(), CP_UTF8);
+	unsigned char arr[30] = { 0, };
+	memcpy(arr, utf8_filename.c_str(), utf8_filename.size());
+
+	return;
 
 }

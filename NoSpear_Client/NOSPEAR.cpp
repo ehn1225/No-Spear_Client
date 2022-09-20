@@ -67,7 +67,7 @@ void NOSPEAR::Fileupload(NOSPEAR_FILE file){
 	//Send File Name (CString to char*)
 	//UTP-8로 변경한 후 서버에 전송
 	//sx->s_ssend((LPSTR)(LPCTSTR)filename, namelength * 2);
-	send(s, (char*)&utf8_filename, utf8_filename.size(), 0);
+	send(s, utf8_filename.c_str(), utf8_filename.size(), 0);
 
 	//Send File Hash
 	//sx->s_ssend(file.Getfilehash(), 64);
