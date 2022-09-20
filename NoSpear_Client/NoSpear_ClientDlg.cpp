@@ -5,30 +5,12 @@
 #include "NoSpear_Client.h"
 #include "NoSpear_ClientDlg.h"
 #include "afxdialogex.h"
-#include <wininet.h>
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#include <stdio.h>
-#include <process.h>
-#include <commctrl.h>
-#include "ssl.h"
+#include "NOSPEAR_FILE.h"
+#include "NOSPEAR.h"
 
-SOCKET s;
-SSL_SOCKET* sx = 0;
-sockaddr_in dA, aa;
-int slen = sizeof(sockaddr_in);
-
-#pragma warning(disable:4996)
-#pragma comment(lib,"ws2_32.lib")
-#pragma comment(lib,"Crypt32.lib")
-#pragma comment(lib,"Secur32.lib")
-#pragma comment(lib, "wininet.lib")
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
-
-CString pathName;
-CString fileName;
 
 struct ST_WSA_INITIALIZER
 {
@@ -101,9 +83,10 @@ BEGIN_MESSAGE_MAP(CNoSpearClientDlg, CDialogEx)
 	ON_WM_SYSCOMMAND()
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
-	ON_BN_CLICKED(IDOK, &CNoSpearClientDlg::OnBnClickedOk)
 	ON_BN_CLICKED(btn_selectfile, &CNoSpearClientDlg::OnBnClickedselectfile)
 	ON_BN_CLICKED(btn_uploadfile, &CNoSpearClientDlg::OnBnClickeduploadfile)
+	ON_BN_CLICKED(IDC_BUTTON1, &CNoSpearClientDlg::OnBnClickedButton1)
+
 END_MESSAGE_MAP()
 
 
@@ -194,13 +177,6 @@ HCURSOR CNoSpearClientDlg::OnQueryDragIcon()
 }
 
 
-
-void CNoSpearClientDlg::OnBnClickedOk()
-{
-	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
-	CDialogEx::OnOK();
-}
-
 void CNoSpearClientDlg::OnBnClickedselectfile()
 {
 	// Manual Diagnose
@@ -210,8 +186,9 @@ void CNoSpearClientDlg::OnBnClickedselectfile()
 	CFileDialog dlg(TRUE, _T("*.dat"), NULL, OFN_HIDEREADONLY | OFN_FILEMUSTEXIST, szFilter);
 
 	if (IDOK == dlg.DoModal())	{
-		pathName = dlg.GetPathName();
-		fileName = dlg.GetFileName();
+		CString pathName = dlg.GetPathName();
+		//fileName = dlg.GetFileName();
+		//AfxMessageBox(PathFindFileName(pathName));
 		UpdateData(TRUE);
 		manual_file_path = pathName;
 		UpdateData(FALSE);
@@ -222,7 +199,6 @@ void CNoSpearClientDlg::OnBnClickeduploadfile()
 {
 	// Manual Diagnose
 	// 수동검사의 검사 버튼을 눌렀을 때 작동을 구현
-
 	CFileFind pFind;
 	UpdateData(TRUE);
 	BOOL bRet = pFind.FindFile(manual_file_path);
@@ -232,62 +208,21 @@ void CNoSpearClientDlg::OnBnClickeduploadfile()
 		return;
 	}
 
-	//SSL Socket Send
-	//https://www.codeproject.com/Articles/24379/SSL-Convert-your-Plain-Sockets-to-SSL-Sockets-in-a
-
-	hostent* hp;
-	unsigned long inaddr;
-
-	memset(&dA, 0, sizeof(dA));
-	dA.sin_family = AF_INET;
-	inaddr = inet_addr("127.0.0.1"); //Server IPv4 Address
-	if (inaddr != INADDR_NONE)
-		memcpy(&dA.sin_addr, &inaddr, sizeof(inaddr));
-	else
-	{
-		hp = gethostbyname("localhost"); //Server Domain Name
-		if (!hp)
-		{
-			AfxMessageBox(_T("Remote System not found!"));
-			return;
-		}
-		memcpy(&dA.sin_addr, hp->h_addr, hp->h_length);
-	}
-	dA.sin_port = htons(42524); //Server Listen Port
-	s = socket(AF_INET, SOCK_STREAM, 0);
-	if (connect(s, (sockaddr*)&dA, slen) < 0)
-	{
-		AfxMessageBox(_T("Cannot connect"));
-		return;
-	}
-
-	getpeername(s, (sockaddr*)&aa, &slen);
-
-	sx = new SSL_SOCKET(s, 0);
-	sx->ClientInit();
-
-	FILE* fp = _wfopen(manual_file_path, L"rb");
-	if (fp == NULL) {
-		AfxMessageBox(_T("파일열기 실패"));
-		return;
-	}
-
-	int nameLength = fileName.GetLength();
-	char namebuf[4];
-	memcpy(namebuf, &nameLength, 4);
-	sx->s_ssend(namebuf, 4);
-
-	sx->s_ssend((LPSTR)(LPCTSTR)fileName, nameLength*2);
-
-	//Issue : 서버에서 바로 처음 세션이 끊기는 현상
-	//이 이슈 CMD 말고 VS에서 돌리니까 발생 안함... 뭐지?
-	char buffer[4096];
-	int read_size = 0;
-	while ((read_size = fread(buffer, 1, 4096, fp)) != 0) {
-		sx->s_ssend(buffer, read_size);
-	}
-	fclose(fp);
-	closesocket(s);
-	delete(sx);
+	NOSPEAR client;
+	NOSPEAR_FILE file = NOSPEAR_FILE(manual_file_path);
+	client.Fileupload(file);		
 }
-	
+
+
+
+void CNoSpearClientDlg::OnBnClickedButton1()
+{
+	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
+	UpdateData(TRUE);
+	NOSPEAR_FILE file = NOSPEAR_FILE(manual_file_path);
+	CString tmp(file.Getfilehash());
+	AfxMessageBox(file.Getfilename());
+	AfxMessageBox(file.Getfilepath());
+	AfxMessageBox(tmp);
+
+}

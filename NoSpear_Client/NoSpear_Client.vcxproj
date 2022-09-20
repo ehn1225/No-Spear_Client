@@ -189,16 +189,21 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="NOSPEAR_FILE.h" />
     <ClInclude Include="framework.h" />
+    <ClInclude Include="NOSPEAR.h" />
     <ClInclude Include="NoSpear_Client.h" />
     <ClInclude Include="NoSpear_ClientDlg.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Resource.h" />
+    <ClInclude Include="sha256.h" />
     <ClInclude Include="ssl.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="z.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="NOSPEAR_FILE.cpp" />
+    <ClCompile Include="NOSPEAR.cpp" />
     <ClCompile Include="NoSpear_Client.cpp" />
     <ClCompile Include="NoSpear_ClientDlg.cpp" />
     <ClCompile Include="pch.cpp">
@@ -207,6 +212,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="sha256.cpp" />
     <ClCompile Include="ssl.cpp" />
   </ItemGroup>
   <ItemGroup>

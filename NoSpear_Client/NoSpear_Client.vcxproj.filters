@@ -39,6 +39,15 @@
     <ClInclude Include="z.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="NOSPEAR.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="NOSPEAR_FILE.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="sha256.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="NoSpear_Client.cpp">
@@ -51,6 +60,15 @@
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="ssl.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="NOSPEAR.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="NOSPEAR_FILE.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="sha256.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>

@@ -32,12 +32,10 @@ protected:
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
 public:
-	afx_msg void OnBnClickedOk();
-	afx_msg void OnBnClickedButton1();
 	afx_msg void OnBnClickedselectfile();
+	afx_msg void OnBnClickeduploadfile();
 private:
 	CString manual_file_path;
 public:
-	afx_msg void OnBnClickeduploadfile();
-	afx_msg void OnBnClickedtest();
+	afx_msg void OnBnClickedButton1();
 };

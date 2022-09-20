@@ -8,5 +8,15 @@
 
 // 여기에 미리 컴파일하려는 헤더 추가
 #include "framework.h"
+#include <cstring>
+#include <fstream>
+#include <wininet.h>
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include <stdio.h>
+#include <process.h>
+#include <commctrl.h>
+#include <iostream>
+#include <string>
 
 #endif //PCH_H

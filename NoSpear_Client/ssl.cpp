@@ -2,7 +2,6 @@
 #include "pch.h"
 #include "ssl.h"
 #include "z.h"
-#define _CRT_SECURE_NO_WARNINGS
 
 //* PENDING:
 //* Certificate Chain 
