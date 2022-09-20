@@ -1,4 +1,4 @@
-#define STRICT
+﻿#define STRICT
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <stdio.h>
@@ -27,17 +27,18 @@ void r(void*){
 	length = ntohl(length);
 	printf("file length : %d\n", length);
 
-	char* filename = (char*)malloc(sizeof(char) * (length + 2));
+	unsigned char* filename = (unsigned char*)malloc(sizeof(unsigned char) * (length + 2));
 	//sx->s_recv((char*)filename, nameLength*2);
-	recv(s, filename, length, 0);
+	recv(s, (char *)filename, length, 0);
 	filename[length] = '\0';
 
-	wchar_t strUnicode[256] = { 0, };
-	char strUTF8[256] = { 0, };
-	int nLen = MultiByteToWideChar(CP_UTF8, 0, filename, length, NULL, NULL);
-	MultiByteToWideChar(CP_UTF8, 0, filename, length, strUnicode, nLen);
-	std::wcout << strUnicode << std::endl;
+	std::wstring wstr((wchar_t*)&filename);
+	std::wcout << wstr << std::endl;
 
+	for (int i = 0; i < length; i++)
+		printf("%x ", filename[i]);
+
+	printf("\n");
 	char hash[65] = { 0, };
 	//sx->s_recv(hash, 64);
 	recv(s, hash, 64, 0);
