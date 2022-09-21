@@ -217,14 +217,27 @@ void CNoSpearClientDlg::OnBnClickeduploadfile()
 
 void CNoSpearClientDlg::OnBnClickedButton1()
 {
+	static const unsigned int FILE_UPLOAD_MAX_SIZE = 10485760; //10MB
+
 	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
 	UpdateData(TRUE);
 	NOSPEAR_FILE file = NOSPEAR_FILE(manual_file_path);
 
-	std::string utf8_filename = CW2A(file.Getfilename(), CP_UTF8);
-	unsigned char arr[30] = { 0, };
-	memcpy(arr, utf8_filename.c_str(), utf8_filename.size());
+	FILE* fp = _wfopen(file.Getfilepath(), L"rb");
+	if (fp == NULL) {
+		AfxMessageBox(_T("업로드 과정 중 파일 열기를 실패하였습니다."));
+		return;
+	}
+	unsigned int filesize = 0;
+	fseek(fp, 0, SEEK_END);
+	filesize = ftell(fp);
+	fseek(fp, 0, SEEK_SET);
 
+	if (filesize > FILE_UPLOAD_MAX_SIZE) {
+		AfxMessageBox(_T("업로드 가능한 용량을 초과하였습니다."));
+		fclose(fp);
+		return;
+	}
 	return;
 
 }
