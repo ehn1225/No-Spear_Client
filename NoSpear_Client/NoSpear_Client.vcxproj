@@ -189,6 +189,7 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="documentValidate.h" />
     <ClInclude Include="NOSPEAR_FILE.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="NOSPEAR.h" />
@@ -202,6 +203,7 @@
     <ClInclude Include="z.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="documentValidate.cpp" />
     <ClCompile Include="NOSPEAR_FILE.cpp" />
     <ClCompile Include="NOSPEAR.cpp" />
     <ClCompile Include="NoSpear_Client.cpp" />

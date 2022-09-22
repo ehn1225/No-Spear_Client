@@ -7,6 +7,8 @@
 #include "afxdialogex.h"
 #include "NOSPEAR_FILE.h"
 #include "NOSPEAR.h"
+#include <iostream>
+#include <fstream> 
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -68,7 +70,7 @@ END_MESSAGE_MAP()
 
 CNoSpearClientDlg::CNoSpearClientDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_NOSPEAR_CLIENT_DIALOG, pParent)
-	, manual_file_path(_T(""))
+	, filename(_T(""))
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -76,7 +78,7 @@ CNoSpearClientDlg::CNoSpearClientDlg(CWnd* pParent /*=nullptr*/)
 void CNoSpearClientDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
-	DDX_Text(pDX, edit_filepath, manual_file_path);
+	DDX_Text(pDX, label_filename, filename);
 }
 
 BEGIN_MESSAGE_MAP(CNoSpearClientDlg, CDialogEx)
@@ -85,7 +87,6 @@ BEGIN_MESSAGE_MAP(CNoSpearClientDlg, CDialogEx)
 	ON_WM_QUERYDRAGICON()
 	ON_BN_CLICKED(btn_selectfile, &CNoSpearClientDlg::OnBnClickedselectfile)
 	ON_BN_CLICKED(btn_uploadfile, &CNoSpearClientDlg::OnBnClickeduploadfile)
-	ON_BN_CLICKED(IDC_BUTTON1, &CNoSpearClientDlg::OnBnClickedButton1)
 
 END_MESSAGE_MAP()
 
@@ -181,16 +182,13 @@ void CNoSpearClientDlg::OnBnClickedselectfile()
 {
 	// Manual Diagnose
 	// 수동검사의 파일선택 버튼을 눌렀을 때 작동을 구현
-
-	CString szFilter = _T("문서 파일 (*.doc, *.hwp, *.xls, *.pdf, *.ppt, *.txt) | *.doc; *.hwp; *.xls; *.pdf; *.ppt; *.txt|");
-	CFileDialog dlg(TRUE, _T("*.dat"), NULL, OFN_HIDEREADONLY | OFN_FILEMUSTEXIST, szFilter);
+	//hwp, hwpx, pdf, doc, docx, xls, xlsx
+	CString szFilter = _T("문서 파일 (*.hwp, *.hwpx, *.pdf, *.doc, *.docx, *.xls, *.xlsx) | *.hwp; *.hwpx; *.pdf; *.doc; *.docx; *.xls; *.xlsx|");
+	CFileDialog dlg(TRUE, NULL, NULL, OFN_HIDEREADONLY | OFN_FILEMUSTEXIST, szFilter);
 
 	if (IDOK == dlg.DoModal())	{
-		CString pathName = dlg.GetPathName();
-		//fileName = dlg.GetFileName();
-		//AfxMessageBox(PathFindFileName(pathName));
-		UpdateData(TRUE);
-		manual_file_path = pathName;
+		filepath = dlg.GetPathName();
+		filename = dlg.GetFileName();
 		UpdateData(FALSE);
 	}
 }
@@ -199,45 +197,19 @@ void CNoSpearClientDlg::OnBnClickeduploadfile()
 {
 	// Manual Diagnose
 	// 수동검사의 검사 버튼을 눌렀을 때 작동을 구현
+	//file의 
 	CFileFind pFind;
 	UpdateData(TRUE);
-	BOOL bRet = pFind.FindFile(manual_file_path);
+	BOOL bRet = pFind.FindFile(filepath);
 
 	if (!bRet) {
 		AfxMessageBox(_T("파일을 찾을 수 없습니다"));
+		AfxTrace(TEXT("[CNoSpearClientDlg::OnBnClickeduploadfile] 파일이 유효하지 않음\n"));
+
 		return;
 	}
 
 	NOSPEAR client;
-	NOSPEAR_FILE file = NOSPEAR_FILE(manual_file_path);
-	client.Fileupload(file);		
-}
 
-
-
-void CNoSpearClientDlg::OnBnClickedButton1()
-{
-	static const unsigned int FILE_UPLOAD_MAX_SIZE = 10485760; //10MB
-
-	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
-	UpdateData(TRUE);
-	NOSPEAR_FILE file = NOSPEAR_FILE(manual_file_path);
-
-	FILE* fp = _wfopen(file.Getfilepath(), L"rb");
-	if (fp == NULL) {
-		AfxMessageBox(_T("업로드 과정 중 파일 열기를 실패하였습니다."));
-		return;
-	}
-	unsigned int filesize = 0;
-	fseek(fp, 0, SEEK_END);
-	filesize = ftell(fp);
-	fseek(fp, 0, SEEK_SET);
-
-	if (filesize > FILE_UPLOAD_MAX_SIZE) {
-		AfxMessageBox(_T("업로드 가능한 용량을 초과하였습니다."));
-		fclose(fp);
-		return;
-	}
-	return;
-
+	client.Fileupload(NOSPEAR_FILE(filepath));
 }

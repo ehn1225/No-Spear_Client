@@ -18,5 +18,7 @@
 #include <commctrl.h>
 #include <iostream>
 #include <string>
+#include <vector>
+#include <string>
 
 #endif //PCH_H

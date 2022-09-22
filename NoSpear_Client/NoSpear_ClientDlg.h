@@ -34,8 +34,8 @@ protected:
 public:
 	afx_msg void OnBnClickedselectfile();
 	afx_msg void OnBnClickeduploadfile();
+
 private:
-	CString manual_file_path;
-public:
-	afx_msg void OnBnClickedButton1();
+	CString filename;
+	CString filepath;
 };
