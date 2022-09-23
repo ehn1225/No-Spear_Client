@@ -4,6 +4,7 @@ class NOSPEAR_FILE {
 	CString filename;
 	CString filepath;
 	char filehash[65] = { 0, }; //sha256 is 64byte
+	unsigned int filesize = 0;
 
 public:
 	NOSPEAR_FILE(CString filepath);
@@ -11,4 +12,5 @@ public:
 	CString Getfilepath();
 	char* Getfilehash();
 	bool Checkvalidation();
+	unsigned int Getfilesize();
 };

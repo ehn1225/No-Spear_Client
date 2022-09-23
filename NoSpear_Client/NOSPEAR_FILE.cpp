@@ -50,7 +50,7 @@ bool NOSPEAR_FILE::Checkvalidation(){
 	}
 
 	fseek(fp, 0, SEEK_END);
-	unsigned long filesize = ftell(fp);
+	filesize = ftell(fp);
 	if (filesize > FILE_UPLOAD_MAX_SIZE) {
 		AfxTrace(TEXT("[NOSPEAR_FILE::Checkvalidation] 업로드 허용 용량 초과\n"));
 		fclose(fp);
@@ -66,4 +66,9 @@ bool NOSPEAR_FILE::Checkvalidation(){
 	}
 	
 	return true;
+}
+
+unsigned int NOSPEAR_FILE::Getfilesize()
+{
+	return filesize;
 }

@@ -14,6 +14,8 @@
 #define new DEBUG_NEW
 #endif
 
+NOSPEAR* client = NULL;
+
 struct ST_WSA_INITIALIZER
 {
 	ST_WSA_INITIALIZER(void)
@@ -123,6 +125,39 @@ BOOL CNoSpearClientDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 작은 아이콘을 설정합니다.
 
 	// TODO: 여기에 추가 초기화 작업을 추가합니다.
+	CFileFind pFind;
+	BOOL bRet = pFind.FindFile(L"config.dat");
+
+	if (bRet) {
+		//서버 주소 설정 파일이 존재할 경우, 반영해서 NOSPEAR 객체를 생성함
+		/*
+			config.dat 파일 형식
+			첫번째 줄에 서버 주소
+			두번째 줄에 port
+
+			[example - config.dat]
+			127.0.0.1
+			12345
+		*/
+		AfxTrace(TEXT("[CNoSpearClientDlg::OnInitDialog] 설정 파일 존재\n"));
+
+		std::string ip;
+		std::string port;
+
+		std::ifstream ifs;
+		ifs.open("config.dat");
+		if (ifs.is_open()) {
+			std::getline(ifs, ip);
+			std::getline(ifs, port);
+		}
+		client = new NOSPEAR(ip, atoi(port.c_str()));
+	}
+	else {
+		//설정 파일이 없는 경우 기본 설정으로 진행
+		AfxTrace(TEXT("[CNoSpearClientDlg::OnInitDialog] 설정 파일 미존재\n"));
+		client = new NOSPEAR();
+	}
+
 
 
 	return TRUE;  // 포커스를 컨트롤에 설정하지 않으면 TRUE를 반환합니다.
@@ -205,11 +240,8 @@ void CNoSpearClientDlg::OnBnClickeduploadfile()
 	if (!bRet) {
 		AfxMessageBox(_T("파일을 찾을 수 없습니다"));
 		AfxTrace(TEXT("[CNoSpearClientDlg::OnBnClickeduploadfile] 파일이 유효하지 않음\n"));
-
 		return;
 	}
 
-	NOSPEAR client;
-
-	client.Fileupload(NOSPEAR_FILE(filepath));
+	client->Fileupload(NOSPEAR_FILE(filepath));
 }
