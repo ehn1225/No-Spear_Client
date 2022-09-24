@@ -8,7 +8,6 @@
 
 // 여기에 미리 컴파일하려는 헤더 추가
 #include "framework.h"
-#include <cstring>
 #include <fstream>
 #include <wininet.h>
 #include <winsock2.h>
@@ -18,7 +17,18 @@
 #include <commctrl.h>
 #include <iostream>
 #include <string>
+#include <string.h>
+#include <cstring>
 #include <vector>
-#include <string>
+
+//아래 참조들은 커널 드라이버 통신을 위한 것
+#include <windows.h>
+#include <stdlib.h>
+#include <winioctl.h>
+#include <crtdbg.h>
+#include <assert.h>
+#include <fltuser.h>
+//#include "scanuser.h"
+#include <dontuse.h>
 
 #endif //PCH_H
