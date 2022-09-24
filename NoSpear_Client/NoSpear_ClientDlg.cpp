@@ -232,7 +232,6 @@ void CNoSpearClientDlg::OnBnClickeduploadfile()
 {
 	// Manual Diagnose
 	// 수동검사의 검사 버튼을 눌렀을 때 작동을 구현
-	//file의 
 	CFileFind pFind;
 	UpdateData(TRUE);
 	BOOL bRet = pFind.FindFile(filepath);

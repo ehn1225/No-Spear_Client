@@ -4,7 +4,7 @@ class NOSPEAR_FILE {
 	CString filename;
 	CString filepath;
 	char filehash[65] = { 0, }; //sha256 is 64byte
-	unsigned int filesize = 0;
+	unsigned int filesize = 0; //MAX of type : 4GB
 
 public:
 	NOSPEAR_FILE(CString filepath);

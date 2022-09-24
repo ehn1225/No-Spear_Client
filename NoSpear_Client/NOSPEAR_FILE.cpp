@@ -4,7 +4,6 @@
 #include "NOSPEAR_FILE.h"
 #include "documentValidate.h"
 #include "sha256.h"
-#include <string.h>
 
 NOSPEAR_FILE::NOSPEAR_FILE(CString filepath) {
 	this->filepath = filepath;
@@ -26,6 +25,10 @@ NOSPEAR_FILE::NOSPEAR_FILE(CString filepath) {
 	for (int i = 0; i < SHA256::DIGEST_SIZE; i++)
 		sprintf(filehash + i * 2, "%02x", digest[i]);
 	//취약 포인트. sprintf에서 sprintf_s로 변경해야 함. or snprintf
+
+	//Get file size
+	fseek(fp, 0, SEEK_END);
+	this->filesize = ftell(fp);
 	
 	fclose(fp);
 }
@@ -51,13 +54,13 @@ bool NOSPEAR_FILE::Checkvalidation(){
 
 	fseek(fp, 0, SEEK_END);
 	filesize = ftell(fp);
+	fclose(fp);
+
 	if (filesize > FILE_UPLOAD_MAX_SIZE) {
 		AfxTrace(TEXT("[NOSPEAR_FILE::Checkvalidation] 업로드 허용 용량 초과\n"));
-		fclose(fp);
 		return false;
 	}
 
-	fclose(fp);
 
 	DocumentValidate document_validation;
 	if (document_validation.readSignature(std::string(CT2CA(filepath))) == false) {
@@ -68,7 +71,6 @@ bool NOSPEAR_FILE::Checkvalidation(){
 	return true;
 }
 
-unsigned int NOSPEAR_FILE::Getfilesize()
-{
+unsigned int NOSPEAR_FILE::Getfilesize(){
 	return filesize;
 }

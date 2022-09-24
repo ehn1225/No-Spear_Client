@@ -34,7 +34,7 @@ void NOSPEAR::Fileupload(NOSPEAR_FILE file){
 	AfxTrace(TEXT("[NOSPEAR::Fileupload] hash : " + CString(file.Getfilehash()) + "\n"));
 
 	CString filename = file.Getfilename();
-	//validation 호출. 먼저 validation을 체크하지 않으면 파일 사이즈 안나옴
+	//validation 호출
 	if (file.Checkvalidation() == false) {
 		AfxTrace(TEXT("[NOSPEAR::Fileupload] 제약되는 파일으로 확인\n"));
 		return;
@@ -81,6 +81,7 @@ void NOSPEAR::Fileupload(NOSPEAR_FILE file){
 
 	char file_buffer[NOSPEAR::FILE_BUFFER_SIZE];
 	int read_size = 0;
+
 	FILE* fp = _wfopen(file.Getfilepath(), L"rb");
 	if (fp == NULL) {
 		AfxTrace(TEXT("[NOSPEAR::Fileupload] 파일이 유효하지 않습니다.\n"));
@@ -111,10 +112,12 @@ void NOSPEAR::Fileupload(NOSPEAR_FILE file){
 }
 
 NOSPEAR::NOSPEAR(){
-
+	//기본생성자
+	//일반 사용자 환경에서는 하드코딩된 서버 주소로 접속함
 }
 
 NOSPEAR::NOSPEAR(std::string ip, unsigned short port){
+	//config.dat 파일이 있을 때 사용되는 생성자
 	SERVER_IP = ip;
 	SERVER_PORT = port;
 }
