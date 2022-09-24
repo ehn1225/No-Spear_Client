@@ -10,7 +10,7 @@ NOSPEAR_FILE::NOSPEAR_FILE(CString filepath) {
 	this->filename = PathFindFileName(filepath);
 
 	//SHA256 °è»êºÎ
-	int readsize = 0;
+	unsigned int readsize = 0;
 	unsigned char filebuffer[FILE_BUFFER_SIZE] = {0, };
 	unsigned char digest[SHA256::DIGEST_SIZE] = {0, };
 

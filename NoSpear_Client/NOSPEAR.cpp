@@ -2,6 +2,7 @@
 #include "NOSPEAR_FILE.h"
 #include "NOSPEAR.h"
 #include "ssl.h"
+#include "scanuk.h"
 
 #pragma warning(disable:4996)
 #pragma comment(lib,"ws2_32.lib")
@@ -70,7 +71,7 @@ void NOSPEAR::Fileupload(NOSPEAR_FILE file){
 	//Send File Name (CString to char*)
 	//UTP-8로 변경한 후 서버에 전송
 	//sx->s_ssend((LPSTR)(LPCTSTR)filename, namelength * 2);
-	send(s, utf8_filename.c_str(), utf8_filename.size(), 0);
+	send(s, utf8_filename.c_str(), (UINT)utf8_filename.size(), 0);
 
 	//Send File Hash
 	//sx->s_ssend(file.Getfilehash(), 64);

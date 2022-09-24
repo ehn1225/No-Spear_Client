@@ -7,8 +7,7 @@
 #include "afxdialogex.h"
 #include "NOSPEAR_FILE.h"
 #include "NOSPEAR.h"
-#include <iostream>
-#include <fstream> 
+
 
 #ifdef _DEBUG
 #define new DEBUG_NEW

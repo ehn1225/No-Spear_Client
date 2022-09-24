@@ -17,18 +17,14 @@
 #include <commctrl.h>
 #include <iostream>
 #include <string>
-#include <string.h>
-#include <cstring>
 #include <vector>
 
-//아래 참조들은 커널 드라이버 통신을 위한 것
 #include <windows.h>
 #include <stdlib.h>
 #include <winioctl.h>
-#include <crtdbg.h>
-#include <assert.h>
+//#include <crtdbg.h>
+//#include <assert.h>
 #include <fltuser.h>
-//#include "scanuser.h"
-#include <dontuse.h>
+//#include <dontuse.h>
 
 #endif //PCH_H
