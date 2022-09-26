@@ -194,6 +194,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="documentValidate.h" />
+    <ClInclude Include="LIVEPROTECT.h" />
     <ClInclude Include="NOSPEAR_FILE.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="NOSPEAR.h" />
@@ -201,7 +202,6 @@
     <ClInclude Include="NoSpear_ClientDlg.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Resource.h" />
-    <ClInclude Include="scanuser.h" />
     <ClInclude Include="sha256.h" />
     <ClInclude Include="ssl.h" />
     <ClInclude Include="targetver.h" />
@@ -209,6 +209,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="documentValidate.cpp" />
+    <ClCompile Include="LIVEPROTECT.cpp" />
     <ClCompile Include="NOSPEAR_FILE.cpp" />
     <ClCompile Include="NOSPEAR.cpp" />
     <ClCompile Include="NoSpear_Client.cpp" />
@@ -219,7 +220,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="scanUser.cpp" />
     <ClCompile Include="sha256.cpp" />
     <ClCompile Include="ssl.cpp" />
   </ItemGroup>

@@ -1,13 +1,7 @@
-﻿
-// NoSpear_ClientDlg.h: 헤더 파일
-//
-
-#pragma once
-
-
+﻿#pragma once
 // CNoSpearClientDlg 대화 상자
-class CNoSpearClientDlg : public CDialogEx
-{
+class LIVEPROTECT;
+class CNoSpearClientDlg : public CDialogEx{
 // 생성입니다.
 public:
 	CNoSpearClientDlg(CWnd* pParent = nullptr);	// 표준 생성자입니다.
@@ -34,8 +28,10 @@ protected:
 public:
 	afx_msg void OnBnClickedselectfile();
 	afx_msg void OnBnClickeduploadfile();
-
+	LIVEPROTECT* live = NULL;
 private:
 	CString filename;
 	CString filepath;
+public:
+	afx_msg void OnBnClickedtest();
 };

@@ -61,7 +61,6 @@ bool NOSPEAR_FILE::Checkvalidation(){
 		return false;
 	}
 
-
 	DocumentValidate document_validation;
 	if (document_validation.readSignature(std::string(CT2CA(filepath))) == false) {
 		AfxTrace(TEXT("[NOSPEAR_FILE::Checkvalidation] 허용된 문서 타입이 아님\n"));

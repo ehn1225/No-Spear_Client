@@ -7,6 +7,7 @@
 #include "afxdialogex.h"
 #include "NOSPEAR_FILE.h"
 #include "NOSPEAR.h"
+#include "LIVEPROTECT.h"
 
 
 #ifdef _DEBUG
@@ -89,6 +90,7 @@ BEGIN_MESSAGE_MAP(CNoSpearClientDlg, CDialogEx)
 	ON_BN_CLICKED(btn_selectfile, &CNoSpearClientDlg::OnBnClickedselectfile)
 	ON_BN_CLICKED(btn_uploadfile, &CNoSpearClientDlg::OnBnClickeduploadfile)
 
+	ON_BN_CLICKED(btn_test, &CNoSpearClientDlg::OnBnClickedtest)
 END_MESSAGE_MAP()
 
 
@@ -140,9 +142,7 @@ BOOL CNoSpearClientDlg::OnInitDialog()
 		*/
 		AfxTrace(TEXT("[CNoSpearClientDlg::OnInitDialog] 설정 파일 존재\n"));
 
-		std::string ip;
-		std::string port;
-
+		std::string ip, port;
 		std::ifstream ifs;
 		ifs.open("config.dat");
 		if (ifs.is_open()) {
@@ -212,8 +212,7 @@ HCURSOR CNoSpearClientDlg::OnQueryDragIcon()
 }
 
 
-void CNoSpearClientDlg::OnBnClickedselectfile()
-{
+void CNoSpearClientDlg::OnBnClickedselectfile(){
 	// Manual Diagnose
 	// 수동검사의 파일선택 버튼을 눌렀을 때 작동을 구현
 	//hwp, hwpx, pdf, doc, docx, xls, xlsx
@@ -241,5 +240,68 @@ void CNoSpearClientDlg::OnBnClickeduploadfile()
 		return;
 	}
 
-	client->Fileupload(NOSPEAR_FILE(filepath));
+	int returncode = 0;
+	CString count;
+
+	returncode = client->Fileupload(NOSPEAR_FILE(filepath));
+	for (int i = 0; i < 3; i++) {
+		if (returncode < 0) {
+			AfxMessageBox(client->GetErrorMsg());
+			return;
+		}
+
+		switch (returncode) {
+			case TYPE_NORMAL:
+				AfxMessageBox(_T("정상 파일"));
+				break;
+			case TYPE_MALWARE:
+				AfxMessageBox(_T("악성 파일"));
+				break;
+			case TYPE_SUSPICIOUS:
+				AfxMessageBox(_T("악성 의심 파일"));
+				break;
+			case TYPE_UNEXPECTED:
+				AfxMessageBox(_T("몰루 파일"));
+				break;
+			case TYPE_NOFILE:
+				AfxMessageBox(_T("문서 파일이 아님"));
+				break;
+			case TYPE_RESEND:
+				count.Format(L"(%d/%d)", i+1, 3);
+				if (IDYES == AfxMessageBox(L"파일을 업로드하는 중 오류가 발생하였습니다.\n 다시 업로드 하시겠습니까? " + count, MB_YESNO | MB_ICONWARNING)) {
+					returncode = client->Fileupload(NOSPEAR_FILE(filepath));
+					continue;
+				}
+				break;
+			default:
+				AfxMessageBox(_T("Unknown Response"));
+				break;
+		}
+		break;
+	}
+}
+
+
+void CNoSpearClientDlg::OnBnClickedtest(){
+	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
+	if (live == NULL) {
+		live = new LIVEPROTECT();
+		HRESULT result = live->Init();
+		CString resultext;
+		if (result == S_OK) {
+			AfxMessageBox(_T("연결 성공\n"));
+			live->livestatus = true;
+		}
+		else {
+			resultext.Format(_T("return : %ld\n"), result);
+			AfxMessageBox(resultext);
+			delete(live);
+			live = NULL;
+		}
+	}
+	else {
+		delete(live);
+		live = NULL;
+		AfxMessageBox(_T("연결 종료\n"));
+	}
 }

@@ -51,7 +51,7 @@
     <ClInclude Include="documentValidate.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="scanuser.h">
+    <ClInclude Include="LIVEPROTECT.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
@@ -80,7 +80,7 @@
     <ClCompile Include="documentValidate.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="scanUser.cpp">
+    <ClCompile Include="LIVEPROTECT.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>

@@ -16,10 +16,11 @@
 #include <process.h>
 #include <commctrl.h>
 #include <iostream>
+#include <algorithm>
 #include <string>
 #include <vector>
+#include <Windows.h>
 
-#include <windows.h>
 #include <stdlib.h>
 #include <winioctl.h>
 //#include <crtdbg.h>
