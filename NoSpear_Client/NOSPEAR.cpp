@@ -1,9 +1,8 @@
 #include "pch.h"
 #include "NOSPEAR_FILE.h"
+#include "LIVEPROTECT.h"
 #include "NOSPEAR.h"
 #include "ssl.h"
-#include "LIVEPROTECT.h"
-
 
 #pragma warning(disable:4996)
 #pragma comment(lib,"ws2_32.lib")
@@ -96,6 +95,7 @@ int NOSPEAR::Fileupload(NOSPEAR_FILE file){
 	}
 
 	AfxTrace(TEXT("[NOSPEAR::Fileupload] 파일 업로드 완료\n"));
+	errormsg = TEXT("[NOSPEAR::Fileupload] 파일 업로드 완료");
 
 	//검사 결과를 리턴 받습니다. 동기 방식을 사용
 	unsigned short result = 0;
@@ -114,18 +114,33 @@ void NOSPEAR::ActivateLiveProtect(bool status){
 	if (live_protect_status == status)
 		return;
 
-	live_protect_status = status;
 
 	//LIVEPROTECT 객체 생성
-	if (live_protect_status) {
-	
+	if (status) {
+		if (liveprotect == NULL) {
+			liveprotect = new LIVEPROTECT();
+			HRESULT result = liveprotect->ActivateLiveProtect();
+			CString resultext;
+			if (result == S_OK) {
+				AfxMessageBox(_T("드라이버 연결 성공\n"));
+				live_protect_status = true;
+			}
+			else {
+				resultext.Format(_T("LIVEPROTECT::Init() return : %ld\n"), result);
+				AfxMessageBox(resultext);
+				delete(liveprotect);
+				liveprotect = NULL;
+			}
+		}
 	
 	}
 	else {
-	
-	
+		liveprotect->InActivateLiveProtect();
+		delete(liveprotect);
+		liveprotect = NULL;
+		AfxMessageBox(_T("드라이버 연결 종료\n"));
+		live_protect_status = false;
 	}
-	
 }
 
 CString NOSPEAR::GetErrorMsg(){

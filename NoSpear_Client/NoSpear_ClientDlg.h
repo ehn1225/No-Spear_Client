@@ -28,10 +28,11 @@ protected:
 public:
 	afx_msg void OnBnClickedselectfile();
 	afx_msg void OnBnClickeduploadfile();
-	LIVEPROTECT* live = NULL;
 private:
 	CString filename;
 	CString filepath;
 public:
 	afx_msg void OnBnClickedtest();
+	CButton test2;
+	afx_msg void OnBnClickedButton1();
 };

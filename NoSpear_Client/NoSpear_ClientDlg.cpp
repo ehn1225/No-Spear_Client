@@ -81,6 +81,7 @@ void CNoSpearClientDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Text(pDX, label_filename, filename);
+	DDX_Control(pDX, IDC_BUTTON1, test2);
 }
 
 BEGIN_MESSAGE_MAP(CNoSpearClientDlg, CDialogEx)
@@ -91,6 +92,7 @@ BEGIN_MESSAGE_MAP(CNoSpearClientDlg, CDialogEx)
 	ON_BN_CLICKED(btn_uploadfile, &CNoSpearClientDlg::OnBnClickeduploadfile)
 
 	ON_BN_CLICKED(btn_test, &CNoSpearClientDlg::OnBnClickedtest)
+	ON_BN_CLICKED(IDC_BUTTON1, &CNoSpearClientDlg::OnBnClickedButton1)
 END_MESSAGE_MAP()
 
 
@@ -261,7 +263,7 @@ void CNoSpearClientDlg::OnBnClickeduploadfile()
 				AfxMessageBox(_T("악성 의심 파일"));
 				break;
 			case TYPE_UNEXPECTED:
-				AfxMessageBox(_T("몰루 파일"));
+				AfxMessageBox(_T("상상하지 못한 파일"));
 				break;
 			case TYPE_NOFILE:
 				AfxMessageBox(_T("문서 파일이 아님"));
@@ -284,24 +286,14 @@ void CNoSpearClientDlg::OnBnClickeduploadfile()
 
 void CNoSpearClientDlg::OnBnClickedtest(){
 	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
-	if (live == NULL) {
-		live = new LIVEPROTECT();
-		HRESULT result = live->Init();
-		CString resultext;
-		if (result == S_OK) {
-			AfxMessageBox(_T("연결 성공\n"));
-			live->livestatus = true;
-		}
-		else {
-			resultext.Format(_T("return : %ld\n"), result);
-			AfxMessageBox(resultext);
-			delete(live);
-			live = NULL;
-		}
-	}
-	else {
-		delete(live);
-		live = NULL;
-		AfxMessageBox(_T("연결 종료\n"));
-	}
+	client->ActivateLiveProtect(TRUE);
+	
+}
+
+
+void CNoSpearClientDlg::OnBnClickedButton1()
+{
+	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
+	client->ActivateLiveProtect(FALSE);
+
 }
