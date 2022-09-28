@@ -22,8 +22,10 @@ Environment:
 #include <fltKernel.h>
 #include <dontuse.h>
 #include <suppress.h>
+#include <ntifs.h>
 #include "scanuk.h"
 #include "scanner.h"
+//#include <locale.h>
 
 #pragma prefast(disable:__WARNING_ENCODE_MEMBER_FUNCTION_POINTER, "Not valid for kernel mode drivers")
 
@@ -39,16 +41,13 @@ SCANNER_DATA ScannerData;
 //
 
 const UNICODE_STRING ScannerExtensionsToScan[] =
-    { RTL_CONSTANT_STRING( L"doc"),
-      RTL_CONSTANT_STRING( L"docx"),
-      RTL_CONSTANT_STRING( L"pps"),
-      RTL_CONSTANT_STRING( L"ppt"),
-      RTL_CONSTANT_STRING( L"pptx"),
-      RTL_CONSTANT_STRING( L"xls"),
-      RTL_CONSTANT_STRING( L"xlsx"),
-      RTL_CONSTANT_STRING( L"txt"),
-      RTL_CONSTANT_STRING( L"hwp"),
-      RTL_CONSTANT_STRING( L"pdf"),
+    { RTL_CONSTANT_STRING(L"hwp"),
+      RTL_CONSTANT_STRING(L"hwpx"),
+      RTL_CONSTANT_STRING(L"pdf"),
+      RTL_CONSTANT_STRING(L"doc"),
+      RTL_CONSTANT_STRING(L"docx"),
+      RTL_CONSTANT_STRING(L"xls"),
+      RTL_CONSTANT_STRING(L"xlsx"),
       {0, 0, NULL}
     };
 
@@ -228,7 +227,6 @@ Return Value:
         //  Free the security descriptor in all cases. It is not needed once
         //  the call to FltCreateCommunicationPort() is made.
         //
-
         FltFreeSecurityDescriptor( sd );
 
         if (NT_SUCCESS( status )) {
@@ -308,6 +306,7 @@ Return Value
     ScannerData.ClientPort = ClientPort;
 
     DbgPrint( "!!! scanner.sys --- connected, port=0x%p\n", ClientPort );
+    DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "!!! scanner.sys --- connected, port=0x%p\n", ClientPort);
 
     return STATUS_SUCCESS;
 }
@@ -339,6 +338,7 @@ Return value
     PAGED_CODE();
 
     DbgPrint( "!!! scanner.sys --- disconnected, port=0x%p\n", ScannerData.ClientPort );
+    DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "!!! scanner.sys --- disconnected, port=0x%p\n", ScannerData.ClientPort);
 
     //
     //  Close our handle to the connection: note, since we limited max connections to 1,
@@ -530,6 +530,7 @@ Return Value:
     if (IoThreadToProcess( Data->Thread ) == ScannerData.UserProcess) {
 
         DbgPrint( "!!! scanner.sys -- allowing create for trusted process \n" );
+        DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "!!! scanner.sys -- allowing create for trusted process \n");
 
         return FLT_PREOP_SUCCESS_NO_CALLBACK;
     }
@@ -651,6 +652,7 @@ Return Value:
                                             FLT_FILE_NAME_QUERY_DEFAULT,
                                         &nameInfo );
 
+
     if (!NT_SUCCESS( status )) {
 
         return FLT_POSTOP_FINISHED_PROCESSING;
@@ -663,12 +665,13 @@ Return Value:
     //
 
     scanFile = ScannerpCheckExtension( &nameInfo->Extension );
-	
-	if(scanFile)
-	{
+
+	if(scanFile){
 		cbFilePath = min((512-1)*sizeof(WCHAR), nameInfo->Name.Length);
 		RtlCopyMemory(wFilePath, nameInfo->Name.Buffer, cbFilePath);
-	}
+        DbgPrint("\n Filename : %wZ", &nameInfo->Name);
+        DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "Filename : %wZ\n", &nameInfo->Name);
+    }
 
     //
     //  Release file name info, we're done with it
@@ -693,6 +696,8 @@ Return Value:
 				&safeToOpen
 				);
 
+    DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[scanner.sys] " __FUNCTION__ "[% u] % s to creat / open a file(% ws)\n", PtrToUint(PsGetCurrentProcessId()), (!safeToOpen) ? "Blocked " : "Complete", wFilePath);
+
     if (!safeToOpen) {
 
         //
@@ -700,8 +705,11 @@ Return Value:
         //
 
         DbgPrint( "!!! scanner.sys -- foul language detected in postcreate !!!\n" );
+        DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "!!! scanner.sys -- foul language detected in postcreate !!!\n");
 
         DbgPrint( "!!! scanner.sys -- undoing create \n" );
+        DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "!!! scanner.sys -- undoing create \n");
+
 
         FltCancelFileOpen( FltObjects->Instance, FltObjects->FileObject );
 
@@ -872,7 +880,9 @@ Return Value:
             leave;
         }
 
-        notification = ExAllocatePool2( POOL_FLAG_PAGED, sizeof( SCANNER_NOTIFICATION ), 'nacS' );
+        notification = ExAllocatePoolWithTag( NonPagedPool,
+                                              sizeof( SCANNER_NOTIFICATION ),
+                                              'nacS' );
 
         if(NULL == notification) {
 
@@ -880,6 +890,8 @@ Return Value:
             leave;
         }
 		
+		RtlZeroMemory(notification, sizeof( SCANNER_NOTIFICATION ));
+
         //
         //  Read the beginning of the file and pass the contents to user mode.
         //
@@ -908,7 +920,7 @@ Return Value:
             /*RtlCopyMemory( &notification->Contents,
                            buffer,
                            min( notification->BytesToScan, SCANNER_READ_BUFFER_SIZE ) );*/
-						   
+			//유저에게 전송하는 영역	   
 			RtlCopyMemory( &notification->Contents, pwFilePath, cbFilePath);
 
             replyLength = sizeof( SCANNER_REPLY );
@@ -932,6 +944,8 @@ Return Value:
                 //
 
                 DbgPrint( "!!! scanner.sys --- couldn't send message to user-mode to scan file, status 0x%X\n", status );
+                DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "!!! scanner.sys --- couldn't send message to user-mode to scan file, status 0x%X\n", status);
+
             }
         }
 
