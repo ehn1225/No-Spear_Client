@@ -3,7 +3,7 @@ Vaccine client
 
 <h2>Manual Upload Usage</h2>
 1. 서버 주소 확인(기본 설정 ip : 127.0.0.1, port : 42524)<br>
-	만약 서버 주소가 다를 경우 아래 "서버 주소 변경 방법"에 따라 서버 주소를 바꿔주면 됩니다.
+	만약 서버 주소가 다를 경우 아래 "서버 주소 변경 방법"에 따라 서버 주소를 바꿔주면 됩니다.<br>
 2. 클라이언트 프로그램 실행<br>
 3. 클라이언트 프로그램에서 "파일선택" 버튼을 눌러 문서 파일 선택 후 "검사" 버튼 클릭<br>
 4. 서버에 연결할 수 없을 경우 "서버에 연결할 수 없습니다" 메시지박스 출력됨<br>
@@ -16,7 +16,7 @@ Vaccine client
 4. 프로그램 다시 실행<br>
 
 <h2>커널 드라이버 실행 방법</h2>
-1. Disable driver signature enforcement 모드로 윈도우 부팅
+1. Disable driver signature enforcement 모드로 윈도우 부팅<br>
 2. github에서 scanner.inf, scanner.sys 다운로드<br>
 3. scanner.inf 마우스 우클릭 -> 설치<br>
 4. 드라이버 실행은 관리자 권한으로 CMD 실행 후 "sc start scanner"<br>
