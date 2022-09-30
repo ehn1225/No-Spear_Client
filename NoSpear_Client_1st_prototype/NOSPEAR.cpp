@@ -24,8 +24,6 @@ void NOSPEAR::Deletefile(NOSPEAR_FILE file){
 }
 
 int NOSPEAR::Fileupload(NOSPEAR_FILE file){
-	//SSL Socket Send
-	//https://www.codeproject.com/Articles/24379/SSL-Convert-your-Plain-Sockets-to-SSL-Sockets-in-a
 	AfxTrace(TEXT("[NOSPEAR::Fileupload] 파일 업로드 시작\n"));
 	AfxTrace(TEXT("[NOSPEAR::Fileupload] name : " + file.Getfilename() + "\n"));
 	AfxTrace(TEXT("[NOSPEAR::Fileupload] path : " + file.Getfilepath() + "\n"));
@@ -67,6 +65,7 @@ int NOSPEAR::Fileupload(NOSPEAR_FILE file){
 
 	//Send File Name (UTF-8 String to char*)
 	//UTP-8로 변경한 후 서버에 전송
+	send(s, utf8_filename.c_str(), (UINT)utf8_filename.size(), 0);
 
 	//Send File Hash
 	send(s, file.Getfilehash(), 64, 0);

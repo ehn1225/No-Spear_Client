@@ -1,5 +1,5 @@
 class NOSPEAR {
-	std::string SERVER_IP = "127.0.0.1";
+	std::string SERVER_IP = "3.39.223.108";
 	unsigned short SERVER_PORT = 42524;
 	static const short FILE_BUFFER_SIZE = 4096;
 	CString errormsg;
