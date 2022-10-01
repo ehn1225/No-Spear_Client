@@ -3,6 +3,51 @@
 #include "NoSpear_ClientDlg.h"
 #pragma comment(lib,"fltLib.lib")
 
+BOOL inline LIVEPROTECT::IsMaliciousLocal(CString filepath, bool& rediagnose) {
+    //파일이 위험하다고 판단되면 true, 아니면 false를 리턴합니다.
+    //1. 캐시확인(whitelist)
+    //2. While list 확인
+    //3. 블랙리스트 확인
+
+    //1. 캐시 확인. Create Time을 기준으로 검색해보고 동일한게 존재한다면 Pass
+    struct __stat64 buffer;
+    _wstat64(filepath, &buffer);
+    time_t file_ctime = buffer.st_ctime;
+    time_t now = time(nullptr);
+
+    //vector<CACHE>::iterator it;
+    //for (it = cache_table.begin(); it != cache_table.end(); it++) {
+    //    if (it->ctime == file_ctime) {
+    //        //Create Time을 비교해보고, 동일한게 있다면 통과
+    //        it->last_use = now;
+    //        return false;
+    //    }
+    //    if (now - it->last_use > 300) {
+    //        //5분 동안 사용안할 경우 캐시에서 지움
+    //        cache_table.erase(it);
+    //    }
+    //}
+
+    //set을 쓰는 경우 원소 값 삭제불가능
+    // find는 존재하지 않으면 set.end()를 리턴. cache_table에 존재한다면 바로 통과함
+    if (cache_table.find(file_ctime) != cache_table.end()) {
+        return false;
+    }
+
+    //2.Local 확인. SQLite를 이용해 DB 검사해봄
+    //key=filepath, filename, create time, 서버 검사 여부
+
+    //3.Local BlackList 확인. SQLite를 이용해 DB 검사해봄
+    //key=hash, diagnose code(blacklist만 있으면 code는 없음(악성코드 여부)
+
+    //여기 까지 왔으면 일단 블락 때림.
+    //이제 서버에 물어봐야하는 단계
+    //네트워크에 연결안된 상태라면 사용자 선택에 따라 진행
+    rediagnose = true;
+    return true;
+}
+
+
 PWCHAR LIVEPROTECT::GetCharPointerW(PWCHAR pwStr, WCHAR wLetter, int Count) {
     //pwStr문자열에서 wLetter문자의 Count번째 위치를 리턴하는 함수
 
@@ -70,14 +115,44 @@ DWORD LIVEPROTECT::ScannerWorker(PSCANNER_THREAD_CONTEXT Context) {
             //C 뒤에 \와, 일반적으로 아는 경로를 붙혀줌
 
             AfxTrace(TEXT("FilePath : %s\n", wDosFilePath));
+            CString path = CString(wDosFilePath);
+            //AfxMessageBox(CString(wDosFilePath));
+            bool rediagnose = false;
+            result = IsMaliciousLocal(path, rediagnose);
+            //네트워크가 차단되거나, 서버에 업로드 처리 진행
+            //true -> 차단, false -> 통과
 
-            result = false; //isblacklist() 함수 만들기
-            //result == true -> 차단
-            //result == false -> 통과
+            if (rediagnose == true) {
+                //IsMalicious에서 판단할 수 없음.
+                //서버에 질의를 하는 함수 호출
+                AfxMessageBox(_T("서버에 물어봐야 합니다"));
+                //NOSPESR_FILE 객체 생성
+            }
+
+            //사용자와 최종 확인하는 부분(악성코드인데 삭제할래? 그래도 실행할래?, 정상이 아닐때만 출력됨)
+
+
+            //최종 결과를cache에 저장해주기. 허용할 것만 추가
+            //if (result == false) {
+            // //vecort<CACHE> 용
+            //    struct __stat64 buffer;
+            //    _wstat64(path, &buffer);
+            //    CACHE tmp;
+            //    tmp.filepath = path;
+            //    tmp.ctime = buffer.st_ctime;
+            //    tmp.last_use = time(nullptr);
+            //    cache_table.push_back(tmp);
+            //}
+            if (result == false) {
+                //set용
+                struct __stat64 buffer;
+                _wstat64(path, &buffer);
+                cache_table.insert(buffer.st_ctime);
+            }
 
             if (threadstatus == false) {
                 result = false;
-                //실시간 검사를 종료하였을 경우 bypass
+                //실시간 검사를 종료한 상태에서는 항상 통과시킴
             }
         }
 
@@ -202,6 +277,7 @@ int LIVEPROTECT::ActivateLiveProtect(){
 int LIVEPROTECT::InActivateLiveProtect(){
     if (threadstatus) {
         threadstatus = false;
+        cache_table.clear();
         WaitForMultipleObjectsEx(threadCount, threads, TRUE, INFINITE, FALSE);
 
         for (int i = 0; i < threadCount; i++) {

@@ -25,14 +25,17 @@ protected:
 	afx_msg void OnPaint();
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
-public:
-	afx_msg void OnBnClickedselectfile();
-	afx_msg void OnBnClickeduploadfile();
 private:
 	CString filename;
 	CString filepath;
 public:
-	afx_msg void OnBnClickedtest();
-	CButton test2;
+	afx_msg void OnBnClickedselectfile();
+	afx_msg void OnBnClickeduploadfile();
+	afx_msg void OnBnClickedactivelive();
+	afx_msg void OnBnClickedinactivelive();
 	afx_msg void OnBnClickedButton1();
+	//void CNoSpearClientDlg::CreateHorizontalScroll();
+	afx_msg void OnBnClickedButton2();
+	CListBox filelist;
+	CListCtrl m_ctrlFileList;
 };

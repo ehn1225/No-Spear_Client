@@ -20,6 +20,10 @@
 #include <string>
 #include <vector>
 #include <Windows.h>
+#include <sys/stat.h>
+#include <time.h>
+#include <set>
+#include <filesystem>
 
 #include <stdlib.h>
 #include <winioctl.h>

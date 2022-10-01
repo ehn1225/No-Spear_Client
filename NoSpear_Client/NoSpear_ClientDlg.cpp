@@ -8,7 +8,7 @@
 #include "NOSPEAR_FILE.h"
 #include "NOSPEAR.h"
 #include "LIVEPROTECT.h"
-
+namespace fs = std::filesystem;
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -81,7 +81,7 @@ void CNoSpearClientDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Text(pDX, label_filename, filename);
-	DDX_Control(pDX, IDC_BUTTON1, test2);
+	DDX_Control(pDX, FileList, m_ctrlFileList);
 }
 
 BEGIN_MESSAGE_MAP(CNoSpearClientDlg, CDialogEx)
@@ -90,9 +90,10 @@ BEGIN_MESSAGE_MAP(CNoSpearClientDlg, CDialogEx)
 	ON_WM_QUERYDRAGICON()
 	ON_BN_CLICKED(btn_selectfile, &CNoSpearClientDlg::OnBnClickedselectfile)
 	ON_BN_CLICKED(btn_uploadfile, &CNoSpearClientDlg::OnBnClickeduploadfile)
-
-	ON_BN_CLICKED(btn_test, &CNoSpearClientDlg::OnBnClickedtest)
+	ON_BN_CLICKED(btn_activelive, &CNoSpearClientDlg::OnBnClickedactivelive)
+	ON_BN_CLICKED(btn_inactivelive, &CNoSpearClientDlg::OnBnClickedinactivelive)
 	ON_BN_CLICKED(IDC_BUTTON1, &CNoSpearClientDlg::OnBnClickedButton1)
+	ON_BN_CLICKED(IDC_BUTTON2, &CNoSpearClientDlg::OnBnClickedButton2)
 END_MESSAGE_MAP()
 
 
@@ -262,15 +263,15 @@ void CNoSpearClientDlg::OnBnClickeduploadfile()
 			case TYPE_SUSPICIOUS:
 				AfxMessageBox(_T("악성 의심 파일"));
 				break;
-			case TYPE_UNEXPECTED:
+			case TYPE_UNEXPECTED://엔진도 모르겠다 진짜 Unknown
 				AfxMessageBox(_T("상상하지 못한 파일"));
 				break;
 			case TYPE_NOFILE:
 				AfxMessageBox(_T("문서 파일이 아님"));
 				break;
 			case TYPE_RESEND:
-				count.Format(L"(%d/%d)", i+1, 3);
-				if (IDYES == AfxMessageBox(L"파일을 업로드하는 중 오류가 발생하였습니다.\n 다시 업로드 하시겠습니까? " + count, MB_YESNO | MB_ICONWARNING)) {
+				count.Format(L"재시도 횟수 : %d회/%d회", i+1, 3);
+				if (IDYES == AfxMessageBox(L"파일을 업로드하는 중 오류가 발생하였습니다.\n 다시 시도 하시겠습니까? \n" + count, MB_YESNO | MB_ICONWARNING)) {
 					returncode = client->Fileupload(NOSPEAR_FILE(filepath));
 					continue;
 				}
@@ -284,16 +285,148 @@ void CNoSpearClientDlg::OnBnClickeduploadfile()
 }
 
 
-void CNoSpearClientDlg::OnBnClickedtest(){
+void CNoSpearClientDlg::OnBnClickedactivelive(){
 	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
 	client->ActivateLiveProtect(TRUE);
 	
 }
 
 
-void CNoSpearClientDlg::OnBnClickedButton1()
-{
+void CNoSpearClientDlg::OnBnClickedinactivelive(){
 	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
 	client->ActivateLiveProtect(FALSE);
+}
+
+
+bool Has_ADS(CString filepath) {
+	wchar_t szVolName[MAX_PATH], szFSName[MAX_PATH];
+	DWORD dwSN, dwMaxLen, dwVolFlags;
+	::GetVolumeInformation(L"C:\\", szVolName, MAX_PATH, &dwSN,
+		&dwMaxLen, &dwVolFlags, szFSName, MAX_PATH);
+
+	if (CString(szFSName) == L"NTFS") {  // If NTFS
+
+		WIN32_FIND_STREAM_DATA fsd;
+		HANDLE hFind = NULL;
+
+		try {
+			hFind = ::FindFirstStreamW(filepath, FindStreamInfoStandard, &fsd, 0);
+			if (hFind == INVALID_HANDLE_VALUE) throw ::GetLastError();
+
+			for (;;) {
+				CString tmp;
+				tmp.Format(TEXT("%s"), fsd.cStreamName);
+				if (tmp == L":Zone.Identifier:$DATA") {
+					return true;
+				}
+				if (!::FindNextStreamW(hFind, &fsd)) {
+					DWORD dr = ::GetLastError();
+					if (dr != ERROR_HANDLE_EOF) throw dr;
+					break;
+				}
+			}
+		}
+		catch (DWORD err) {
+			AfxTrace(TEXT("Error! Windows error code: %u\n", err));
+		}
+
+		if (hFind != NULL) ::FindClose(hFind);
+	}
+	return false;
+}
+
+void CNoSpearClientDlg::OnBnClickedButton1(){
+	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
+
+	//Create Time
+	//UpdateData(TRUE);
+	//struct __stat64 buffer;
+	//_wstat64(filepath, &buffer);
+	//struct tm* timeinfo = localtime(&buffer.st_ctime); // or gmtime() depending on what you want
+	//CString tmp = CString(asctime(timeinfo));
+	////AfxMessageBox(tmp);
+
+	//time_t timeinfo1 = buffer.st_ctime; // or gmtime() depending on what you want
+	//tmp.Format(TEXT("time : %ld"), timeinfo1);
+	//AfxMessageBox(tmp);
+
+	/*time_t result = time(nullptr);
+	tmp.Format(TEXT("time : %ld"), result);
+	AfxMessageBox(tmp);*/
+
+	//SQLite 테스트
+	m_ctrlFileList.InsertColumn(0, L"파일명", LVCFMT_LEFT, 100, -1);
+	m_ctrlFileList.InsertColumn(1, L"파일경로", LVCFMT_LEFT, 100, -1);
+	m_ctrlFileList.InsertColumn(2, L"외부파일", LVCFMT_LEFT, 100, -1);
+
+	//filesystem test
+	//https://stackoverflow.com/questions/62988629/c-stdfilesystemfilesystem-error-exception-trying-to-read-system-volume-inf
+	
+	fs::path rootdir("C:\\Users\\LYC\\OneDrive - 서울과학기술대학교\\바탕 화면\\기타 서류");
+	//	fs::path rootdir("C:\\Users");
+
+	auto iter = fs::recursive_directory_iterator(rootdir, fs::directory_options::skip_permission_denied);
+	auto end_iter = fs::end(iter);
+	auto ec = std::error_code();
+	int count = 0;
+	int error = 0;
+	for (; iter != end_iter; iter.increment(ec)){
+		if (ec){
+			error++;
+			continue;
+		}
+		string ext = iter->path().extension().string();
+		//One-Drive상의 일부 폴더 탐색 안되는 문제 있음
+		//*.hwp; *.hwpx; *.pdf; *.doc; *.docx; *.xls; *.xlsx;
+		if (ext == ".hwp" || ext == ".hwpx" || ext == ".pdf"|| ext == ".doc"|| ext == ".docx"|| ext == ".xls"|| ext == ".xlsx") {
+			CString path = CString(iter->path().string().c_str());
+			AfxTrace(path + "\n");
+			m_ctrlFileList.InsertItem(count, iter->path().filename().c_str());
+			m_ctrlFileList.SetItem(count, 1, LVIF_TEXT, path, 0, 0, 0, NULL);
+			m_ctrlFileList.SetItem(count, 2, LVIF_TEXT, (Has_ADS(path) == true) ? L"외부" : L"내부", 0, 0, 0, NULL);
+			count++;
+		}
+	}
+	CString tmp;
+	tmp.Format(TEXT("Complete. Find %d, error %d"), count, error);
+	AfxTrace(tmp);
+}
+
+
+void CNoSpearClientDlg::OnBnClickedButton2(){
+	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
+	wchar_t szVolName[MAX_PATH], szFSName[MAX_PATH];
+	DWORD dwSN, dwMaxLen, dwVolFlags;
+	::GetVolumeInformation(L"C:\\", szVolName, MAX_PATH, &dwSN,
+		&dwMaxLen, &dwVolFlags, szFSName, MAX_PATH);
+
+	if (CString(szFSName) == L"NTFS") {  // If NTFS
+
+		WIN32_FIND_STREAM_DATA fsd;
+		HANDLE hFind = NULL;
+
+		try {
+			hFind = ::FindFirstStreamW(L"C:\\Users\\LYC\\OneDrive - 서울과학기술대학교\\바탕 화면\\기타 서류\\Bitlocker.pdf", FindStreamInfoStandard, &fsd, 0);
+			if (hFind == INVALID_HANDLE_VALUE) throw ::GetLastError();
+
+			for (;;) {
+				CString tmp;
+				tmp.Format(TEXT("%s"), fsd.cStreamName);
+				if (tmp == L":Zone.Identifier:$DATA") {
+					AfxMessageBox(L"냐옹");
+				}
+				if (!::FindNextStreamW(hFind, &fsd)) {
+					DWORD dr = ::GetLastError();
+					if (dr != ERROR_HANDLE_EOF) throw dr;
+					break;
+				}
+			}
+		}
+		catch (DWORD err) {
+			AfxTrace(TEXT("Error! Windows error code: %u\n", err));
+		}
+
+		if (hFind != NULL) ::FindClose(hFind);
+	}
 
 }
