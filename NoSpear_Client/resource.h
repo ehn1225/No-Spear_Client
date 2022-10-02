@@ -7,6 +7,7 @@
 #define IDS_ABOUTBOX                    101
 #define IDD_NOSPEAR_CLIENT_DIALOG       102
 #define IDR_MAINFRAME                   128
+#define IDI_ICON1                       130
 #define btn_selectfile                  1001
 #define btn_uploadfile                  1002
 #define edit_filepath                   1003
@@ -18,7 +19,6 @@
 #define btn_inactivelive                1016
 #define IDC_BUTTON1                     1018
 #define IDC_LIST2                       1019
-#define FileLisst                       1019
 #define FileList                        1019
 #define IDC_BUTTON2                     1020
 
@@ -26,7 +26,7 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        130
+#define _APS_NEXT_RESOURCE_VALUE        131
 #define _APS_NEXT_COMMAND_VALUE         32771
 #define _APS_NEXT_CONTROL_VALUE         1022
 #define _APS_NEXT_SYMED_VALUE           101
