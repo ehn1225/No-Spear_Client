@@ -41,6 +41,7 @@ class LIVEPROTECT{
     static BOOL IsMaliciousOnline(CString filepath);
     static PWCHAR GetCharPointerW(PWCHAR pwStr, WCHAR wLetter, int Count);
     static DWORD ScannerWorker(PSCANNER_THREAD_CONTEXT Context);
+    static CString GetProcessName(unsigned long pid);
     HANDLE port, completion;
 
 public:

@@ -94,6 +94,7 @@ BEGIN_MESSAGE_MAP(CNoSpearClientDlg, CDialogEx)
 	ON_BN_CLICKED(btn_activelive, &CNoSpearClientDlg::OnBnClickedactivelive)
 	ON_BN_CLICKED(btn_inactivelive, &CNoSpearClientDlg::OnBnClickedinactivelive)
 	ON_BN_CLICKED(IDC_BUTTON1, &CNoSpearClientDlg::OnBnClickedButton1)
+	ON_BN_CLICKED(IDC_BUTTON2, &CNoSpearClientDlg::OnBnClickedButton2)
 END_MESSAGE_MAP()
 
 
@@ -319,4 +320,22 @@ void CNoSpearClientDlg::OnBnClickedButton1(){
 	FILELISTVIEWER dlg;
 	dlg.DoModal();
 
+}
+
+void CNoSpearClientDlg::OnBnClickedButton2()
+{
+	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
+	unsigned long pid = 17032;
+	CString name;
+
+	DWORD error = 0;
+
+	if (HANDLE hProc = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid)) {
+		wchar_t buf[512] = { 0, };
+		DWORD bufLen = sizeof(buf);
+		QueryFullProcessImageName(hProc, 0, buf, &bufLen);
+		CloseHandle(hProc);
+		name = CString(buf);
+	}
+	AfxMessageBox(name);
 }

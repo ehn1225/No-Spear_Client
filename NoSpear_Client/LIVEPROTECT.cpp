@@ -64,6 +64,22 @@ PWCHAR LIVEPROTECT::GetCharPointerW(PWCHAR pwStr, WCHAR wLetter, int Count) {
 	return (PWCHAR)&pwStr[--i];
 }
 
+CString LIVEPROTECT::GetProcessName(unsigned long pid){
+    // TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
+    CString processname = L"Unknown";
+    DWORD error = 0;
+
+    if (HANDLE hProc = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid)) {
+        wchar_t buf[512] = { 0, };
+        DWORD bufLen = sizeof(buf);
+        QueryFullProcessImageName(hProc, 0, buf, &bufLen);
+        CloseHandle(hProc);
+        processname = CString(buf);
+    }
+    //AfxMessageBox(processname);
+    return processname;
+}
+
 DWORD LIVEPROTECT::ScannerWorker(PSCANNER_THREAD_CONTEXT Context) {
     PSCANNER_NOTIFICATION notification;
     SCANNER_REPLY_MESSAGE replyMessage;
@@ -94,7 +110,8 @@ DWORD LIVEPROTECT::ScannerWorker(PSCANNER_THREAD_CONTEXT Context) {
         notification = &message->Notification;
         assert(notification->BytesToScan <= SCANNER_READ_BUFFER_SIZE);
         __analysis_assume(notification->BytesToScan <= SCANNER_READ_BUFFER_SIZE);
-
+        unsigned long pid = notification->pid;
+        
         {
             WCHAR wDosFilePath[512] = { 0, };
 
@@ -114,7 +131,10 @@ DWORD LIVEPROTECT::ScannerWorker(PSCANNER_THREAD_CONTEXT Context) {
             wcscat(wDosFilePath, ++pwPtr); //파일경로
             //C 뒤에 \와, 일반적으로 아는 경로를 붙혀줌
 
-            AfxTrace(TEXT("FilePath : %s\n", wDosFilePath));
+            CString tmp;
+            tmp.Format(TEXT("pid : %d, process name : %ws, FilePath : %s\n"), pid, GetProcessName(pid), wDosFilePath);
+            AfxTrace(tmp);
+            //AfxMessageBox(tmp);
             CString path = CString(wDosFilePath);
             //AfxMessageBox(CString(wDosFilePath));
             bool rediagnose = false;
