@@ -48,6 +48,12 @@
     <ClInclude Include="LIVEPROTECT.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="FlexibleDialog.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="FILELISTVIEWER.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="NoSpear_Client.cpp">
@@ -72,6 +78,12 @@
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="LIVEPROTECT.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="FlexibleDialog.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="FILELISTVIEWER.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>

@@ -198,6 +198,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="documentValidate.h" />
+    <ClInclude Include="FILELISTVIEWER.h" />
+    <ClInclude Include="FlexibleDialog.h" />
     <ClInclude Include="LIVEPROTECT.h" />
     <ClInclude Include="NOSPEAR_FILE.h" />
     <ClInclude Include="framework.h" />
@@ -211,6 +213,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="documentValidate.cpp" />
+    <ClCompile Include="FILELISTVIEWER.cpp" />
+    <ClCompile Include="FlexibleDialog.cpp" />
     <ClCompile Include="LIVEPROTECT.cpp" />
     <ClCompile Include="NOSPEAR_FILE.cpp" />
     <ClCompile Include="NOSPEAR.cpp" />

@@ -88,9 +88,9 @@ DWORD LIVEPROTECT::ScannerWorker(PSCANNER_THREAD_CONTEXT Context) {
             hr = HRESULT_FROM_WIN32(GetLastError());
             break;
         }
-        CString tmp;
-        tmp.Format(TEXT("Received message, size %d\n"), pOvlp->InternalHigh);
-        AfxTrace(tmp);
+        //CString tmp;
+        //tmp.Format(TEXT("Received message, size %d\n"), pOvlp->InternalHigh);
+        //AfxTrace(tmp);
         notification = &message->Notification;
         assert(notification->BytesToScan <= SCANNER_READ_BUFFER_SIZE);
         __analysis_assume(notification->BytesToScan <= SCANNER_READ_BUFFER_SIZE);
@@ -125,7 +125,7 @@ DWORD LIVEPROTECT::ScannerWorker(PSCANNER_THREAD_CONTEXT Context) {
             if (rediagnose == true) {
                 //IsMalicious에서 판단할 수 없음.
                 //서버에 질의를 하는 함수 호출
-                AfxMessageBox(_T("서버에 물어봐야 합니다"));
+                //AfxMessageBox(_T("서버에 물어봐야 합니다"));
                 //NOSPESR_FILE 객체 생성
             }
 
@@ -155,6 +155,9 @@ DWORD LIVEPROTECT::ScannerWorker(PSCANNER_THREAD_CONTEXT Context) {
                 //실시간 검사를 종료한 상태에서는 항상 통과시킴
             }
         }
+        
+        result = false;
+        //테스트용 바이패스
 
         replyMessage.ReplyHeader.Status = 0;
         replyMessage.ReplyHeader.MessageId = message->MessageHeader.MessageId;

@@ -37,17 +37,6 @@ public:
 	afx_msg void OnBnClickedactivelive();
 	afx_msg void OnBnClickedinactivelive();
 	afx_msg void OnBnClickedButton1();
-	//void CNoSpearClientDlg::CreateHorizontalScroll();
 	afx_msg void OnBnClickedButton2();
-	CListBox filelist;
-	CListCtrl m_ctrlFileList;
-	afx_msg void OnHdnItemclickFilelist(NMHDR* pNMHDR, LRESULT* pResult);
-	static int CALLBACK CompareItem(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
-	int nSortColumn;
-	bool bAscending;
-	struct SORTPARAM{
-		int iSortColumn;
-		bool bSortDirect;
-		CListCtrl* pList;
-	};
+
 };
