@@ -19,8 +19,11 @@ public:
 
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 지원입니다.
-
+	virtual BOOL OnInitDialog();
 	DECLARE_MESSAGE_MAP()
+	afx_msg void OnPaint();
+	HICON m_hIcon;
+
 public:
 
 	afx_msg void OnGetMinMaxInfo(MINMAXINFO* lpMMI);
@@ -40,4 +43,7 @@ public:
 	afx_msg void OnBnClickedSelectfolder();
 	afx_msg void OnHdnItemdblclickFilelistctrl(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnNMDblclkFilelistctrl(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg void OnCbnSelchangeCombo1();
+	CComboBox file_check_combo;
+	afx_msg void OnBnClickedButton2();
 };

@@ -15,6 +15,7 @@ IMPLEMENT_DYNAMIC(FILELISTVIEWER, CFlexibleDialog)
 FILELISTVIEWER::FILELISTVIEWER(CWnd* pParent /*=nullptr*/)
 	: CFlexibleDialog(IDD_FILELISTVIEWDIALOG, pParent)
 {
+	m_hIcon = AfxGetApp()->LoadIcon(IDI_ICON1);
 
 }
 
@@ -26,6 +27,61 @@ void FILELISTVIEWER::DoDataExchange(CDataExchange* pDX)
 {
 	CFlexibleDialog::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_FileListCtrl, filelistbox);
+	DDX_Control(pDX, IDC_COMBO1, file_check_combo);
+}
+
+BOOL FILELISTVIEWER::OnInitDialog(){
+	CDialogEx::OnInitDialog();
+
+	filelistbox.InsertColumn(0, L"파일명", LVCFMT_LEFT, 200, -1);
+	filelistbox.InsertColumn(1, L"확장자", LVCFMT_LEFT, 70, -1);
+	filelistbox.InsertColumn(2, L"파일경로", LVCFMT_LEFT, 150, -1);
+	filelistbox.InsertColumn(3, L"위험도", LVCFMT_LEFT, 90, -1);
+	filelistbox.InsertColumn(4, L"검사 날짜", LVCFMT_LEFT, 100, -1);
+	filelistbox.InsertColumn(5, L"ADS", LVCFMT_LEFT, 70, -1);
+	filelistbox.InsertColumn(6, L"ZoneId", LVCFMT_LEFT, 70, -1);
+	filelistbox.InsertColumn(7, L"ReferrerUrl", LVCFMT_LEFT, 70, -1);
+	filelistbox.InsertColumn(8, L"HostUrl", LVCFMT_LEFT, 70, -1);
+	filelistbox.InsertColumn(9, L"만든 날짜", LVCFMT_LEFT, 100, -1);
+	filelistbox.InsertColumn(10, L"수정한 날짜", LVCFMT_LEFT, 100, -1);
+	filelistbox.InsertColumn(11, L"엑세스한 날짜", LVCFMT_LEFT, 100, -1);
+	filelistbox.SetExtendedStyle(LVS_EX_CHECKBOXES | LVS_EX_FULLROWSELECT);
+
+	CRect rctComboBox, rctDropDown;
+	file_check_combo.GetClientRect(&rctComboBox);
+	file_check_combo.GetDroppedControlRect(&rctDropDown);
+	file_check_combo.GetParent()->ScreenToClient(&rctDropDown);
+	rctDropDown.bottom = rctDropDown.top + rctComboBox.Height() + 400;
+	file_check_combo.MoveWindow(&rctDropDown);
+
+	SetIcon(m_hIcon, TRUE);			// 큰 아이콘을 설정합니다.
+	SetIcon(m_hIcon, FALSE);		// 작은 아이콘을 설정합니다.
+
+	return 0;
+}
+
+void FILELISTVIEWER::OnPaint(){
+	if (IsIconic())
+	{
+		CPaintDC dc(this); // 그리기를 위한 디바이스 컨텍스트입니다.
+
+		SendMessage(WM_ICONERASEBKGND, reinterpret_cast<WPARAM>(dc.GetSafeHdc()), 0);
+
+		// 클라이언트 사각형에서 아이콘을 가운데에 맞춥니다.
+		int cxIcon = GetSystemMetrics(SM_CXICON);
+		int cyIcon = GetSystemMetrics(SM_CYICON);
+		CRect rect;
+		GetClientRect(&rect);
+		int x = (rect.Width() - cxIcon + 1) / 2;
+		int y = (rect.Height() - cyIcon + 1) / 2;
+
+		// 아이콘을 그립니다.
+		dc.DrawIcon(x, y, m_hIcon);
+	}
+	else
+	{
+		CDialogEx::OnPaint();
+	}
 }
 
 
@@ -35,6 +91,8 @@ BEGIN_MESSAGE_MAP(FILELISTVIEWER, CFlexibleDialog)
 	ON_BN_CLICKED(IDC_BUTTON1, &FILELISTVIEWER::OnBnClickedButton1)
 	ON_BN_CLICKED(btn_SelectFolder, &FILELISTVIEWER::OnBnClickedSelectfolder)
 	ON_NOTIFY(NM_DBLCLK, IDC_FileListCtrl, &FILELISTVIEWER::OnNMDblclkFilelistctrl)
+	ON_CBN_SELCHANGE(IDC_COMBO1, &FILELISTVIEWER::OnCbnSelchangeCombo1)
+	ON_BN_CLICKED(IDC_BUTTON2, &FILELISTVIEWER::OnBnClickedButton2)
 END_MESSAGE_MAP()
 
 
@@ -82,20 +140,6 @@ bool FILELISTVIEWER::Has_ADS(CString filepath) {
 }
 
 void FILELISTVIEWER::PrintFolder(CString folderpath) {
-
-	filelistbox.InsertColumn(0, L"파일명", LVCFMT_LEFT, 200, -1);
-	filelistbox.InsertColumn(1, L"확장자", LVCFMT_LEFT, 70, -1);
-	filelistbox.InsertColumn(2, L"파일경로", LVCFMT_LEFT, 150, -1);
-	filelistbox.InsertColumn(3, L"검사여부", LVCFMT_LEFT, 90, -1);
-	filelistbox.InsertColumn(4, L"ADS", LVCFMT_LEFT, 70, -1);
-	filelistbox.InsertColumn(5, L"ZoneId", LVCFMT_LEFT, 70, -1);
-	filelistbox.InsertColumn(6, L"ReferrerUrl", LVCFMT_LEFT, 70, -1);
-	filelistbox.InsertColumn(7, L"HostUrl", LVCFMT_LEFT, 70, -1);
-	filelistbox.InsertColumn(8, L"만든 날짜", LVCFMT_LEFT, 100, -1);
-	filelistbox.InsertColumn(9, L"수정한 날짜", LVCFMT_LEFT, 100, -1);
-	filelistbox.InsertColumn(10, L"엑세스한 날짜", LVCFMT_LEFT, 100, -1);
-	filelistbox.SetExtendedStyle(LVS_EX_CHECKBOXES|LVS_EX_FULLROWSELECT);
-
 	//매개변수로 입력된 폴더 경`로를 재귀 탐색하여 문서 파일을 Listview에 출력해줌.
 	//filesystem test, https://stackoverflow.com/questions/62988629/c-stdfilesystemfilesystem-error-exception-trying-to-read-system-volume-inf
 
@@ -135,9 +179,23 @@ void FILELISTVIEWER::PrintFolder(CString folderpath) {
 			filelistbox.InsertItem(count, iter->path().filename().c_str());
 			filelistbox.SetItem(count, 1, LVIF_TEXT, CString((ext.substr(1, 4)).c_str()), 0, 0, 0, NULL);
 			filelistbox.SetItem(count, 2, LVIF_TEXT, path, 0, 0, 0, NULL);
-			filelistbox.SetItem(count, 3, LVIF_TEXT, L"검사안됨", 0, 0, 0, NULL);
-			filelistbox.SetItem(count, 4, LVIF_TEXT, (bNTFS) ? ((Has_ADS(path) == true) ? L"외부" : L"내부") : L"Not NTFS", 0, 0, 0, NULL);
-
+			filelistbox.SetItem(count, 3, LVIF_TEXT, (count % 5 == 1) ? L"미검사" : L"안전", 0, 0, 0, NULL);
+			filelistbox.SetItem(count, 4, LVIF_TEXT, L"-", 0, 0, 0, NULL);
+			int pos = 5;
+			if (bNTFS && Has_ADS(path)) {
+				CStdioFile ads_stream;
+				CFileException e;
+				if (!ads_stream.Open(path + L":Zone.Identifier", CFile::modeRead, &e)) {
+					e.ReportError();
+				}
+				CString str;
+				while (ads_stream.ReadString(str))
+					filelistbox.SetItem(count, pos++, LVIF_TEXT, str, 0, 0, 0, NULL);
+			}
+			else {
+				for (pos = 5 ; pos < 9; pos++)
+					filelistbox.SetItem(count, pos, LVIF_TEXT, L"-", 0, 0, 0, NULL);
+			}
 			count++;
 		}
 	}
@@ -203,4 +261,57 @@ void FILELISTVIEWER::OnNMDblclkFilelistctrl(NMHDR* pNMHDR, LRESULT* pResult)
 		ShellExecute(NULL, _T("open"), _T("explorer"), _T("/select,") + filepath, NULL, SW_SHOW);
 	}
 	*pResult = 0;
+}
+
+
+void FILELISTVIEWER::OnCbnSelchangeCombo1(){
+	int index = file_check_combo.GetCurSel();
+	if (index != CB_ERR) {
+		for (int i = 0; i < filelistbox.GetItemCount(); i++)
+			filelistbox.SetCheck(i, FALSE);
+		//CString str;
+		//file_check_combo.GetLBText(index, str);
+		switch (index){
+			case 0:
+				//전체 문서 선택
+				for (int i = 0; i < filelistbox.GetItemCount(); i++)
+					filelistbox.SetCheck(i, TRUE);
+				break;
+			case 1:
+				//미검사 문서 선택 column 3
+				for (int i = 0; i < filelistbox.GetItemCount(); i++) {
+					if (filelistbox.GetItemText(i, 3) == L"미검사")
+						filelistbox.SetCheck(i, TRUE);
+				}
+				break;
+			case 2:
+				//외부 문서 선택 column 5
+				for (int i = 0; i < filelistbox.GetItemCount(); i++) {
+					if (filelistbox.GetItemText(i, 5) == L"[ZoneTransfer]")
+						filelistbox.SetCheck(i, TRUE);
+				}
+				break;
+			case 3:
+				//전체 선택 해제
+				for (int i = 0; i < filelistbox.GetItemCount(); i++)
+					filelistbox.SetCheck(i, FALSE);
+				break;
+		default:
+			//여긴 올리가 없음
+			break;
+		}
+	}
+	
+}
+
+
+void FILELISTVIEWER::OnBnClickedButton2(){
+	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
+	for (int i = 0; i < filelistbox.GetItemCount(); i++) {
+		bool result = filelistbox.GetCheck(i);
+		CString tmp;
+		tmp.Format(TEXT("%d : %d\n"), i, result);
+		AfxTrace(tmp);
+
+	}
 }

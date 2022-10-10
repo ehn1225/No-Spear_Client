@@ -95,6 +95,7 @@ BEGIN_MESSAGE_MAP(CNoSpearClientDlg, CDialogEx)
 	ON_BN_CLICKED(btn_inactivelive, &CNoSpearClientDlg::OnBnClickedinactivelive)
 	ON_BN_CLICKED(IDC_BUTTON1, &CNoSpearClientDlg::OnBnClickedButton1)
 	ON_BN_CLICKED(IDC_BUTTON2, &CNoSpearClientDlg::OnBnClickedButton2)
+	ON_WM_DROPFILES()
 END_MESSAGE_MAP()
 
 
@@ -128,6 +129,10 @@ BOOL CNoSpearClientDlg::OnInitDialog()
 	//  프레임워크가 이 작업을 자동으로 수행합니다.
 	SetIcon(m_hIcon, TRUE);			// 큰 아이콘을 설정합니다.
 	SetIcon(m_hIcon, FALSE);		// 작은 아이콘을 설정합니다.
+
+	ChangeWindowMessageFilter(0x0049, MSGFLT_ADD);
+	ChangeWindowMessageFilter(WM_DROPFILES, MSGFLT_ADD);
+	DragAcceptFiles();
 
 	// TODO: 여기에 추가 초기화 작업을 추가합니다.
 	CFileFind pFind;
@@ -338,4 +343,19 @@ void CNoSpearClientDlg::OnBnClickedButton2()
 		name = CString(buf);
 	}
 	AfxMessageBox(name);
+}
+
+
+void CNoSpearClientDlg::OnDropFiles(HDROP hDropInfo)
+{
+	wchar_t buffer[512] = {0, };
+	// TODO: 여기에 메시지 처리기 코드를 추가 및/또는 기본값을 호출합니다.
+	UINT count = DragQueryFile(hDropInfo, 0xFFFFFFFF, buffer, 512);
+	::DragQueryFile(hDropInfo, 0, buffer, 512);
+	CString tmp = CString(buffer);
+	filepath = tmp;
+	filename = PathFindFileName(tmp);
+	UpdateData(FALSE);
+	::DragFinish(hDropInfo);
+	CDialogEx::OnDropFiles(hDropInfo);
 }
