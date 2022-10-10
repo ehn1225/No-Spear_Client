@@ -38,4 +38,6 @@ public:
 private:
 	CString filename;
 	CString filepath;
+public:
+	afx_msg void OnDropFiles(HDROP hDropInfo);
 };

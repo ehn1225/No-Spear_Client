@@ -221,7 +221,9 @@
     <None Include="res\NoSpearClient.rc2" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="res\icon3.ico" />
     <Image Include="res\NoSpear_Client.ico" />
+    <Image Include="res\NoSpear_icon.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
