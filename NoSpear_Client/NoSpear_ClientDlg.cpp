@@ -280,6 +280,9 @@ void CNoSpearClientDlg::OnBnClickeduploadfile()
 					continue;
 				}
 				break;
+			case TYPE_REJECT:
+				AfxMessageBox(_T("서버에서 검사를 거부하였습니다."));
+				break;
 			default:
 				AfxMessageBox(_T("Unknown Response"));
 				break;
@@ -330,7 +333,7 @@ void CNoSpearClientDlg::OnBnClickedButton1(){
 void CNoSpearClientDlg::OnBnClickedButton2()
 {
 	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
-	unsigned long pid = 17032;
+	unsigned long pid = 4372;
 	CString name;
 
 	DWORD error = 0;
@@ -350,12 +353,12 @@ void CNoSpearClientDlg::OnDropFiles(HDROP hDropInfo)
 {
 	wchar_t buffer[512] = {0, };
 	// TODO: 여기에 메시지 처리기 코드를 추가 및/또는 기본값을 호출합니다.
-	UINT count = DragQueryFile(hDropInfo, 0xFFFFFFFF, buffer, 512);
-	::DragQueryFile(hDropInfo, 0, buffer, 512);
+	//UINT count = DragQueryFile(hDropInfo, 0xFFFFFFFF, buffer, 512);
+	DragQueryFile(hDropInfo, 0, buffer, 512);
 	CString tmp = CString(buffer);
 	filepath = tmp;
 	filename = PathFindFileName(tmp);
 	UpdateData(FALSE);
-	::DragFinish(hDropInfo);
+	DragFinish(hDropInfo);
 	CDialogEx::OnDropFiles(hDropInfo);
 }
