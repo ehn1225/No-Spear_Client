@@ -280,6 +280,9 @@ void CNoSpearClientDlg::OnBnClickeduploadfile()
 				continue;
 			}
 			break;
+		case TYPE_REJECT:
+			AfxMessageBox(_T("서버에서 검사를 거부하였습니다."));
+			break;
 		default:
 			AfxMessageBox(_T("Unknown Response"));
 			break;
