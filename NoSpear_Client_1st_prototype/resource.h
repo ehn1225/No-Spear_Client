@@ -7,7 +7,7 @@
 #define IDS_ABOUTBOX                    101
 #define IDD_NOSPEAR_CLIENT_DIALOG       102
 #define IDR_MAINFRAME                   128
-#define IDI_ICON1                       130
+#define IDI_ICON1                       127 //original 130
 #define IDI_ICON2                       131
 #define IDI_ICON3                       132
 #define btn_selectfile                  1001
