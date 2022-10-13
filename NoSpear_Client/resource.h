@@ -7,7 +7,7 @@
 #define IDS_ABOUTBOX                    101
 #define IDD_NOSPEAR_CLIENT_DIALOG       102
 #define IDR_MAINFRAME                   128
-#define IDI_ICON1                       130
+#define IDI_ICON1                       127
 #define IDD_FILELISTVIEWDIALOG          131
 #define btn_selectfile                  1001
 #define btn_uploadfile                  1002
