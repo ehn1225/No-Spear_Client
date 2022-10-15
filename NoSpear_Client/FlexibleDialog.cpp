@@ -57,13 +57,11 @@ void CFlexibleDialog::OnSize(UINT nType, int cx, int cy)
 
 	double dRatioX = (double)cx / m_OriginalRect.Width();
 	double dRatioY = (double)cy / m_OriginalRect.Height();
-	for (auto iter = m_mapWindowRect.begin(); iter != m_mapWindowRect.end(); iter++)
-	{
+	for (auto iter = m_mapWindowRect.begin(); iter != m_mapWindowRect.end(); iter++){
 		double dLeft = (double)iter->second.left * dRatioX;
 		double dRight = (double)iter->second.right * dRatioX;
 		double dTop = (double)iter->second.top * dRatioY;
 		double dBottom = (double)iter->second.bottom * dRatioY;
-
 		iter->first->SetWindowPos(NULL, (int)dLeft, (int)dTop, (int)(dRight - dLeft), (int)(dBottom - dTop), SWP_NOZORDER);
 	}
 

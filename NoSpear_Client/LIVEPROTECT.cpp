@@ -3,47 +3,56 @@
 #include "NoSpear_ClientDlg.h"
 #pragma comment(lib,"fltLib.lib")
 
-BOOL inline LIVEPROTECT::IsMaliciousLocal(CString filepath, bool& rediagnose) {
-    //파일이 위험하다고 판단되면 true, 아니면 false를 리턴합니다.
-    //1. 캐시확인(whitelist)
-    //2. While list 확인
-    //3. 블랙리스트 확인
+BOOL inline LIVEPROTECT::IsMaliciousLocal(unsigned long pid, CString filepath) {
+    //ADS:NOSPEAR 을 확인하고 파일이 위험하다고 판단되면 true, 아니면 false를 리턴합니다.
+    //1. Process Name 확인
+    //2. ADS 유무 확인
+    //3. ADS Value 확인
 
-    //1. 캐시 확인. Create Time을 기준으로 검색해보고 동일한게 존재한다면 Pass
-    struct __stat64 buffer;
-    _wstat64(filepath, &buffer);
-    time_t file_ctime = buffer.st_ctime;
-    time_t now = time(nullptr);
+    //1. ProcessName 확인
+    //allow explorer.exe
 
-    //vector<CACHE>::iterator it;
-    //for (it = cache_table.begin(); it != cache_table.end(); it++) {
-    //    if (it->ctime == file_ctime) {
-    //        //Create Time을 비교해보고, 동일한게 있다면 통과
-    //        it->last_use = now;
-    //        return false;
-    //    }
-    //    if (now - it->last_use > 300) {
-    //        //5분 동안 사용안할 경우 캐시에서 지움
-    //        cache_table.erase(it);
-    //    }
-    //}
 
-    //set을 쓰는 경우 원소 값 삭제불가능
-    // find는 존재하지 않으면 set.end()를 리턴. cache_table에 존재한다면 바로 통과함
-    if (cache_table.find(file_ctime) != cache_table.end()) {
-        return false;
+    //2. ADS:NOSPEAR 유무 확인 후 없으면 차단
+    bool HasADS = false;
+    WIN32_FIND_STREAM_DATA fsd;
+    HANDLE hFind = NULL;
+    try {
+        hFind = ::FindFirstStreamW(filepath, FindStreamInfoStandard, &fsd, 0);
+        if (hFind == INVALID_HANDLE_VALUE) throw ::GetLastError();
+
+        for (;;) {
+            CString tmp;
+            tmp.Format(TEXT("%s"), fsd.cStreamName);
+            if (tmp == L":NOSPEAR:$DATA") {
+                HasADS = true;
+            }
+            if (!::FindNextStreamW(hFind, &fsd)) {
+                DWORD dr = ::GetLastError();
+                if (dr != ERROR_HANDLE_EOF) throw dr;
+                break;
+            }
+        }
     }
+    catch (DWORD err) {
+        AfxTrace(TEXT("[LIVEPROTECT::IsMaliciousLocal] Find ADS, Windows error code: %u\n", err));
+    }
+    if (hFind != NULL)
+        ::FindClose(hFind);
 
-    //2.Local 확인. SQLite를 이용해 DB 검사해봄
-    //key=filepath, filename, create time, 서버 검사 여부
+    if (HasADS == false)
+        return true;
 
-    //3.Local BlackList 확인. SQLite를 이용해 DB 검사해봄
-    //key=hash, diagnose code(blacklist만 있으면 code는 없음(악성코드 여부)
+    //2. ADS Value 확인
+    CStdioFile ads_stream;
+    CFileException e;
+    if (!ads_stream.Open(filepath + L":Zone.Identifier", CFile::modeRead, &e)) {
+        e.ReportError();
+    }
+    CString str;
+    //ads_stream.ReadString(str);
+    //string to integer and compare 0 or 1
 
-    //여기 까지 왔으면 일단 블락 때림.
-    //이제 서버에 물어봐야하는 단계
-    //네트워크에 연결안된 상태라면 사용자 선택에 따라 진행
-    rediagnose = true;
     return true;
 }
 
@@ -85,7 +94,7 @@ DWORD LIVEPROTECT::ScannerWorker(PSCANNER_THREAD_CONTEXT Context) {
     SCANNER_REPLY_MESSAGE replyMessage;
     PSCANNER_MESSAGE message = NULL;
     LPOVERLAPPED pOvlp;
-    BOOL result;
+    BOOL isMailicious;
     DWORD outSize;
     HRESULT hr;
     ULONG_PTR key;
@@ -94,22 +103,17 @@ DWORD LIVEPROTECT::ScannerWorker(PSCANNER_THREAD_CONTEXT Context) {
 #pragma warning(disable:4127) // conditional expression is constant
 
     while (threadstatus) {
-
 #pragma warning(pop)
 
-        result = GetQueuedCompletionStatus(Context->Completion, &outSize, &key, &pOvlp, INFINITE);
+        isMailicious = GetQueuedCompletionStatus(Context->Completion, &outSize, &key, &pOvlp, INFINITE);
         message = CONTAINING_RECORD(pOvlp, SCANNER_MESSAGE, Ovlp);
 
-        if (!result) {
+        if (!isMailicious) {
             hr = HRESULT_FROM_WIN32(GetLastError());
             break;
         }
-        //CString tmp;
-        //tmp.Format(TEXT("Received message, size %d\n"), pOvlp->InternalHigh);
-        //AfxTrace(tmp);
+
         notification = &message->Notification;
-        assert(notification->BytesToScan <= SCANNER_READ_BUFFER_SIZE);
-        __analysis_assume(notification->BytesToScan <= SCANNER_READ_BUFFER_SIZE);
         unsigned long pid = notification->pid;
         
         {
@@ -128,62 +132,42 @@ DWORD LIVEPROTECT::ScannerWorker(PSCANNER_THREAD_CONTEXT Context) {
                 break;
 
             wcscat(wDosFilePath, L"\\");
-            wcscat(wDosFilePath, ++pwPtr); //파일경로
-            //C 뒤에 \와, 일반적으로 아는 경로를 붙혀줌
-
+            wcscat(wDosFilePath, ++pwPtr);
             CString tmp;
             tmp.Format(TEXT("pid : %d, process name : %ws, FilePath : %s\n"), pid, GetProcessName(pid), wDosFilePath);
             AfxTrace(tmp);
-            //AfxMessageBox(tmp);
+
             CString path = CString(wDosFilePath);
-            //AfxMessageBox(CString(wDosFilePath));
-            bool rediagnose = false;
-            result = IsMaliciousLocal(path, rediagnose);
-            //네트워크가 차단되거나, 서버에 업로드 처리 진행
+
+            //Process Name 검사 수행. Office 프로그램이 아닐 경우, 바로 넘어감.
+            //office 프로그램이 아니라면 통과, 한글, Office 365, adobe reader, this.
+            //Create Time으로 현재 시각과 동일하면 새로 생성한 파일이다.
+            //새로 생성한 파일은 통과시킨다.
+
+            //Alternate Data Stream 기반 파일 허용 여부
+            isMailicious = IsMaliciousLocal(pid, path);
             //true -> 차단, false -> 통과
 
-            if (rediagnose == true) {
-                //IsMalicious에서 판단할 수 없음.
-                //서버에 질의를 하는 함수 호출
-                //AfxMessageBox(_T("서버에 물어봐야 합니다"));
-                //NOSPESR_FILE 객체 생성
-            }
-
-            //사용자와 최종 확인하는 부분(악성코드인데 삭제할래? 그래도 실행할래?, 정상이 아닐때만 출력됨)
-
-
-            //최종 결과를cache에 저장해주기. 허용할 것만 추가
-            //if (result == false) {
-            // //vecort<CACHE> 용
-            //    struct __stat64 buffer;
-            //    _wstat64(path, &buffer);
-            //    CACHE tmp;
-            //    tmp.filepath = path;
-            //    tmp.ctime = buffer.st_ctime;
-            //    tmp.last_use = time(nullptr);
-            //    cache_table.push_back(tmp);
-            //}
-            if (result == false) {
-                //set용
-                struct __stat64 buffer;
-                _wstat64(path, &buffer);
-                cache_table.insert(buffer.st_ctime);
-            }
-
             if (threadstatus == false) {
-                result = false;
+                isMailicious = false;
                 //실시간 검사를 종료한 상태에서는 항상 통과시킴
             }
         }
         
-        result = false;
+        isMailicious = false;
         //테스트용 바이패스
+
+        //최종결과를 History남기는 로직 구현 필요 : 클라이언트의 스레드로 넘기기
+        //해당 수행 결과를 클라이언트 스레드로 넘김.
+        //클라이언트 스레드는 넘오오는 값을 통해 새로운 파일이 탐지되었음을 파악하고, 사용자에게 허용할지 물어봄.
+        //커널 드라이버는 멈추지 않는다.
+        //빠꾸 맥이고 허용 여부 물어본다음에 다시 반복하게끔.
 
         replyMessage.ReplyHeader.Status = 0;
         replyMessage.ReplyHeader.MessageId = message->MessageHeader.MessageId;
 
         //  Need to invert the boolean -- result is true if found
-        replyMessage.Reply.SafeToOpen = !result;
+        replyMessage.Reply.SafeToOpen = !isMailicious;
 
         AfxTrace(TEXT("Replying message\n"));
   
@@ -300,7 +284,6 @@ int LIVEPROTECT::ActivateLiveProtect(){
 int LIVEPROTECT::InActivateLiveProtect(){
     if (threadstatus) {
         threadstatus = false;
-        cache_table.clear();
         WaitForMultipleObjectsEx(threadCount, threads, TRUE, INFINITE, FALSE);
 
         for (int i = 0; i < threadCount; i++) {

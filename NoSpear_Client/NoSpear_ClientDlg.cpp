@@ -94,7 +94,6 @@ BEGIN_MESSAGE_MAP(CNoSpearClientDlg, CDialogEx)
 	ON_BN_CLICKED(btn_activelive, &CNoSpearClientDlg::OnBnClickedactivelive)
 	ON_BN_CLICKED(btn_inactivelive, &CNoSpearClientDlg::OnBnClickedinactivelive)
 	ON_BN_CLICKED(IDC_BUTTON1, &CNoSpearClientDlg::OnBnClickedButton1)
-	ON_BN_CLICKED(IDC_BUTTON2, &CNoSpearClientDlg::OnBnClickedButton2)
 	ON_WM_DROPFILES()
 END_MESSAGE_MAP()
 
@@ -233,62 +232,14 @@ void CNoSpearClientDlg::OnBnClickedselectfile(){
 	}
 }
 
-void CNoSpearClientDlg::OnBnClickeduploadfile()
-{
+void CNoSpearClientDlg::OnBnClickeduploadfile(){
 	// Manual Diagnose
 	// 수동검사의 검사 버튼을 눌렀을 때 작동을 구현
-	CFileFind pFind;
 	UpdateData(TRUE);
-	BOOL bRet = pFind.FindFile(filepath);
-
-	if (!bRet) {
-		AfxMessageBox(_T("파일을 찾을 수 없습니다"));
-		AfxTrace(TEXT("[CNoSpearClientDlg::OnBnClickeduploadfile] 파일이 유효하지 않음\n"));
-		return;
-	}
-
-	int returncode = 0;
-	CString count;
-
-	returncode = client->Fileupload(NOSPEAR_FILE(filepath));
-	for (int i = 0; i < 3; i++) {
-		if (returncode < 0) {
-			AfxMessageBox(client->GetErrorMsg());
-			return;
-		}
-
-		switch (returncode) {
-			case TYPE_NORMAL:
-				AfxMessageBox(_T("분석 결과 : 정상 파일"));
-				break;
-			case TYPE_MALWARE:
-				AfxMessageBox(_T("분석 결과 : 악성 파일"));
-				break;
-			case TYPE_SUSPICIOUS:
-				AfxMessageBox(_T("분석 결과 : 악성 의심 파일"));
-				break;
-			case TYPE_UNEXPECTED://엔진도 모르겠다 진짜 Unknown
-				AfxMessageBox(_T("분석 결과 : 알 수 없는 파일"));
-				break;
-			case TYPE_NOFILE:
-				AfxMessageBox(_T("분석 결과 : 문서 파일이 아님"));
-				break;
-			case TYPE_RESEND:
-				count.Format(L"재시도 횟수 : %d회/%d회", i + 1, 3);
-				if (IDYES == AfxMessageBox(L"파일을 업로드하는 중 오류가 발생하였습니다.\n다시 시도 하시겠습니까?\n" + count, MB_YESNO | MB_ICONWARNING)) {
-					returncode = client->Fileupload(NOSPEAR_FILE(filepath));
-					continue;
-				}
-				break;
-			case TYPE_REJECT:
-				AfxMessageBox(_T("서버에서 검사를 거부하였습니다."));
-				break;
-			default:
-				AfxMessageBox(_T("Unknown Response"));
-				break;
-		}
-		break;
-	}
+	DIAGNOSE_RESULT diagnose_resut;
+	diagnose_resut = client->SingleDiagnose(filepath);
+	
+	AfxMessageBox(diagnose_resut.result_msg);
 }
 
 
@@ -329,25 +280,6 @@ void CNoSpearClientDlg::OnBnClickedButton1(){
 	dlg.DoModal();
 
 }
-
-void CNoSpearClientDlg::OnBnClickedButton2()
-{
-	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
-	unsigned long pid = 4372;
-	CString name;
-
-	DWORD error = 0;
-
-	if (HANDLE hProc = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid)) {
-		wchar_t buf[512] = { 0, };
-		DWORD bufLen = sizeof(buf);
-		QueryFullProcessImageName(hProc, 0, buf, &bufLen);
-		CloseHandle(hProc);
-		name = CString(buf);
-	}
-	AfxMessageBox(name);
-}
-
 
 void CNoSpearClientDlg::OnDropFiles(HDROP hDropInfo)
 {

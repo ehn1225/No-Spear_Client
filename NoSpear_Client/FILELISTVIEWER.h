@@ -2,8 +2,6 @@
 #include "afxdialogex.h"
 #include "FlexibleDialog.h"
 
-// FILELISTVIEWER 대화 상자
-
 class FILELISTVIEWER : public CFlexibleDialog
 {
 	DECLARE_DYNAMIC(FILELISTVIEWER)
@@ -23,6 +21,8 @@ protected:
 	DECLARE_MESSAGE_MAP()
 	afx_msg void OnPaint();
 	HICON m_hIcon;
+	int m_iDlgLimitMinWidth;
+	int m_iDlgLimitMinHeight;
 
 public:
 

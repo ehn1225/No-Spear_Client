@@ -14,15 +14,7 @@
 // CNoSpearClientApp:
 // 이 클래스의 구현에 대해서는 NoSpear_Client.cpp을(를) 참조하세요.
 //
-enum E_MALWARE_TYPE {
-	TYPE_NORMAL,
-	TYPE_MALWARE,
-	TYPE_SUSPICIOUS,
-	TYPE_UNEXPECTED,
-	TYPE_NOFILE,
-	TYPE_RESEND,
-	TYPE_REJECT
-};
+
 
 class CNoSpearClientApp : public CWinApp
 {

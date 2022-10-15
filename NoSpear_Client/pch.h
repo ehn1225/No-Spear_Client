@@ -30,6 +30,16 @@
 #include <winioctl.h>
 #include <fltuser.h>
 
+enum E_MALWARE_TYPE {
+	TYPE_NORMAL,
+	TYPE_MALWARE,
+	TYPE_SUSPICIOUS,
+	TYPE_UNEXPECTED,
+	TYPE_NOFILE,
+	TYPE_RESEND,
+	TYPE_REJECT
+};
+
 //MFC XP 스타일 지정
 //그래픽적으로 조금 느려진 것 같음
 #ifdef _UNICODE

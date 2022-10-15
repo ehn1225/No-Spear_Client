@@ -25,20 +25,32 @@ void NOSPEAR::Deletefile(NOSPEAR_FILE file){
 	}
 }
 
-int NOSPEAR::Fileupload(NOSPEAR_FILE file){
+DIAGNOSE_RESULT NOSPEAR::FileUpload(CString filepath){
+	DIAGNOSE_RESULT diagnose_return;
+	CFileFind pFind;
+	BOOL bRet = pFind.FindFile(filepath);
 
-	AfxTrace(TEXT("[NOSPEAR::Fileupload] 파일 업로드 시작\n"));
-	AfxTrace(TEXT("[NOSPEAR::Fileupload] name : " + file.Getfilename() + "\n"));
-	AfxTrace(TEXT("[NOSPEAR::Fileupload] path : " + file.Getfilepath() + "\n"));
-	AfxTrace(TEXT("[NOSPEAR::Fileupload] hash : " + CString(file.Getfilehash()) + "\n"));
+	if (!bRet) {
+		AfxTrace(TEXT("[NOSPEAR::FileUpload] 파일이 유효하지 않음\n"));
+		diagnose_return.result_msg = L"[NOSPEAR::FileUpload] 파일이 유효하지 않음";
+		diagnose_return.result_code = -1;
+		return diagnose_return;
+	}
 
-	CString filename = file.Getfilename();
+	NOSPEAR_FILE file = NOSPEAR_FILE(filepath);
+
+	AfxTrace(TEXT("[NOSPEAR::FileUpload] 파일 업로드 시작\n"));
+	AfxTrace(TEXT("[NOSPEAR::FileUpload] name : " + file.Getfilename() + "\n"));
+	AfxTrace(TEXT("[NOSPEAR::FileUpload] path : " + file.Getfilepath() + "\n"));
+	AfxTrace(TEXT("[NOSPEAR::FileUpload] hash : " + CString(file.Getfilehash()) + "\n"));
+
 
 	//validation 호출
 	if (file.Checkvalidation() == false) {
-		AfxTrace(TEXT("[NOSPEAR::Fileupload] 제약되는 파일으로 확인\n"));
-		errormsg = TEXT("[NOSPEAR::Fileupload] 업로드가 제약되는 파일입니다.");
-		return -1;
+		AfxTrace(TEXT("[NOSPEAR::FileUpload] 제약되는 파일으로 확인\n"));
+		diagnose_return.result_msg = TEXT("[NOSPEAR::FileUpload] 업로드가 제약되는 파일입니다.");
+		diagnose_return.result_code = -1;
+		return diagnose_return;
 	}
 
 	unsigned long inaddr;
@@ -52,14 +64,16 @@ int NOSPEAR::Fileupload(NOSPEAR_FILE file){
 	dA.sin_port = htons(SERVER_PORT);
 	s = socket(AF_INET, SOCK_STREAM, 0);
 	if (connect(s, (sockaddr*)&dA, slen) < 0){
-		AfxTrace(TEXT("[NOSPEAR::Fileupload] 서버에 연결할 수 없음\n"));
-		errormsg = TEXT("[NOSPEAR::Fileupload] 서버에 연결할 수 없습니다.");
-		return -2;
+		AfxTrace(TEXT("[NOSPEAR::FileUpload] 서버에 연결할 수 없음\n"));
+		diagnose_return.result_msg = TEXT("[NOSPEAR::FileUpload] 서버에 연결할 수 없습니다.");
+		diagnose_return.result_code = -2;
+		return diagnose_return;
 	}
 
 	getpeername(s, (sockaddr*)&aa, &slen);
 
 	//CString to UTF-8
+	CString filename = file.Getfilename();
 	std::string utf8_filename = CW2A(filename, CP_UTF8);
 
 	//Send File Name Length
@@ -80,19 +94,19 @@ int NOSPEAR::Fileupload(NOSPEAR_FILE file){
 
 	FILE* fp = _wfopen(file.Getfilepath(), L"rb");
 	if (fp == NULL) {
-		AfxTrace(TEXT("[NOSPEAR::Fileupload] 파일이 유효하지 않습니다.\n"));
-		errormsg = TEXT("[NOSPEAR::Fileupload] 파일이 유효하지 않습니다.");
+		AfxTrace(TEXT("[NOSPEAR::FileUpload] 파일이 유효하지 않습니다.\n"));
+		diagnose_return.result_msg = TEXT("[NOSPEAR::FileUpload] 파일이 유효하지 않습니다.");
 		closesocket(s);
-		//delete(sx);
-		return -3;
+		diagnose_return.result_code = -3;
+		return diagnose_return;
 	}
 
 	while ((read_size = fread(file_buffer, 1, NOSPEAR::FILE_BUFFER_SIZE, fp)) != 0) {
 		send(s, file_buffer, read_size, 0);
 	}
 
-	AfxTrace(TEXT("[NOSPEAR::Fileupload] 파일 업로드 완료\n"));
-	errormsg = TEXT("[NOSPEAR::Fileupload] 파일 업로드 완료");
+	AfxTrace(TEXT("[NOSPEAR::FileUpload] 파일 업로드 완료\n"));
+	diagnose_return.result_msg = TEXT("[NOSPEAR::FileUpload] 파일 업로드 완료");
 
 	//검사 결과를 리턴 받습니다. 동기 방식을 사용
 	unsigned short result = 0;
@@ -102,14 +116,48 @@ int NOSPEAR::Fileupload(NOSPEAR_FILE file){
 	fclose(fp);
 	closesocket(s);
 
-	return result;
+	diagnose_return.result_code = result;
+	return diagnose_return;
+}
+
+void NOSPEAR::GetMsgFromCode(DIAGNOSE_RESULT& result){
+
+	if (result.result_code < 0) {
+		return;
+	}
+
+	switch (result.result_code) {
+		case TYPE_NORMAL:
+			result.result_msg = "분석 결과 : 정상 파일";
+			break;
+		case TYPE_MALWARE:
+			result.result_msg = L"분석 결과 : 악성 파일";
+			break;
+		case TYPE_SUSPICIOUS:
+			result.result_msg = L"분석 결과 : 악성 의심 파일";
+			break;
+		case TYPE_UNEXPECTED:
+			result.result_msg = L"분석 결과 : 알 수 없는 파일";
+			break;
+		case TYPE_NOFILE:
+			result.result_msg = L"분석 결과 : 문서 파일이 아님";
+			break;
+		case TYPE_RESEND:
+			result.result_msg = L"파일을 업로드하는 중 오류가 발생하였습니다";
+			break;
+		case TYPE_REJECT:
+			result.result_msg = L"서버에서 검사를 거부하였습니다.";
+			break;
+		default:
+			result.result_msg = L"Unknown Response";
+			break;
+	}
 }
 
 void NOSPEAR::ActivateLiveProtect(bool status){
 	//입력값과 현재 값이 같을 경우 함수 실행 취소
 	if (live_protect_status == status)
 		return;
-
 
 	//LIVEPROTECT 객체 생성
 	if (status) {
@@ -139,9 +187,26 @@ void NOSPEAR::ActivateLiveProtect(bool status){
 	}
 }
 
-CString NOSPEAR::GetErrorMsg(){
-	return errormsg;
+DIAGNOSE_RESULT NOSPEAR::SingleDiagnose(CString file){
+	DIAGNOSE_RESULT dignose_result;
+	dignose_result = FileUpload(file);
+	GetMsgFromCode(dignose_result);
+	return dignose_result;
 }
+
+vector<DIAGNOSE_RESULT> NOSPEAR::MultipleDiagnose(vector<CString> files){
+	vector<DIAGNOSE_RESULT> diagnose_result;
+
+	for (int i = 0; i < files.size(); i++) {
+		DIAGNOSE_RESULT tmp;
+		CString filepath = files.at(i);
+		tmp = FileUpload(filepath);
+		GetMsgFromCode(tmp);
+		diagnose_result.push_back(tmp);
+	}
+	return diagnose_result;
+}
+
 
 NOSPEAR::NOSPEAR(){
 	//기본생성자

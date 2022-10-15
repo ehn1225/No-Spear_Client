@@ -1,14 +1,9 @@
-﻿// FILELISTVIEWER.cpp: 구현 파일
-
-#include "pch.h"
+﻿#include "pch.h"
 #include "NoSpear_Client.h"
 #include "afxdialogex.h"
 #include "FILELISTVIEWER.h"
 using namespace std;
 namespace fs = std::filesystem;
-
-
-// FILELISTVIEWER 대화 상자
 
 IMPLEMENT_DYNAMIC(FILELISTVIEWER, CFlexibleDialog)
 
@@ -57,6 +52,11 @@ BOOL FILELISTVIEWER::OnInitDialog(){
 	SetIcon(m_hIcon, TRUE);			// 큰 아이콘을 설정합니다.
 	SetIcon(m_hIcon, FALSE);		// 작은 아이콘을 설정합니다.
 
+	CRect rcWin;
+	GetWindowRect(&rcWin);
+	m_iDlgLimitMinWidth = rcWin.Width();
+	m_iDlgLimitMinHeight = rcWin.Height();
+
 	return 0;
 }
 
@@ -84,7 +84,6 @@ void FILELISTVIEWER::OnPaint(){
 	}
 }
 
-
 BEGIN_MESSAGE_MAP(FILELISTVIEWER, CFlexibleDialog)
 	ON_WM_GETMINMAXINFO()
 	ON_NOTIFY(HDN_ITEMCLICK, 0, &FILELISTVIEWER::OnHdnItemclickFilelistctrl)
@@ -102,8 +101,8 @@ END_MESSAGE_MAP()
 void FILELISTVIEWER::OnGetMinMaxInfo(MINMAXINFO* lpMMI)
 {
 	// TODO: 여기에 메시지 처리기 코드를 추가 및/또는 기본값을 호출합니다.
-	lpMMI->ptMinTrackSize.x = 1140;
-	lpMMI->ptMinTrackSize.y = 600;
+	lpMMI->ptMinTrackSize.x = m_iDlgLimitMinWidth;
+	lpMMI->ptMinTrackSize.y = m_iDlgLimitMinHeight;
 
 	CFlexibleDialog::OnGetMinMaxInfo(lpMMI);
 }
@@ -168,6 +167,9 @@ void FILELISTVIEWER::PrintFolder(CString folderpath) {
 		if (ec) {
 			continue;
 		}
+
+		//파일 타입이 폴더일 경우 제외 필요함
+
 		string ext = iter->path().extension().string();
 		//One-Drive상의 일부 폴더 탐색 안되는 문제 있음
 		//*.hwp; *.hwpx; *.pdf; *.doc; *.docx; *.xls; *.xlsx;
@@ -233,14 +235,10 @@ void FILELISTVIEWER::OnHdnItemclickFilelistctrl(NMHDR* pNMHDR, LRESULT* pResult)
 	*pResult = 0;
 }
 
-
-
-void FILELISTVIEWER::OnBnClickedButton1()
-{
+void FILELISTVIEWER::OnBnClickedButton1(){
 	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
 	PrintFolder(L"C:\\Users");
 }
-
 
 void FILELISTVIEWER::OnBnClickedSelectfolder(){
 	CFolderPickerDialog Picker(_T("C:\\Users"), OFN_FILEMUSTEXIST, NULL, 0);
@@ -251,8 +249,7 @@ void FILELISTVIEWER::OnBnClickedSelectfolder(){
 	}
 }
 
-void FILELISTVIEWER::OnNMDblclkFilelistctrl(NMHDR* pNMHDR, LRESULT* pResult)
-{
+void FILELISTVIEWER::OnNMDblclkFilelistctrl(NMHDR* pNMHDR, LRESULT* pResult){
 	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
 	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
 	int row = pNMItemActivate->iItem;
@@ -262,7 +259,6 @@ void FILELISTVIEWER::OnNMDblclkFilelistctrl(NMHDR* pNMHDR, LRESULT* pResult)
 	}
 	*pResult = 0;
 }
-
 
 void FILELISTVIEWER::OnCbnSelchangeCombo1(){
 	int index = file_check_combo.GetCurSel();
@@ -303,7 +299,6 @@ void FILELISTVIEWER::OnCbnSelchangeCombo1(){
 	}
 	
 }
-
 
 void FILELISTVIEWER::OnBnClickedButton2(){
 	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
