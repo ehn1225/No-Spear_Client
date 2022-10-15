@@ -1,6 +1,6 @@
 //{{NO_DEPENDENCIES}}
-// Microsoft Visual C++ generated include file.
-// Used by NoSpearClient.rc
+// Microsoft Visual C++에서 생성한 포함 파일입니다.
+// NoSpearClient.rc에서 사용되고 있습니다.
 //
 #define IDM_ABOUTBOX                    0x0010
 #define IDD_ABOUTBOX                    100
@@ -23,6 +23,7 @@
 #define FileList                        1019
 #define IDC_FileListCtrl                1019
 #define IDC_BUTTON2                     1020
+#define btn_diagnose                    1020
 #define btn_SelectFolder                1022
 #define IDC_COMBO1                      1023
 

@@ -1,13 +1,11 @@
-﻿
-// NoSpear_ClientDlg.cpp: 구현 파일
-#include "pch.h"
+﻿#include "pch.h"
 #include "framework.h"
 #include "NoSpear_Client.h"
 #include "NoSpear_ClientDlg.h"
 #include "afxdialogex.h"
 #include "NOSPEAR_FILE.h"
-#include "NOSPEAR.h"
 #include "LIVEPROTECT.h"
+#include "NOSPEAR.h"
 #include "FILELISTVIEWER.h"
 
 namespace fs = std::filesystem;
@@ -15,8 +13,6 @@ namespace fs = std::filesystem;
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
-
-NOSPEAR* client = NULL;
 
 struct ST_WSA_INITIALIZER
 {
@@ -238,7 +234,6 @@ void CNoSpearClientDlg::OnBnClickeduploadfile(){
 	UpdateData(TRUE);
 	DIAGNOSE_RESULT diagnose_resut;
 	diagnose_resut = client->SingleDiagnose(filepath);
-	
 	AfxMessageBox(diagnose_resut.result_msg);
 }
 
@@ -293,4 +288,8 @@ void CNoSpearClientDlg::OnDropFiles(HDROP hDropInfo)
 	UpdateData(FALSE);
 	DragFinish(hDropInfo);
 	CDialogEx::OnDropFiles(hDropInfo);
+}
+
+NOSPEAR* CNoSpearClientDlg::GetClientPtr(){
+	return client;
 }

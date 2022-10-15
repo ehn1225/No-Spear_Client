@@ -117,6 +117,9 @@ DIAGNOSE_RESULT NOSPEAR::FileUpload(CString filepath){
 	closesocket(s);
 
 	diagnose_return.result_code = result;
+
+	//여기에서 DB에 검사결과 저장
+
 	return diagnose_return;
 }
 

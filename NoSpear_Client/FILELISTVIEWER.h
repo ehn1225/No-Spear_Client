@@ -1,7 +1,5 @@
 ﻿#pragma once
-#include "afxdialogex.h"
 #include "FlexibleDialog.h"
-
 class FILELISTVIEWER : public CFlexibleDialog
 {
 	DECLARE_DYNAMIC(FILELISTVIEWER)
@@ -23,6 +21,7 @@ protected:
 	HICON m_hIcon;
 	int m_iDlgLimitMinWidth;
 	int m_iDlgLimitMinHeight;
+	NOSPEAR* nospear_ptr= NULL;
 
 public:
 
@@ -45,5 +44,5 @@ public:
 	afx_msg void OnNMDblclkFilelistctrl(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnCbnSelchangeCombo1();
 	CComboBox file_check_combo;
-	afx_msg void OnBnClickedButton2();
+	afx_msg void OnBnClickeddiagnose();
 };

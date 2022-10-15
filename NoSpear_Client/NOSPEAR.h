@@ -2,6 +2,7 @@ struct DIAGNOSE_RESULT {
 	short result_code = 0;
 	CString result_msg;
 };
+class NOSPEAR_FILE;
 class NOSPEAR {
 	std::string SERVER_IP = "15.164.98.211";
 	unsigned short SERVER_PORT = 42524;

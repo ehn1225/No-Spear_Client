@@ -1,7 +1,10 @@
 ﻿#include "pch.h"
 #include "NoSpear_Client.h"
+#include "NoSpear_ClientDlg.h"
 #include "afxdialogex.h"
 #include "FILELISTVIEWER.h"
+#include "NOSPEAR.h"
+
 using namespace std;
 namespace fs = std::filesystem;
 
@@ -14,12 +17,10 @@ FILELISTVIEWER::FILELISTVIEWER(CWnd* pParent /*=nullptr*/)
 
 }
 
-FILELISTVIEWER::~FILELISTVIEWER()
-{
+FILELISTVIEWER::~FILELISTVIEWER(){
 }
 
-void FILELISTVIEWER::DoDataExchange(CDataExchange* pDX)
-{
+void FILELISTVIEWER::DoDataExchange(CDataExchange* pDX){
 	CFlexibleDialog::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_FileListCtrl, filelistbox);
 	DDX_Control(pDX, IDC_COMBO1, file_check_combo);
@@ -27,19 +28,18 @@ void FILELISTVIEWER::DoDataExchange(CDataExchange* pDX)
 
 BOOL FILELISTVIEWER::OnInitDialog(){
 	CDialogEx::OnInitDialog();
+	nospear_ptr = ((CNoSpearClientDlg*)GetParent())->GetClientPtr();
 
 	filelistbox.InsertColumn(0, L"파일명", LVCFMT_LEFT, 200, -1);
-	filelistbox.InsertColumn(1, L"확장자", LVCFMT_LEFT, 70, -1);
+	filelistbox.InsertColumn(1, L"확장자", LVCFMT_CENTER, 70, -1);
 	filelistbox.InsertColumn(2, L"파일경로", LVCFMT_LEFT, 150, -1);
-	filelistbox.InsertColumn(3, L"위험도", LVCFMT_LEFT, 90, -1);
+	filelistbox.InsertColumn(3, L"위험도", LVCFMT_CENTER, 90, -1);
 	filelistbox.InsertColumn(4, L"검사 날짜", LVCFMT_LEFT, 100, -1);
-	filelistbox.InsertColumn(5, L"ADS", LVCFMT_LEFT, 70, -1);
-	filelistbox.InsertColumn(6, L"ZoneId", LVCFMT_LEFT, 70, -1);
-	filelistbox.InsertColumn(7, L"ReferrerUrl", LVCFMT_LEFT, 70, -1);
-	filelistbox.InsertColumn(8, L"HostUrl", LVCFMT_LEFT, 70, -1);
-	filelistbox.InsertColumn(9, L"만든 날짜", LVCFMT_LEFT, 100, -1);
-	filelistbox.InsertColumn(10, L"수정한 날짜", LVCFMT_LEFT, 100, -1);
-	filelistbox.InsertColumn(11, L"엑세스한 날짜", LVCFMT_LEFT, 100, -1);
+	filelistbox.InsertColumn(5, L"ADS:Zone.Identifier", LVCFMT_CENTER, 70, -1);
+	filelistbox.InsertColumn(6, L"ADS:NOSPEAR", LVCFMT_CENTER, 70, -1);
+	filelistbox.InsertColumn(7, L"만든 날짜", LVCFMT_LEFT, 100, -1);
+	filelistbox.InsertColumn(8, L"수정한 날짜", LVCFMT_LEFT, 100, -1);
+	filelistbox.InsertColumn(9, L"엑세스한 날짜", LVCFMT_LEFT, 100, -1);
 	filelistbox.SetExtendedStyle(LVS_EX_CHECKBOXES | LVS_EX_FULLROWSELECT);
 
 	CRect rctComboBox, rctDropDown;
@@ -61,25 +61,18 @@ BOOL FILELISTVIEWER::OnInitDialog(){
 }
 
 void FILELISTVIEWER::OnPaint(){
-	if (IsIconic())
-	{
-		CPaintDC dc(this); // 그리기를 위한 디바이스 컨텍스트입니다.
-
+	if (IsIconic())	{
+		CPaintDC dc(this);
 		SendMessage(WM_ICONERASEBKGND, reinterpret_cast<WPARAM>(dc.GetSafeHdc()), 0);
-
-		// 클라이언트 사각형에서 아이콘을 가운데에 맞춥니다.
 		int cxIcon = GetSystemMetrics(SM_CXICON);
 		int cyIcon = GetSystemMetrics(SM_CYICON);
 		CRect rect;
 		GetClientRect(&rect);
 		int x = (rect.Width() - cxIcon + 1) / 2;
 		int y = (rect.Height() - cyIcon + 1) / 2;
-
-		// 아이콘을 그립니다.
 		dc.DrawIcon(x, y, m_hIcon);
 	}
-	else
-	{
+	else{
 		CDialogEx::OnPaint();
 	}
 }
@@ -91,24 +84,18 @@ BEGIN_MESSAGE_MAP(FILELISTVIEWER, CFlexibleDialog)
 	ON_BN_CLICKED(btn_SelectFolder, &FILELISTVIEWER::OnBnClickedSelectfolder)
 	ON_NOTIFY(NM_DBLCLK, IDC_FileListCtrl, &FILELISTVIEWER::OnNMDblclkFilelistctrl)
 	ON_CBN_SELCHANGE(IDC_COMBO1, &FILELISTVIEWER::OnCbnSelchangeCombo1)
-	ON_BN_CLICKED(IDC_BUTTON2, &FILELISTVIEWER::OnBnClickedButton2)
+	ON_BN_CLICKED(btn_diagnose, &FILELISTVIEWER::OnBnClickeddiagnose)
 END_MESSAGE_MAP()
 
-
-// FILELISTVIEWER 메시지 처리기
-
-
-void FILELISTVIEWER::OnGetMinMaxInfo(MINMAXINFO* lpMMI)
-{
-	// TODO: 여기에 메시지 처리기 코드를 추가 및/또는 기본값을 호출합니다.
+void FILELISTVIEWER::OnGetMinMaxInfo(MINMAXINFO* lpMMI){
 	lpMMI->ptMinTrackSize.x = m_iDlgLimitMinWidth;
 	lpMMI->ptMinTrackSize.y = m_iDlgLimitMinHeight;
-
 	CFlexibleDialog::OnGetMinMaxInfo(lpMMI);
 }
 
 bool FILELISTVIEWER::Has_ADS(CString filepath) {
 	//filepath로 주어진 파일의 ADS를 확인해보고, Zone.Identifier가 있으면 true, 없으면 false 리턴
+	//여기서 Zone.Identifier, NOSPEAR, NOSPEAR value 다 확인해서 구조체로 넘겨주자
 	WIN32_FIND_STREAM_DATA fsd;
 	HANDLE hFind = NULL;
 
@@ -139,7 +126,7 @@ bool FILELISTVIEWER::Has_ADS(CString filepath) {
 }
 
 void FILELISTVIEWER::PrintFolder(CString folderpath) {
-	//매개변수로 입력된 폴더 경`로를 재귀 탐색하여 문서 파일을 Listview에 출력해줌.
+	//매개변수로 입력된 폴더 경로를 재귀 탐색하여 문서 파일을 Listview에 출력해줌.
 	//filesystem test, https://stackoverflow.com/questions/62988629/c-stdfilesystemfilesystem-error-exception-trying-to-read-system-volume-inf
 
 	string strfilepath = string(CT2CA(folderpath));
@@ -183,20 +170,8 @@ void FILELISTVIEWER::PrintFolder(CString folderpath) {
 			filelistbox.SetItem(count, 2, LVIF_TEXT, path, 0, 0, 0, NULL);
 			filelistbox.SetItem(count, 3, LVIF_TEXT, (count % 5 == 1) ? L"미검사" : L"안전", 0, 0, 0, NULL);
 			filelistbox.SetItem(count, 4, LVIF_TEXT, L"-", 0, 0, 0, NULL);
-			int pos = 5;
 			if (bNTFS && Has_ADS(path)) {
-				CStdioFile ads_stream;
-				CFileException e;
-				if (!ads_stream.Open(path + L":Zone.Identifier", CFile::modeRead, &e)) {
-					e.ReportError();
-				}
-				CString str;
-				while (ads_stream.ReadString(str))
-					filelistbox.SetItem(count, pos++, LVIF_TEXT, str, 0, 0, 0, NULL);
-			}
-			else {
-				for (pos = 5 ; pos < 9; pos++)
-					filelistbox.SetItem(count, pos, LVIF_TEXT, L"-", 0, 0, 0, NULL);
+				filelistbox.SetItem(count, 5, LVIF_TEXT, L"O", 0, 0, 0, NULL);
 			}
 			count++;
 		}
@@ -236,7 +211,6 @@ void FILELISTVIEWER::OnHdnItemclickFilelistctrl(NMHDR* pNMHDR, LRESULT* pResult)
 }
 
 void FILELISTVIEWER::OnBnClickedButton1(){
-	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
 	PrintFolder(L"C:\\Users");
 }
 
@@ -250,8 +224,8 @@ void FILELISTVIEWER::OnBnClickedSelectfolder(){
 }
 
 void FILELISTVIEWER::OnNMDblclkFilelistctrl(NMHDR* pNMHDR, LRESULT* pResult){
+	//List Control을 더블클릭하면 파일탐색기로 파일 위치로 이동해줌
 	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
-	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
 	int row = pNMItemActivate->iItem;
 	if (row != -1) {
 		CString filepath = filelistbox.GetItemText(row, 2);
@@ -283,7 +257,7 @@ void FILELISTVIEWER::OnCbnSelchangeCombo1(){
 			case 2:
 				//외부 문서 선택 column 5
 				for (int i = 0; i < filelistbox.GetItemCount(); i++) {
-					if (filelistbox.GetItemText(i, 5) == L"[ZoneTransfer]")
+					if (filelistbox.GetItemText(i, 5) == L"O")
 						filelistbox.SetCheck(i, TRUE);
 				}
 				break;
@@ -300,13 +274,26 @@ void FILELISTVIEWER::OnCbnSelchangeCombo1(){
 	
 }
 
-void FILELISTVIEWER::OnBnClickedButton2(){
-	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
+void FILELISTVIEWER::OnBnClickeddiagnose(){
+	std::vector<CString> files;
 	for (int i = 0; i < filelistbox.GetItemCount(); i++) {
-		bool result = filelistbox.GetCheck(i);
-		CString tmp;
-		tmp.Format(TEXT("%d : %d\n"), i, result);
-		AfxTrace(tmp);
-
+		if (filelistbox.GetCheck(i)) {
+			files.push_back(filelistbox.GetItemText(i, 2));
+		}
 	}
+	
+	std::vector<CString>::iterator it;
+	for (it = files.begin(); it != files.end(); it++)
+		AfxTrace(*it + L"\n");
+	
+	if (nospear_ptr == NULL) {
+		AfxMessageBox(L"[FILELISTVIEWER::OnBnClickeddiagnose] Can't Access NOSPEAR Object\n");
+		AfxTrace(L"[FILELISTVIEWER::OnBnClickeddiagnose] Can't Access NOSPEAR Object\n");
+		return;
+	}
+	std::vector<DIAGNOSE_RESULT> result;
+	result = nospear_ptr->MultipleDiagnose(files);
+
+	//완료되면 List Control 새로고침
+	
 }
