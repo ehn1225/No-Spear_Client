@@ -25,7 +25,7 @@
 #include <set>
 #include <map>
 #include <filesystem>
-
+#include <queue>
 #include <stdlib.h>
 #include <winioctl.h>
 #include <fltuser.h>
@@ -38,6 +38,14 @@ enum E_MALWARE_TYPE {
 	TYPE_NOFILE,
 	TYPE_RESEND,
 	TYPE_REJECT
+};
+
+struct NOSPEAR_HISTORY {
+	time_t eventtime;
+	time_t createtime;
+	time_t modifytime;
+	time_t access_time;
+
 };
 
 //MFC XP 스타일 지정

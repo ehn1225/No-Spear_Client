@@ -12,6 +12,9 @@ class NOSPEAR {
 	bool live_protect_status = false;
 	DIAGNOSE_RESULT FileUpload(CString file);
 	void GetMsgFromCode(DIAGNOSE_RESULT& result);
+	//클라이언트 스레드에서 아래 큐에서 가져온 것들을 실시간으로 검사 진행함
+	//드라이버 스레드에서 이 큐에 값을 넣음.
+	std::queue<CString> request_diagnose_queue;
 
 public:
 	NOSPEAR();

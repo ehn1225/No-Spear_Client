@@ -125,13 +125,14 @@ DIAGNOSE_RESULT NOSPEAR::FileUpload(CString filepath){
 
 void NOSPEAR::GetMsgFromCode(DIAGNOSE_RESULT& result){
 
+	//result_code < 0 : 이미 msg에 내용이 들어가있음.
 	if (result.result_code < 0) {
 		return;
 	}
 
 	switch (result.result_code) {
 		case TYPE_NORMAL:
-			result.result_msg = "분석 결과 : 정상 파일";
+			result.result_msg = L"분석 결과 : 정상 파일";
 			break;
 		case TYPE_MALWARE:
 			result.result_msg = L"분석 결과 : 악성 파일";
@@ -166,6 +167,7 @@ void NOSPEAR::ActivateLiveProtect(bool status){
 	if (status) {
 		if (liveprotect == NULL) {
 			liveprotect = new LIVEPROTECT();
+			//결과를 구조체로 넘겨서 메시지도 같이 출력해주면 좋을듯
 			HRESULT result = liveprotect->ActivateLiveProtect();
 			CString resultext;
 			if (result == S_OK) {
@@ -202,14 +204,12 @@ vector<DIAGNOSE_RESULT> NOSPEAR::MultipleDiagnose(vector<CString> files){
 
 	for (int i = 0; i < files.size(); i++) {
 		DIAGNOSE_RESULT tmp;
-		CString filepath = files.at(i);
-		tmp = FileUpload(filepath);
+		tmp = FileUpload(files.at(i));
 		GetMsgFromCode(tmp);
 		diagnose_result.push_back(tmp);
 	}
 	return diagnose_result;
 }
-
 
 NOSPEAR::NOSPEAR(){
 	//기본생성자

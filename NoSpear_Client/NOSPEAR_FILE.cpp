@@ -1,5 +1,4 @@
 #define _CRT_SECURE_NO_WARNINGS
-
 #include "pch.h"
 #include "NOSPEAR_FILE.h"
 #include "documentValidate.h"

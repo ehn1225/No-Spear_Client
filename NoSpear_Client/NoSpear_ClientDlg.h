@@ -33,4 +33,5 @@ public:
 	afx_msg void OnBnClickedButton1();
 	afx_msg void OnDropFiles(HDROP hDropInfo);
 	NOSPEAR* GetClientPtr();
+	afx_msg void OnBnClickedButton2();
 };

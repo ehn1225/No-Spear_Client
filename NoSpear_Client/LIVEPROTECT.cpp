@@ -3,55 +3,64 @@
 #include "NoSpear_ClientDlg.h"
 #pragma comment(lib,"fltLib.lib")
 
-BOOL inline LIVEPROTECT::IsMaliciousLocal(unsigned long pid, CString filepath) {
-    //ADS:NOSPEAR 을 확인하고 파일이 위험하다고 판단되면 true, 아니면 false를 리턴합니다.
-    //1. Process Name 확인
-    //2. ADS 유무 확인
-    //3. ADS Value 확인
+unsigned short inline LIVEPROTECT::ReadNospearADS(CString filepath) {
+    //result values
+    //-1 : ADS:NOSPEAR 부재
+    //0 : ADS:NOSPEAR에서 차단하도록 지정되어있음.
+    //1 : ADS:NOSPEAR에서 문서 프로그램을 제외하고 허용하도록 지정되어있음.
+    //2 : ADS:NOSPEAR에서 허용하도록 지정되어있음.
 
-    //1. ProcessName 확인
-    //allow explorer.exe
-
-
-    //2. ADS:NOSPEAR 유무 확인 후 없으면 차단
-    bool HasADS = false;
-    WIN32_FIND_STREAM_DATA fsd;
-    HANDLE hFind = NULL;
-    try {
-        hFind = ::FindFirstStreamW(filepath, FindStreamInfoStandard, &fsd, 0);
-        if (hFind == INVALID_HANDLE_VALUE) throw ::GetLastError();
-
-        for (;;) {
-            CString tmp;
-            tmp.Format(TEXT("%s"), fsd.cStreamName);
-            if (tmp == L":NOSPEAR:$DATA") {
-                HasADS = true;
-            }
-            if (!::FindNextStreamW(hFind, &fsd)) {
-                DWORD dr = ::GetLastError();
-                if (dr != ERROR_HANDLE_EOF) throw dr;
-                break;
-            }
-        }
-    }
-    catch (DWORD err) {
-        AfxTrace(TEXT("[LIVEPROTECT::IsMaliciousLocal] Find ADS, Windows error code: %u\n", err));
-    }
-    if (hFind != NULL)
-        ::FindClose(hFind);
-
-    if (HasADS == false)
-        return true;
-
-    //2. ADS Value 확인
     CStdioFile ads_stream;
     CFileException e;
-    if (!ads_stream.Open(filepath + L":Zone.Identifier", CFile::modeRead, &e)) {
-        e.ReportError();
+    if (!ads_stream.Open(filepath + L":NOSPEAR", CFile::modeRead, &e)) {
+        //NOSPEAR ADS를 열 수 없기에, 없다고 간주하고 차단
+        //e.ReportError();
+        return -1;
+    }
+
+    CString str;
+    ads_stream.ReadString(str);
+
+    //NOSPEAR ADS Value에 따른 결과 반환
+    if (str == L"0")
+        return 0;
+    else if (str == L"1")
+        return 1;
+    else if (str == L"2")
+        return 2;
+    else{
+        //NOSPEAR ADS 잘못된 값이 들어왔을 경우 없다고 간주하고 차단
+        return -1;
+    }
+}
+
+bool LIVEPROTECT::WriteNospearADS(CString filepath, unsigned short value){
+    //value 값으로 ADS:NOSPEAR 생성
+    CStdioFile ads_stream;
+    CFileException e;
+    if (!ads_stream.Open(filepath + L":NOSPEAR", CStdioFile::modeCreate | CStdioFile::modeWrite, &e)) {
+        return false;
     }
     CString str;
-    //ads_stream.ReadString(str);
-    //string to integer and compare 0 or 1
+    str.Format(TEXT("%d"), value);
+    ads_stream.WriteString(str);
+    return true;
+}
+
+bool LIVEPROTECT::WriteZoneIdentifierADS(CString filepath, unsigned long pid){
+    //pid를 이용해서 ProcessName으로 ADS:Zone.Identifier 생성
+    CStdioFile ads_stream;
+    CFileException e;
+    if (!ads_stream.Open(filepath + L":Zone.Identifier", CStdioFile::modeCreate | CStdioFile::modeWrite, &e)) {
+        return false;
+    }
+    CString processName = GetProcessName(pid);
+    //processName = PathFindFileName(processName);
+    processName.Format(TEXT("ProcessName=%ws"), processName);
+    ads_stream.WriteString(L"[ZoneTransfer]\n");
+    ads_stream.WriteString(L"ZoneId=3\n");
+    ads_stream.WriteString(L"ADS Appended By No-Spear Client\n");
+    ads_stream.WriteString(processName);
 
     return true;
 }
@@ -87,6 +96,27 @@ CString LIVEPROTECT::GetProcessName(unsigned long pid){
     }
     //AfxMessageBox(processname);
     return processname;
+}
+
+bool LIVEPROTECT::IsOfficeProgram(unsigned long pid){
+    set<CString> list;
+    list.insert(L"POWERPNT.EXE");       //MS Office PowerPoint
+    list.insert(L"WINWORD.EXE");        //MS Office Word
+    list.insert(L"EXCEL.EXE");          //MS Office Excel
+    list.insert(L"HwpViewer.exe");      //Hancom hangule Viewer
+    list.insert(L"scalc.exe");          //LibreOffice Excel
+    list.insert(L"swriter.exe");        //LibreOffice Word
+    list.insert(L"simpress.exe");       //LibreOffice PowerPoint
+
+    //Lowercase 필요할까?
+    CString programName = GetProcessName(pid);
+    programName = PathFindFileName(programName);
+    set<CString>::iterator it = list.find(programName);
+
+    if (it != list.end())
+        return true;
+    else
+        return false;
 }
 
 DWORD LIVEPROTECT::ScannerWorker(PSCANNER_THREAD_CONTEXT Context) {
@@ -133,40 +163,58 @@ DWORD LIVEPROTECT::ScannerWorker(PSCANNER_THREAD_CONTEXT Context) {
 
             wcscat(wDosFilePath, L"\\");
             wcscat(wDosFilePath, ++pwPtr);
-            CString tmp;
+ /*           CString tmp;
             tmp.Format(TEXT("pid : %d, process name : %ws, FilePath : %s\n"), pid, GetProcessName(pid), wDosFilePath);
-            AfxTrace(tmp);
+            AfxTrace(tmp);*/
 
             CString path = CString(wDosFilePath);
 
-            //Process Name 검사 수행. Office 프로그램이 아닐 경우, 바로 넘어감.
-            //office 프로그램이 아니라면 통과, 한글, Office 365, adobe reader, this.
-            //Create Time으로 현재 시각과 동일하면 새로 생성한 파일이다.
-            //새로 생성한 파일은 통과시킨다.
-
             //Alternate Data Stream 기반 파일 허용 여부
-            isMailicious = IsMaliciousLocal(pid, path);
-            //true -> 차단, false -> 통과
+            unsigned short ads_result = 0;
+            ads_result = ReadNospearADS(path);
+            switch (ads_result){
+                case 0:
+                    //무조건 차단
+                    isMailicious = true;
+                    break;
+                case 1:
+                    //Office 프로그램이 아닐 경우 통과(Office 365, adobe reader)
+                    isMailicious = IsOfficeProgram(pid);
+                    break;
+                case 2:
+                    //모두 허용
+                    isMailicious = false;
+                    break;
+                default:
+                    //ADS:NOSPEAR가 없을 때
+                    if (IsOfficeProgram(pid) == false) {
+                        //Office Program이 아니라면 ADS:NOSPEAR = 1부착
+                        //또한, CREATE일 때 ProcessName을 이용하여 ADS:Zone.Identifier 부착
+                        //근데 CREATE일 때 ADS에 접근할 수 있을까?
+                        WriteNospearADS(path, 1);
 
-            if (threadstatus == false) {
-                isMailicious = false;
-                //실시간 검사를 종료한 상태에서는 항상 통과시킴
+                        isMailicious = false;
+                    }
+                    else {
+                        //CREATE일 때 ADS:NOSPEAR = 2부착 후 PASS
+
+
+                        //OPEN이라면 검사 진행
+                    
+                    
+                    }
+
+                    break;
             }
+
+            //실시간 검사를 종료한 상태에서는 항상 통과시킴
+            if (threadstatus == false) isMailicious = false;
         }
         
-        isMailicious = false;
-        //테스트용 바이패스
-
         //최종결과를 History남기는 로직 구현 필요 : 클라이언트의 스레드로 넘기기
-        //해당 수행 결과를 클라이언트 스레드로 넘김.
-        //클라이언트 스레드는 넘오오는 값을 통해 새로운 파일이 탐지되었음을 파악하고, 사용자에게 허용할지 물어봄.
-        //커널 드라이버는 멈추지 않는다.
-        //빠꾸 맥이고 허용 여부 물어본다음에 다시 반복하게끔.
 
         replyMessage.ReplyHeader.Status = 0;
         replyMessage.ReplyHeader.MessageId = message->MessageHeader.MessageId;
-
-        //  Need to invert the boolean -- result is true if found
         replyMessage.Reply.SafeToOpen = !isMailicious;
 
         AfxTrace(TEXT("Replying message\n"));
@@ -220,7 +268,7 @@ int LIVEPROTECT::ActivateLiveProtect(){
     HRESULT hr;
     DWORD i, j;
 
-    //  Open a commuication channel to the filter
+    //Open a commuication channel to the filter
     AfxTrace(TEXT("[LIVEPROTECT::ActivateLiveProtect] Connecting to the filter ...\n"));
 
     hr = FilterConnectCommunicationPort(ScannerPortName, 0, NULL, 0, NULL, &port);

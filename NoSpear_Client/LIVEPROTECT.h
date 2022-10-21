@@ -29,12 +29,19 @@ class LIVEPROTECT{
     HANDLE threads[SCANNER_MAX_THREAD_COUNT];
     SCANNER_THREAD_CONTEXT context;
     PSCANNER_MESSAGE msg;
-    static BOOL IsMaliciousLocal(unsigned long pid, CString filepath);
+    static unsigned short ReadNospearADS(CString filepath);
+    static bool WriteNospearADS(CString filepath, unsigned short value);
+    static bool WriteZoneIdentifierADS(CString filepath, unsigned long pid);
+
     //static BOOL IsMaliciousOnline(CString filepath);
     static PWCHAR GetCharPointerW(PWCHAR pwStr, WCHAR wLetter, int Count);
     static DWORD ScannerWorker(PSCANNER_THREAD_CONTEXT Context);
     static CString GetProcessName(unsigned long pid);
+    static bool IsOfficeProgram(unsigned long pid);
+
     HANDLE port, completion;
+    //문서프로그램 배열 필요함
+    //캐시 배열 필요함(ADS:Block 이지만, 허용하고 싶어)
 
 public:
     LIVEPROTECT();
