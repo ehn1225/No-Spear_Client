@@ -190,9 +190,7 @@ ScannerPreCreate (
     PAGED_CODE();
 
     if (IoThreadToProcess( Data->Thread ) == ScannerData.UserProcess) {
-
-        DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "!!! scanner.sys -- allowing create for trusted process \n");
-
+        //DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "!!! scanner.sys -- allowing create for trusted process \n");
         return FLT_PREOP_SUCCESS_NO_CALLBACK;
     }
 
@@ -236,6 +234,8 @@ ScannerPostCreate (
 	ULONG cbFilePath = 0;
     ULONG pid = 0;
     ULONG mode_num = 0;
+    WCHAR wStream[256] = { 0, };
+    ULONG stream_len = 0;
     //Mode
     //open : 0
     //create : 1
@@ -259,37 +259,50 @@ ScannerPostCreate (
     scanFile = ScannerpCheckExtension( &nameInfo->Extension );
 
 	if(scanFile){
+        //if (nameInfo->Stream.Length != 0) {
+        //    stream_len = min((512 - 1) * sizeof(WCHAR), nameInfo->Stream.Length);
+        //    RtlCopyMemory(wStream, nameInfo->Stream.Buffer, stream_len);
+        //    DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "PASS : Stream is non 0 % ws\n", wStream);
+        //    FltReleaseFileNameInformation(nameInfo);
+        //    return FLT_POSTOP_FINISHED_PROCESSING;
+        //}
+
 		cbFilePath = min((512-1)*sizeof(WCHAR), nameInfo->Name.Length);
 		RtlCopyMemory(wFilePath, nameInfo->Name.Buffer, cbFilePath);
     }
 
     FltReleaseFileNameInformation( nameInfo );
 
-    if (!scanFile) {
+    if (!scanFile || nameInfo->Stream.Length != 0) {
+        //Stream이 다를 경우(ADS가 있을 경우, 파일에 대한 접근이 아니므로 통과)
         return FLT_POSTOP_FINISHED_PROCESSING;
     }
 
     pid = PtrToUint(PsGetCurrentProcessId());
 
     if (Data->IoStatus.Information == FILE_OPENED) {
-        DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[scanner.sys] " __FUNCTION__ "[% u] OPEN a file(% ws)\n", pid, wFilePath);
         mode_num = 0;
     }
     else if (Data->IoStatus.Information == FILE_CREATED) {
-        DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[scanner.sys] " __FUNCTION__ "[% u] CREATE a file(% ws)\n", pid, wFilePath);
         mode_num = 1;
+    }
+    else {
+        DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[scanner.sys] " __FUNCTION__ "[% u] ELSEE a file(% ws)\n", pid, wFilePath);
     }
 
     (VOID)ScannerpScanFileInUserMode(wFilePath, cbFilePath, FltObjects->Instance, FltObjects->FileObject, pid, mode_num, &safeToOpen);
 
+    if (safeToOpen) {
+        DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[scanner.sys] " __FUNCTION__ "[% u] % ws a file(% ws)\n", pid, (mode_num == 0) ? L"OPEN" : L"CREATE", wFilePath);
+    }
 
     if (!safeToOpen) {
-        DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[scanner.sys] " __FUNCTION__ "[% u] BLOCK a file(% ws)\n", pid, wFilePath);
+        DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[scanner.sys] " __FUNCTION__ "[% u] % ws a file is BLOCKED (% ws)\n", pid, (mode_num == 0) ? L"OPEN" : L"CREATE", wFilePath);
         FltCancelFileOpen( FltObjects->Instance, FltObjects->FileObject );
         Data->IoStatus.Status = STATUS_ACCESS_DENIED;
         Data->IoStatus.Information = 0;
         returnStatus = FLT_POSTOP_FINISHED_PROCESSING;
-    } 
+    }
     else if (FltObjects->FileObject->WriteAccess) {
         status = FltAllocateContext( ScannerData.Filter, FLT_STREAMHANDLE_CONTEXT, sizeof(SCANNER_STREAM_HANDLE_CONTEXT), PagedPool, &scannerContext );
 
@@ -376,7 +389,6 @@ ScannerpScanFileInUserMode (
     }
 
     try {
-
         status = FltGetVolumeFromInstance( Instance, &volume );
 
         if (!NT_SUCCESS( status )) {
@@ -414,7 +426,7 @@ ScannerpScanFileInUserMode (
             //notification->BytesToScan = (ULONG) bytesRead;
 			notification->BytesToScan = (ULONG) cbFilePath;
             notification->pid = (ULONG)pid;
-            notification->mode = (ULONG) mode_num;
+            notification->mode = (ULONG)mode_num;
 
             /*RtlCopyMemory( &notification->Contents,
                            buffer,
