@@ -236,10 +236,17 @@ ScannerPostCreate (
     ULONG mode_num = 0;
     WCHAR wStream[256] = { 0, };
     ULONG stream_len = 0;
+    //UNICODE_STRING download = RTL_CONSTANT_STRING(L"download");
+    //UNICODE_STRING part = RTL_CONSTANT_STRING(L"part");
+
+    //RtlInitUnicodeString(&download, L"download");
+    //RtlInitUnicodeString(&part, L"part");
+
     //Mode
     //open : 0
     //create : 1
-    //delete : 2
+    //NOTICE - delete : 2
+    //NOTICE - temp file : 3
 
     UNREFERENCED_PARAMETER( CompletionContext );
     UNREFERENCED_PARAMETER( Flags );
@@ -286,18 +293,18 @@ ScannerPostCreate (
     else if (Data->IoStatus.Information == FILE_CREATED) {
         mode_num = 1;
     }
-    else {
-        DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[scanner.sys] " __FUNCTION__ "[% u] ELSEE a file(% ws)\n", pid, wFilePath);
-    }
+    //if (RtlCompareUnicodeString(&nameInfo->Extension, &download, TRUE) == 0 || RtlCompareUnicodeString(&nameInfo->Extension, &part, TRUE) == 0) {
+    //    mode_num = 3;
+    //}
 
     (VOID)ScannerpScanFileInUserMode(wFilePath, cbFilePath, FltObjects->Instance, FltObjects->FileObject, pid, mode_num, &safeToOpen);
 
     if (safeToOpen) {
-        DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[scanner.sys] " __FUNCTION__ "[% u] % ws a file(% ws)\n", pid, (mode_num == 0) ? L"OPEN" : L"CREATE", wFilePath);
+        DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[scanner.sys] " __FUNCTION__ "2 [% u] % ws a file(% ws)\n", pid, (mode_num == 0) ? L"OPEN" : L"CREATE", wFilePath);
     }
 
     if (!safeToOpen) {
-        DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[scanner.sys] " __FUNCTION__ "[% u] % ws a file is BLOCKED (% ws)\n", pid, (mode_num == 0) ? L"OPEN" : L"CREATE", wFilePath);
+        DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[scanner.sys] " __FUNCTION__ "2 [% u] % ws a file is BLOCKED (% ws)\n", pid, (mode_num == 0) ? L"OPEN" : L"CREATE", wFilePath);
         FltCancelFileOpen( FltObjects->Instance, FltObjects->FileObject );
         Data->IoStatus.Status = STATUS_ACCESS_DENIED;
         Data->IoStatus.Information = 0;
@@ -353,9 +360,10 @@ ScannerPreInformation(
                 return FLT_PREOP_SUCCESS_NO_CALLBACK;
             }
             pid = PtrToUint(PsGetCurrentProcessId());
-            DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[scanner.sys] " __FUNCTION__ "[% u] Deleted a file(% ws)\n", pid, wFilePath);
 
             (VOID)ScannerpScanFileInUserMode(wFilePath, cbFilePath, FltObjects->Instance, FltObjects->FileObject, pid, 2, &safeToOpen);
+
+            DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[scanner.sys] " __FUNCTION__ "2 [% u] Deleted a file(% ws)\n", pid, wFilePath);
 
         }
     }
@@ -374,15 +382,13 @@ ScannerpScanFileInUserMode (
     __out PBOOLEAN SafeToOpen
 ){
     NTSTATUS status = STATUS_SUCCESS;
-    PVOID buffer = NULL;
-    ULONG bytesRead;
     PSCANNER_NOTIFICATION notification = NULL;
     FLT_VOLUME_PROPERTIES volumeProps;
-    LARGE_INTEGER offset;
     ULONG replyLength, length;
     PFLT_VOLUME volume = NULL;
 
     *SafeToOpen = TRUE;
+    //DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[scanner.sys] " __FUNCTION__ "1 Send Message with Code %d\n", mode_num);
 
     if (ScannerData.ClientPort == NULL) {
         return STATUS_SUCCESS;
@@ -403,13 +409,6 @@ ScannerpScanFileInUserMode (
 
         length = max( SCANNER_READ_BUFFER_SIZE, volumeProps.SectorSize );
 
-        buffer = FltAllocatePoolAlignedWithTag( Instance, NonPagedPool, length, 'nacS' );
-
-        if (NULL == buffer) {
-            status = STATUS_INSUFFICIENT_RESOURCES;
-            leave;
-        }
-
         notification = ExAllocatePoolWithTag( NonPagedPool, sizeof( SCANNER_NOTIFICATION ), 'nacS' );
 
         if(NULL == notification) {
@@ -419,40 +418,25 @@ ScannerpScanFileInUserMode (
 		
 		RtlZeroMemory(notification, sizeof( SCANNER_NOTIFICATION ));
 
-        offset.QuadPart = bytesRead = 0;
-        status = FltReadFile( Instance, FileObject, &offset, length, buffer, FLTFL_IO_OPERATION_NON_CACHED | FLTFL_IO_OPERATION_DO_NOT_UPDATE_BYTE_OFFSET, &bytesRead, NULL, NULL );
+		notification->BytesToScan = (ULONG) cbFilePath;
+        notification->pid = (ULONG)pid;
+        notification->mode = (ULONG)mode_num;
+   
+		RtlCopyMemory( &notification->Contents, pwFilePath, cbFilePath);
 
-        if (NT_SUCCESS( status ) && (0 != bytesRead)) {
-            //notification->BytesToScan = (ULONG) bytesRead;
-			notification->BytesToScan = (ULONG) cbFilePath;
-            notification->pid = (ULONG)pid;
-            notification->mode = (ULONG)mode_num;
+        replyLength = sizeof( SCANNER_REPLY );
 
-            /*RtlCopyMemory( &notification->Contents,
-                           buffer,
-                           min( notification->BytesToScan, SCANNER_READ_BUFFER_SIZE ) );*/
-			//유저에게 전송하는 영역	   
-			RtlCopyMemory( &notification->Contents, pwFilePath, cbFilePath);
+        status = FltSendMessage( ScannerData.Filter, &ScannerData.ClientPort, notification, sizeof(SCANNER_NOTIFICATION), notification, &replyLength, NULL );
 
-
-            replyLength = sizeof( SCANNER_REPLY );
-
-            status = FltSendMessage( ScannerData.Filter, &ScannerData.ClientPort, notification, sizeof(SCANNER_NOTIFICATION), notification, &replyLength, NULL );
-
-            if (STATUS_SUCCESS == status) {
-                *SafeToOpen = ((PSCANNER_REPLY) notification)->SafeToOpen;
-            }
-            else {
-                DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "!!! scanner.sys --- couldn't send message to user-mode to scan file, status 0x%X\n", status);
-            }
+        if (STATUS_SUCCESS == status) {
+            *SafeToOpen = ((PSCANNER_REPLY) notification)->SafeToOpen;
+        }
+        else {
+            DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "!!! scanner.sys --- couldn't send message to user-mode to scan file, status 0x%X\n", status);
         }
 
-    } finally {
-
-        if (NULL != buffer) {
-            FltFreePoolAlignedWithTag( Instance, buffer, 'nacS' );
-        }
-
+    } 
+    finally {
         if (NULL != notification) {
             ExFreePoolWithTag( notification, 'nacS' );
         }
@@ -460,7 +444,7 @@ ScannerpScanFileInUserMode (
         if (NULL != volume) {
             FltObjectDereference( volume );
         }
-    }
+    }   
 
     return status;
 }

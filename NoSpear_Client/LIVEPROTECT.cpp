@@ -3,18 +3,22 @@
 #include "NoSpear_ClientDlg.h"
 #pragma comment(lib,"fltLib.lib")
 
+enum MODE_TYPE {
+	TYPE_OPEN,
+	TYPE_CREATE,
+	TYPE_DELETE,
+};
 unsigned short inline LIVEPROTECT::ReadNospearADS(CString filepath) {
-    //result values
+    //return values
     //-1 : ADS:NOSPEAR 부재
-    //0 : ADS:NOSPEAR에서 차단하도록 지정되어있음.
-    //1 : ADS:NOSPEAR에서 문서 프로그램을 제외하고 허용하도록 지정되어있음.
-    //2 : ADS:NOSPEAR에서 허용하도록 지정되어있음.
+    //0 : ADS:NOSPEAR외 전체 차단
+    //1 : ADS:NOSPEAR에서 문서 프로그램을 제외하고 허용
+    //2 : ADS:NOSPEAR에서 전체 허용
 
     CStdioFile ads_stream;
     CFileException e;
     if (!ads_stream.Open(filepath + L":NOSPEAR", CFile::modeRead, &e)) {
-        //NOSPEAR ADS를 열 수 없기에, 없다고 간주하고 차단
-        //e.ReportError();
+        //NOSPEAR ADS가 없음.
         return -1;
     }
 
@@ -39,11 +43,13 @@ bool LIVEPROTECT::WriteNospearADS(CString filepath, unsigned short value){
     CStdioFile ads_stream;
     CFileException e;
     if (!ads_stream.Open(filepath + L":NOSPEAR", CStdioFile::modeCreate | CStdioFile::modeWrite, &e)) {
+        AfxTrace(L"WriteNospearADS 부착 실패\n");
         return false;
     }
     CString str;
     str.Format(TEXT("%d"), value);
     ads_stream.WriteString(str);
+    AfxTrace(L"WriteNospearADS 부착 성공\n");
     return true;
 }
 
@@ -52,16 +58,17 @@ bool LIVEPROTECT::WriteZoneIdentifierADS(CString filepath, unsigned long pid){
     CStdioFile ads_stream;
     CFileException e;
     if (!ads_stream.Open(filepath + L":Zone.Identifier", CStdioFile::modeCreate | CStdioFile::modeWrite, &e)) {
+        AfxTrace(L"WriteZoneIdentifierADS 부착 실패\n");
         return false;
     }
     CString processName = GetProcessName(pid);
-    //processName = PathFindFileName(processName);
     processName.Format(TEXT("ProcessName=%ws"), processName);
+
     ads_stream.WriteString(L"[ZoneTransfer]\n");
     ads_stream.WriteString(L"ZoneId=3\n");
     ads_stream.WriteString(L"ADS Appended By No-Spear Client\n");
     ads_stream.WriteString(processName);
-
+    AfxTrace(L"WriteZoneIdentifierADS 부착 성공\n");
     return true;
 }
 
@@ -83,7 +90,6 @@ PWCHAR LIVEPROTECT::GetCharPointerW(PWCHAR pwStr, WCHAR wLetter, int Count) {
 }
 
 CString LIVEPROTECT::GetProcessName(unsigned long pid){
-    // TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
     CString processname = L"Unknown";
     DWORD error = 0;
 
@@ -94,7 +100,6 @@ CString LIVEPROTECT::GetProcessName(unsigned long pid){
         CloseHandle(hProc);
         processname = CString(buf);
     }
-    //AfxMessageBox(processname);
     return processname;
 }
 
@@ -145,6 +150,7 @@ DWORD LIVEPROTECT::ScannerWorker(PSCANNER_THREAD_CONTEXT Context) {
 
         notification = &message->Notification;
         unsigned long pid = notification->pid;
+        unsigned long mode = notification->mode;
         
         {
             WCHAR wDosFilePath[512] = { 0, };
@@ -159,20 +165,27 @@ DWORD LIVEPROTECT::ScannerWorker(PSCANNER_THREAD_CONTEXT Context) {
 
             hr = FilterGetDosName((PWCHAR)notification->Contents, wDosFilePath, 512);
             if (FAILED(hr))
-                break;
+                break;  
 
             wcscat(wDosFilePath, L"\\");
             wcscat(wDosFilePath, ++pwPtr);
- /*           CString tmp;
-            tmp.Format(TEXT("pid : %d, process name : %ws, FilePath : %s\n"), pid, GetProcessName(pid), wDosFilePath);
-            AfxTrace(tmp);*/
+            //CString tmp;
+            //tmp.Format(TEXT("pid : %d, process name : %ws, FilePath : %s\n"), pid, GetProcessName(pid), wDosFilePath);
+            //AfxTrace(tmp);
 
             CString path = CString(wDosFilePath);
-
+            CString processname = GetProcessName(pid);
             //Alternate Data Stream 기반 파일 허용 여부
-            unsigned short ads_result = 0;
-            ads_result = ReadNospearADS(path);
-            switch (ads_result){
+
+            CString ext = PathFindExtension(path);
+            if (ext == L".part" || ext == L".download") {
+                isMailicious = false;
+                //AfxTrace(TEXT("Temp FIle\n"));
+            }
+            else {
+                unsigned short ads_result = 0;
+                ads_result = ReadNospearADS(path);
+                switch (ads_result) {
                 case 0:
                     //무조건 차단
                     isMailicious = true;
@@ -187,28 +200,36 @@ DWORD LIVEPROTECT::ScannerWorker(PSCANNER_THREAD_CONTEXT Context) {
                     break;
                 default:
                     //ADS:NOSPEAR가 없을 때
-                    if (IsOfficeProgram(pid) == false) {
-                        //Office Program이 아니라면 ADS:NOSPEAR = 1부착
-                        //또한, CREATE일 때 ProcessName을 이용하여 ADS:Zone.Identifier 부착
-                        //근데 CREATE일 때 ADS에 접근할 수 있을까?
-                        WriteNospearADS(path, 1);
-
-                        isMailicious = false;
+                    isMailicious = false;
+                    if (mode == TYPE_CREATE) {
+                        if (IsOfficeProgram(pid)) {
+                            createlist.insert(path);
+                        }
                     }
                     else {
-                        //CREATE일 때 ADS:NOSPEAR = 2부착 후 PASS
-
-
-                        //OPEN이라면 검사 진행
-                    
-                    
+                        set<CString>::iterator it = createlist.find(path);
+                        if (it != createlist.end()) {
+                            bool temp = WriteNospearADS(path, 2);
+                            AfxTrace(TEXT("AUTO 2, RESULT : %d\n"), temp);
+                        }
+                        else {
+                            WriteNospearADS(path, 1);
+                            if (IsOfficeProgram(pid)) {
+                                isMailicious = true;
+                                AfxTrace(TEXT("Malicious, RESULT : BLOCK\n"));
+                            }
+                        }
                     }
-
                     break;
-            }
+                }
+
+            }         
 
             //실시간 검사를 종료한 상태에서는 항상 통과시킴
             if (threadstatus == false) isMailicious = false;
+            CString tmp;
+            tmp.Format(TEXT("pid : %d, process name : %ws, FilePath : %s, MODE : %d, Permit : %ws\n"), pid, processname, wDosFilePath, mode, (isMailicious) ? L"BLOCKED" : L"ALLOWED");
+            AfxTrace(tmp);
         }
         
         //최종결과를 History남기는 로직 구현 필요 : 클라이언트의 스레드로 넘기기
@@ -217,13 +238,13 @@ DWORD LIVEPROTECT::ScannerWorker(PSCANNER_THREAD_CONTEXT Context) {
         replyMessage.ReplyHeader.MessageId = message->MessageHeader.MessageId;
         replyMessage.Reply.SafeToOpen = !isMailicious;
 
-        AfxTrace(TEXT("Replying message\n"));
+        //AfxTrace(TEXT("Replying message\n"));
   
         hr = FilterReplyMessage(Context->Port, (PFILTER_REPLY_HEADER)&replyMessage, sizeof(FILTER_REPLY_HEADER) + 1);
         //원래  sizeof( replyMessage ) 이거였는데, 21로 나와서 오류남. 17이 나와야 정상
 
         if (SUCCEEDED(hr)) {
-            AfxTrace(TEXT("Replied message\n"));
+            //AfxTrace(TEXT("Replied message\n"));
         }
         else {
             AfxTrace(TEXT("Scanner: Error replying message. Error = 0x%X\n", hr));

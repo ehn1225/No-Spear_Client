@@ -40,6 +40,7 @@ class LIVEPROTECT{
     static bool IsOfficeProgram(unsigned long pid);
 
     HANDLE port, completion;
+    static set<CString> createlist;
     //문서프로그램 배열 필요함
     //캐시 배열 필요함(ADS:Block 이지만, 허용하고 싶어)
 
