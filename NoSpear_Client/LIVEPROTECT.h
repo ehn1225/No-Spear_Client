@@ -21,9 +21,9 @@ typedef struct _SCANNER_REPLY_MESSAGE {
 } SCANNER_REPLY_MESSAGE, * PSCANNER_REPLY_MESSAGE;
 
 static bool threadstatus = false;
-static std::set<CString> createlist;
-static std::map<CString, CString> fileToProcess;
-static SQLITE historyDB;
+static std::set<CString> safeDocList;
+static std::map<CString, CString> adsZoneList;
+static SQLITE liveProtectDB;
 
 class LIVEPROTECT{
     const DWORD requestCount = SCANNER_DEFAULT_REQUEST_COUNT;

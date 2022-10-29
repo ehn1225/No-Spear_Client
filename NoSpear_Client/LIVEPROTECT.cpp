@@ -141,16 +141,13 @@ DWORD LIVEPROTECT::ScannerWorker(PSCANNER_THREAD_CONTEXT Context) {
 
         isMailicious = GetQueuedCompletionStatus(Context->Completion, &outSize, &key, &pOvlp, INFINITE);
         message = CONTAINING_RECORD(pOvlp, SCANNER_MESSAGE, Ovlp);
+        notification = &message->Notification;
 
         if (!isMailicious) {
             hr = HRESULT_FROM_WIN32(GetLastError());
             break;
         }
 
-        notification = &message->Notification;
-        unsigned long pid = notification->pid;
-        unsigned long mode = notification->mode;
-        
         {
             WCHAR wDosFilePath[512] = { 0, };
 
@@ -172,32 +169,25 @@ DWORD LIVEPROTECT::ScannerWorker(PSCANNER_THREAD_CONTEXT Context) {
             //tmp.Format(TEXT("pid : %d, process name : %ws, FilePath : %s\n"), pid, GetProcessName(pid), wDosFilePath);
             //AfxTrace(tmp);
 
+            unsigned long pid = notification->pid;
+            unsigned long mode = notification->mode;
             CString path = CString(wDosFilePath);
             CString processname = GetProcessName(pid);
-            //Alternate Data Stream 기반 파일 허용 여부
             int passcode = 0;
             CString ext = PathFindExtension(path);
-            if (ext == L".part" || ext == L".download" || threadstatus == false) {
+
+            if (mode == TYPE_CREATE || ext == L".part" || ext == L".download") {
                 isMailicious = false;
-                passcode = 0;
-                if (threadstatus != false) {
-                    if (mode == TYPE_CREATE) {
-                        //새로운 파일을 "생성"한 경우
-                        fileToProcess.insert(pair<CString, CString>(path, processname));
-                        passcode = 11;
-                    }
-                    else {
-                        std::map<CString, CString>::iterator it = fileToProcess.find(path);
-                        if (it != fileToProcess.end()) {
-                            //로컬 문서 프로그램으로 생성한 이력이 있는 경우
-                            WriteZoneIdentifierADS(path, it->second);
-                            passcode = 12;
-                        }
-                        else {
-                            WriteZoneIdentifierADS(path, processname);
-                            passcode = 13;
-                        }
-                    }
+                if (ext == L".part" || ext == L".download") {
+                    CString path2 = path;
+                    path2.Replace(ext, L"");
+                    adsZoneList.insert(make_pair(path2, processname));
+                    passcode = 1;
+                }
+                else{
+                    if (IsOfficeProgram(pid))
+                        safeDocList.insert(path);
+                    passcode = 2;
                 }
             }
             else {
@@ -205,79 +195,76 @@ DWORD LIVEPROTECT::ScannerWorker(PSCANNER_THREAD_CONTEXT Context) {
                 ads_result = ReadNospearADS(path);
                 switch (ads_result) {
                     case 0:
-                        //무조건 차단
                         isMailicious = true;
-                        passcode = 1;
-                        break;
-                    case 1:
-                        //Office 프로그램이 아닐 경우 통과(Office 365, adobe reader)
-                        isMailicious = IsOfficeProgram(pid);
-                        passcode = 2;
-                        break;
-                    case 2:
-                        //모두 허용
-                        isMailicious = false;
                         passcode = 3;
                         break;
-                    default:
-                        //ADS:NOSPEAR가 없을 때
+                    case 1:
+                        isMailicious = IsOfficeProgram(pid);
+                        passcode = 4;
+                        break;
+                    case 2:
                         isMailicious = false;
-                        if (mode == TYPE_CREATE) {
-                            //새로운 파일을 "생성"한 경우 : 파일 유입, 새로운 문서 파일 생성 둘다 포함
-                            if (IsOfficeProgram(pid)) {
-                                createlist.insert(path);
-                            }
-                            passcode = 4;
+                        passcode = 5;
+                        break;
+                    default:
+                        isMailicious = false;
+                        WriteNospearADS(path, 1);
+                        std::set<CString>::iterator it = safeDocList.find(path);
+                        if (it != safeDocList.end()) {
+                            //로컬 문서 프로그램으로 생성한 이력이 있는 경우
+                            bool temp = WriteNospearADS(path, 2);
+                            passcode = 6;
                         }
                         else {
-                            std::set<CString>::iterator it = createlist.find(path);
-                            if (it != createlist.end()) {
-                                //로컬 문서 프로그램으로 생성한 이력이 있는 경우
-                                bool temp = WriteNospearADS(path, 2);
-                                passcode = 5;
+                            if (!IsOfficeProgram(pid)) {
+                                break;
+                            }
+                            //로컬에서 생성한 적이 없는 새로운 문서를 실행할 때
+                            //Local File DB 확인
+                            //passcode = 6;
+                            //없으면 Black List DB 확인
+                            //passcode = 7;
+                            //없으면 업로드
+                            CString errMsg;
+                            errMsg.Format(TEXT("확인되지 않은 문서 파일이 실행되는 것을 탐지하였습니다.\n파일명 : %ws\n 검사를 진행하시겠습니까? "), PathFindFileName(path));
+                            if (AfxMessageBox(errMsg, MB_YESNO | MB_ICONWARNING) == IDYES) {
+                                AfxMessageBox(L"검사를 진행합니다.");
+                                isMailicious = true;
+                                passcode = 81;
                             }
                             else {
-                                WriteNospearADS(path, 1);
-                                if (IsOfficeProgram(pid)) {
-                                    //로컬에서 생성한 적이 없는 새로운 문서를 문서 프로그램으로 실행할 때
-                                    //Local File List DB 확인해보기
-                                    isMailicious = true;
-                                    passcode = 6;
-                                }
-                                else {
-                                    //로컬에서 생성된 적이 없고, 새로운 문서 파일이 유입될 때
-                                    passcode = 7;
-                                    WriteZoneIdentifierADS(path, processname);
-                                }
+                                WriteNospearADS(path, 2);
+                                isMailicious = false;
+                                passcode = 82;
                             }
                         }
+                        
                         break;
                 }
 
+                //Zone.Identifier 붙혀줌. NOSPEAR.cpp로 이동 예정(클라이언트 스레드)
+                std::map<CString, CString>::iterator it = adsZoneList.begin();
+                while (it != adsZoneList.end()) {
+                    if (WriteZoneIdentifierADS(it->first, it->second) && processname != it->second) {
+                        AfxTrace(L"PeeKabuu\n");
+                        adsZoneList.erase(it++);
+                    }
+                    else
+                        ++it;
+
+                }
             }
+
+            
+
             CString tmp;
             tmp.Format(TEXT("process name : %ws, FilePath : %s, MODE : %d, Permit : %ws(%d)\n"), processname, wDosFilePath, mode, (isMailicious) ? L"BLOCKED" : L"ALLOWED", passcode);
             AfxTrace(tmp);
-            
-            CString str_mode;
-            switch (mode) {
-                case TYPE_OPEN:
-                    str_mode = L"OPEN";
-                    break;
-                case TYPE_CREATE:
-                    str_mode = L"CREATE";
-                    break;
-                case TYPE_DELETE:
-                    str_mode = L"DELETE";
-                    break;
-                default:
-                    str_mode = L"UNKNOWN";
-                    break;
-            }
 
+            CString str_mode[] = {L"OPEN",  L"CREATE", L"DELETE"};
             //최종결과를 NOSPEAR:NOSPEAR_HISTORY 테이블에 저장 
-            CString strInsQuery = _T("INSERT INTO NOSPEAR_HISTORY(FilePath, ProcessName, Operation, Permission) VALUES ('" + path + "','" + processname +"','" + str_mode +"','" + ((isMailicious) ? L"BLOCKED" : L"ALLOWED") +"');");
-            int rc = historyDB.ExecuteSqlite(strInsQuery);
+            CString strInsQuery = _T("INSERT INTO NOSPEAR_HISTORY(FilePath, ProcessName, Operation, Permission) VALUES ('" + path + "','" + processname +"','" + str_mode[mode] + "','" + ((isMailicious) ? L"BLOCKED" : L"ALLOWED") + "');");
+            liveProtectDB.ExecuteSqlite(strInsQuery);
         }
        
         replyMessage.ReplyHeader.Status = 0;
@@ -317,11 +304,13 @@ DWORD LIVEPROTECT::ScannerWorker(PSCANNER_THREAD_CONTEXT Context) {
 }
 
 LIVEPROTECT::LIVEPROTECT() {
-    if (historyDB.DatabaseOpen(L"NOSPEAR")) {
+    if (liveProtectDB.DatabaseOpen(L"NOSPEAR")) {
         AfxTrace(TEXT("[LIVEPROTECT::LIVEPROTECT] Can't Create NOSPEAR_HISTORY DataBase.\n"));
         return;
     }
-    historyDB.ExecuteSqlite(L"CREATE TABLE IF NOT EXISTS NOSPEAR_HISTORY(SEQ INTEGER PRIMARY KEY AUTOINCREMENT, TimeStamp TEXT not null DEFAULT (datetime('now', 'localtime')), FilePath TEXT NOT NULL, ProcessName TEXT, Operation TEXT, Permission TEXT);");
+    liveProtectDB.ExecuteSqlite(L"CREATE TABLE IF NOT EXISTS NOSPEAR_HISTORY(SEQ INTEGER PRIMARY KEY AUTOINCREMENT, TimeStamp TEXT not null DEFAULT (datetime('now', 'localtime')), FilePath TEXT NOT NULL, ProcessName TEXT, Operation TEXT, Permission TEXT);");
+    liveProtectDB.ExecuteSqlite(L"CREATE TABLE IF NOT EXISTS NOSPEAR_LocalFileList(SEQ INTEGER PRIMARY KEY AUTOINCREMENT, TimeStamp TEXT not null DEFAULT (datetime('now', 'localtime')), FilePath TEXT NOT NULL, ZoneIdentifier INTEGER, ProcessName TEXT, DiagnoseDate TEXT, Serverity INTEGER);");
+    
 }
 
 LIVEPROTECT::~LIVEPROTECT() {

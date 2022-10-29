@@ -38,9 +38,6 @@ BOOL FILELISTVIEWER::OnInitDialog(){
 	filelistbox.InsertColumn(4, L"검사 날짜", LVCFMT_LEFT, 100, -1);
 	filelistbox.InsertColumn(5, L"ADS:Zone.Identifier", LVCFMT_CENTER, 70, -1);
 	filelistbox.InsertColumn(6, L"ADS:NOSPEAR", LVCFMT_CENTER, 70, -1);
-	filelistbox.InsertColumn(7, L"만든 날짜", LVCFMT_LEFT, 100, -1);
-	filelistbox.InsertColumn(8, L"수정한 날짜", LVCFMT_LEFT, 100, -1);
-	filelistbox.InsertColumn(9, L"엑세스한 날짜", LVCFMT_LEFT, 100, -1);
 	filelistbox.SetExtendedStyle(LVS_EX_CHECKBOXES | LVS_EX_FULLROWSELECT);
 
 	CRect rctComboBox, rctDropDown;
