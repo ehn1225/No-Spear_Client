@@ -23,3 +23,8 @@ Vaccine client
 5. 이후 클라이언트 프로그램 실행 (관리자 권한으로)<br>
 6. 드라이버 종료는 "sc stop scanner"<br>
 7. 드라이버 삭제는 "sc delete scanner"<br>
+
+<h2>Version</h2>
+<h4>1.0.0 : ProtoType 1st(File Upload)</h4>
+<h4>2.0.0 : ProtoType 2nd(Mini Filter, File Viewer)</h4>
+<h4>2.1.0 : ProtoType 3rd_1(Live Protect History, ADS Rules)</h4>
