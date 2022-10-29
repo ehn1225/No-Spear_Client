@@ -1,6 +1,5 @@
 ﻿#pragma once
-#include "FlexibleDialog.h"
-class FILELISTVIEWER : public CFlexibleDialog
+class FILELISTVIEWER : public CDialogEx
 {
 	DECLARE_DYNAMIC(FILELISTVIEWER)
 

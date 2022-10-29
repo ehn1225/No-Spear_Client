@@ -1,5 +1,4 @@
-﻿#pragma once
-class LIVEPROTECT;
+﻿class LIVEPROTECT;
 class NOSPEAR;
 class CNoSpearClientDlg : public CDialogEx{
 public:
@@ -34,4 +33,5 @@ public:
 	afx_msg void OnDropFiles(HDROP hDropInfo);
 	NOSPEAR* GetClientPtr();
 	afx_msg void OnBnClickedButton2();
+	afx_msg void OnBnClickedButton3();
 };

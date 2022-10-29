@@ -48,10 +48,13 @@
     <ClInclude Include="LIVEPROTECT.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="FlexibleDialog.h">
+    <ClInclude Include="FILELISTVIEWER.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="FILELISTVIEWER.h">
+    <ClInclude Include="sqlite3.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="SQLITE.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
@@ -80,10 +83,10 @@
     <ClCompile Include="LIVEPROTECT.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="FlexibleDialog.cpp">
+    <ClCompile Include="FILELISTVIEWER.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="FILELISTVIEWER.cpp">
+    <ClCompile Include="SQLITE.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>

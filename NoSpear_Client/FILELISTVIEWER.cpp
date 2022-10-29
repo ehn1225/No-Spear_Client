@@ -5,13 +5,14 @@
 #include "FILELISTVIEWER.h"
 #include "NOSPEAR.h"
 
+
 using namespace std;
 namespace fs = std::filesystem;
 
-IMPLEMENT_DYNAMIC(FILELISTVIEWER, CFlexibleDialog)
+IMPLEMENT_DYNAMIC(FILELISTVIEWER, CDialogEx)
 
 FILELISTVIEWER::FILELISTVIEWER(CWnd* pParent /*=nullptr*/)
-	: CFlexibleDialog(IDD_FILELISTVIEWDIALOG, pParent)
+	: CDialogEx(IDD_FILELISTVIEWDIALOG, pParent)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDI_ICON1);
 
@@ -21,7 +22,7 @@ FILELISTVIEWER::~FILELISTVIEWER(){
 }
 
 void FILELISTVIEWER::DoDataExchange(CDataExchange* pDX){
-	CFlexibleDialog::DoDataExchange(pDX);
+	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_FileListCtrl, filelistbox);
 	DDX_Control(pDX, IDC_COMBO1, file_check_combo);
 }
@@ -77,7 +78,7 @@ void FILELISTVIEWER::OnPaint(){
 	}
 }
 
-BEGIN_MESSAGE_MAP(FILELISTVIEWER, CFlexibleDialog)
+BEGIN_MESSAGE_MAP(FILELISTVIEWER, CDialogEx)
 	ON_WM_GETMINMAXINFO()
 	ON_NOTIFY(HDN_ITEMCLICK, 0, &FILELISTVIEWER::OnHdnItemclickFilelistctrl)
 	ON_BN_CLICKED(IDC_BUTTON1, &FILELISTVIEWER::OnBnClickedButton1)
@@ -90,7 +91,7 @@ END_MESSAGE_MAP()
 void FILELISTVIEWER::OnGetMinMaxInfo(MINMAXINFO* lpMMI){
 	lpMMI->ptMinTrackSize.x = m_iDlgLimitMinWidth;
 	lpMMI->ptMinTrackSize.y = m_iDlgLimitMinHeight;
-	CFlexibleDialog::OnGetMinMaxInfo(lpMMI);
+	CDialogEx::OnGetMinMaxInfo(lpMMI);
 }
 
 bool FILELISTVIEWER::Has_ADS(CString filepath) {

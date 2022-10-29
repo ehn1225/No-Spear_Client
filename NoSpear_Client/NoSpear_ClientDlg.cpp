@@ -92,6 +92,7 @@ BEGIN_MESSAGE_MAP(CNoSpearClientDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON1, &CNoSpearClientDlg::OnBnClickedButton1)
 	ON_WM_DROPFILES()
 	ON_BN_CLICKED(IDC_BUTTON2, &CNoSpearClientDlg::OnBnClickedButton2)
+	ON_BN_CLICKED(IDC_BUTTON3, &CNoSpearClientDlg::OnBnClickedButton3)
 END_MESSAGE_MAP()
 
 
@@ -161,6 +162,8 @@ BOOL CNoSpearClientDlg::OnInitDialog()
 		AfxTrace(TEXT("[CNoSpearClientDlg::OnInitDialog] 설정 파일 미존재\n"));
 		client = new NOSPEAR();
 	}
+
+
 
 	return TRUE;  // 포커스를 컨트롤에 설정하지 않으면 TRUE를 반환합니다.
 }
@@ -296,57 +299,51 @@ NOSPEAR* CNoSpearClientDlg::GetClientPtr(){
 
 
 void CNoSpearClientDlg::OnBnClickedButton2(){
-	//bool HasADS = false;
-	//WIN32_FIND_STREAM_DATA fsd;
-	//HANDLE hFind = NULL;
-	//try {
-	//	hFind = ::FindFirstStreamW(filepath, FindStreamInfoStandard, &fsd, 0);
-	//	if (hFind == INVALID_HANDLE_VALUE) throw ::GetLastError();
-
-	//	for (;;) {
-	//		CString tmp;
-	//		tmp.Format(TEXT("%s"), fsd.cStreamName);
-	//		if (tmp == L":NOSPEAR:$DATA") {
-	//			HasADS = true;
-	//		}
-	//		if (!::FindNextStreamW(hFind, &fsd)) {
-	//			DWORD dr = ::GetLastError();
-	//			if (dr != ERROR_HANDLE_EOF) throw dr;
-	//			break;
-	//		}
-	//	}
-	//}
-	//catch (DWORD err) {
-	//	AfxTrace(TEXT("[LIVEPROTECT::IsMaliciousLocal] Find ADS, Windows error code: %u\n", err));
-	//}
-	//if (hFind != NULL)
-	//	::FindClose(hFind);
-
-	//if (HasADS == false)
-	//	AfxMessageBox(L"없어용");
-	//	return;
-
-	////2. ADS Value 확인
-	//CStdioFile ads_stream;
-	//CFileException e;
-	//if (!ads_stream.Open(filepath + L":NOSPEAR", CFile::modeRead, &e)) {
-	//	e.ReportError();
-	//}
-	//CString str;
-	//ads_stream.ReadString(str);
-	//bool result = (str == L"1");
 	CStdioFile ads_stream;
 	CFileException e;
-	if (!ads_stream.Open(filepath + L":Zone.Identifier", CStdioFile::modeCreate | CStdioFile::modeWrite, &e)) {
+	if (!ads_stream.Open(filepath + L":NOSPEAR", CStdioFile::modeCreate | CStdioFile::modeWrite, &e)) {
+		AfxTrace(TEXT("WriteNospearADS 부착 실패 %d\n"), 1);
 		return;
 	}
-	CString processName;
-	CString tmp = L"Helloworld.exe";
-	processName.Format(TEXT("ProcessName=%ws"), tmp);
-	ads_stream.WriteString(L"[ZoneTransfer]\n");
-	ads_stream.WriteString(L"ZoneId=3\n");
-	ads_stream.WriteString(L"ADS Appended By No-Spear Client\n");
-	ads_stream.WriteString(processName);
-
+	CString str;
+	str.Format(TEXT("%d"), 1);
+	ads_stream.WriteString(str);
+	AfxTrace(TEXT("WriteNospearADS 부착 성공 %d\n"), 1);
 	return;
+}
+
+void CNoSpearClientDlg::OnBnClickedButton3(){
+	//if (database.DatabaseOpen(L"NOSPEAR")) {
+	//	AfxTrace(TEXT("[LIVEPROTECT::LIVEPROTECT] Can't Create NOSPEAR_HISTORY DataBase.\n"));
+	//	return;
+	//}
+
+	////CString strInsQuery = _T("Insert into helloworld VALUES( NULL,'" + filepath + "');");
+	////int rc = database.ExecuteSqlite(strInsQuery);
+
+	//sqlite3_select p_selResult = database.SelectSqlite(L"select * from NOSPEAR_HISTORY ;");
+	//if (p_selResult.pnRow != 0) {
+	//	for (int i = 0; i <= p_selResult.pnRow; ++i)
+	//	{
+	//		int colCtr = 0;
+	//		int nCol = 1;
+	//		int cellPosition = (i * p_selResult.pnColumn) + colCtr;
+
+	//		std::string sel1 = p_selResult.pazResult[cellPosition++];
+	//		CString zSeq1(sel1.c_str());
+	//		std::string sel2 = p_selResult.pazResult[cellPosition++];
+	//		CString zSeq2(sel2.c_str());
+	//		std::string sel3 = p_selResult.pazResult[cellPosition++];
+	//		CString zSeq3(sel3.c_str());
+	//		std::string sel4 = p_selResult.pazResult[cellPosition++];
+	//		CString zSeq4(sel4.c_str());
+	//		AfxTrace(zSeq1 + L", " + zSeq2 + L", " + zSeq3 + L", " + zSeq4 + L"\n");
+
+	//		if (i == 0) {
+	//			continue;
+	//		}
+
+	//	}
+
+	//}
 }

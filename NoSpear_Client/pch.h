@@ -29,6 +29,7 @@
 #include <stdlib.h>
 #include <winioctl.h>
 #include <fltuser.h>
+#include "scanuk.h"
 
 enum E_MALWARE_TYPE {
 	TYPE_NORMAL,

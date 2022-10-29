@@ -9,6 +9,7 @@
 #pragma comment(lib,"Secur32.lib")
 #pragma comment(lib,"wininet.lib")
 #pragma comment(lib,"fltLib.lib")
+#pragma comment(lib,"sqlite3.lib")
 
 SOCKET s;
 sockaddr_in dA, aa;
