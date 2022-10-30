@@ -70,6 +70,14 @@ bool LIVEPROTECT::WriteZoneIdentifierADS(CString filepath, CString processName){
     AfxTrace(L"WriteZoneIdentifierADS 부착 성공\n");
     return true;
 }
+bool LIVEPROTECT::ReadZoneIdentifierADS(CString filepath) {
+    CStdioFile ads_stream;
+    CFileException e;
+    if (!ads_stream.Open(filepath + L":Zone.Identifier", CFile::modeRead, &e)) {
+        return false;
+    }
+    return true;
+}
 
 
 PWCHAR LIVEPROTECT::GetCharPointerW(PWCHAR pwStr, WCHAR wLetter, int Count) {
@@ -130,11 +138,10 @@ bool LIVEPROTECT::IsOfficeFile(CString ext) {
     list.insert(L".xlsx");
     list.insert(L".pptx");
     list.insert(L".ppsx");
-    //list.insert(L"hwp");
-    //list.insert(L"hwpx");
-    //list.insert(L"pdf");
+    list.insert(L"hwp");
+    list.insert(L"hwpx");
+    list.insert(L"pdf");
 
-    //Lowercase 필요할까?
     set<CString>::iterator it = list.find(ext);
 
     if (it != list.end())
@@ -193,31 +200,37 @@ DWORD LIVEPROTECT::ScannerWorker(PSCANNER_THREAD_CONTEXT Context) {
             unsigned long mode = notification->mode;
             CString path = CString(wDosFilePath);
             CString processname = GetProcessName(pid);
-            int passcode = 0;
             CString ext = PathFindExtension(path);
+            int passcode = 0;
 
             if (mode == TYPE_CREATE || ext == L".part" || ext == L".download") {
                 isMailicious = false;
                 CString strInsQuery;
+                CString type = L"DOCUMENT";
+                int zoneid = 3;
+                int nospear = 1;
                 passcode = 14;
                 if (IsOfficeProgram(pid)) {
                     safeDocList.insert(path);
-                    strInsQuery = L"INSERT INTO NOSPEAR_LocalFileList(FilePath, ZoneIdentifier, ProcessName, NOSPEAR, DiagnoseDate, Serverity) VALUES ('" + path + L"','0','" + processname + L"','2','-','0');";
+                    zoneid = 0;
+                    nospear = 2;
                     passcode = 11;
                 }
                 else {
                     if (ext == L".part" || ext == L".download") {
                         CString path2 = path;
                         path2.Replace(ext, L"");
-                        adsZoneList.insert(make_pair(path2, processname));
-                        if (IsOfficeFile(PathFindExtension(path2))) {
-                            path = path2;
+                        path = path2;
+                        if (!IsOfficeFile(PathFindExtension(path2))) {
+                            type = "OTHER";
                             passcode = 12;
                         }
-                        passcode = 13;
+                        else {
+                            passcode = 13;
+                        }
                     }
-                    strInsQuery = L"INSERT INTO NOSPEAR_LocalFileList(FilePath, ZoneIdentifier, ProcessName, NOSPEAR, DiagnoseDate, Serverity) VALUES ('" + path + L"','3','" + processname + L"','1','-','0');";
                 }
+                strInsQuery.Format(TEXT("REPLACE INTO NOSPEAR_LocalFileList(FilePath, ZoneIdentifier, ProcessName, NOSPEAR, DiagnoseDate, Serverity, FileType) VALUES ('%ws','%d','%ws','%d','-','0','%ws');"), path, zoneid, processname, nospear, type);
                 liveProtectDB.ExecuteSqlite(strInsQuery);
             }
             else {
@@ -230,6 +243,21 @@ DWORD LIVEPROTECT::ScannerWorker(PSCANNER_THREAD_CONTEXT Context) {
                         break;
                     case 1:
                         isMailicious = IsOfficeProgram(pid);
+                        if (isMailicious) {
+                            //ADS:NOSPEAR = 1인 파일을 사용자가 Office Program으로 실행할 때
+                            CString errMsg;
+                            errMsg.Format(TEXT("새로운 문서 파일이 실행되는 것을 탐지하였습니다.\n파일명 : %ws\n 검사를 진행하시겠습니까? "), PathFindFileName(path));
+                            if (AfxMessageBox(errMsg, MB_YESNO | MB_ICONWARNING) == IDYES) {
+                                AfxMessageBox(L"검사를 진행합니다.");
+                                isMailicious = true;
+                                passcode = 81;
+                            }
+                            else {
+                                WriteNospearADS(path, 2);
+                                isMailicious = false;
+                                passcode = 82;
+                            }
+                        }
                         passcode = 4;
                         break;
                     case 2:
@@ -260,49 +288,27 @@ DWORD LIVEPROTECT::ScannerWorker(PSCANNER_THREAD_CONTEXT Context) {
                                 passcode = 71;
                                 break;
                             }
-                            //없으면 Black List DB 확인
-                            //없으면 업로드
-                            //passcode = 7;
-
-                            if (!IsOfficeProgram(pid)) {
+                            else {
+                                //LocalFileDB에 없으면서 ADS:NOSPEAR도 없을 때
+                                //실시간 검사가 없을 때 생긴 파일이므로 DB에 추가함
+                                //악성문서일 가능성으로 인해 차단함
                                 WriteNospearADS(path, 1);
+                                CString strInsQuery;
+                                int zoneid = ReadZoneIdentifierADS(path) ? 3 : 0;
+                                strInsQuery.Format(TEXT("INSERT INTO NOSPEAR_LocalFileList(FilePath, ZoneIdentifier, ProcessName, NOSPEAR, DiagnoseDate, Serverity, FileType) VALUES ('%ws','%d','%ws','1','-','0','DOCUMENT');"), path, zoneid, processname);
+                                liveProtectDB.ExecuteSqlite(strInsQuery);
+                                isMailicious = true;
                                 passcode = 72;
                                 break;
-                            }
-                            CString errMsg;
-                            errMsg.Format(TEXT("새로운 문서 파일이 실행되는 것을 탐지하였습니다.\n파일명 : %ws\n 검사를 진행하시겠습니까? "), PathFindFileName(path));
-                            if (AfxMessageBox(errMsg, MB_YESNO | MB_ICONWARNING) == IDYES) {
-                                AfxMessageBox(L"검사를 진행합니다.");
-                                isMailicious = true;
-                                passcode = 81;
-                            }
-                            else {
-                                WriteNospearADS(path, 2);
-                                isMailicious = false;
-                                passcode = 82;
-                            }
+                            }                           
                         }
                         
                         break;
                 }
-
-                //Zone.Identifier 붙혀줌. NOSPEAR.cpp로 이동 예정(클라이언트 스레드)
-                std::map<CString, CString>::iterator it = adsZoneList.begin();
-                while (it != adsZoneList.end()) {
-                    if (processname != it->second && WriteZoneIdentifierADS(it->first, it->second)) {
-                        AfxTrace(L"PeeKabuu\n");
-                        adsZoneList.erase(it++);
-                    }
-                    else
-                        ++it;
-
-                }
             }
 
-            
-
             CString tmp;
-            tmp.Format(TEXT("process name : %ws, FilePath : %s, MODE : %d, Permit : %ws(%d)\n"), processname, wDosFilePath, mode, (isMailicious) ? L"BLOCKED" : L"ALLOWED", passcode);
+            tmp.Format(TEXT("process name : %ws, FilePath : %ws, MODE : %d, Permit : %ws(%d), Pass Code : %d\n"), processname, path, mode, ((isMailicious) ? L"BLOCK" : L"ALLOW"), passcode);
             AfxTrace(tmp);
 
             CString str_mode[] = {L"OPEN",  L"CREATE", L"DELETE"};
@@ -353,7 +359,7 @@ LIVEPROTECT::LIVEPROTECT() {
         return;
     }
     liveProtectDB.ExecuteSqlite(L"CREATE TABLE IF NOT EXISTS NOSPEAR_HISTORY(SEQ INTEGER PRIMARY KEY AUTOINCREMENT, TimeStamp TEXT not null DEFAULT (datetime('now', 'localtime')), FilePath TEXT NOT NULL, ProcessName TEXT, Operation TEXT, Permission TEXT);");
-    liveProtectDB.ExecuteSqlite(L"CREATE TABLE IF NOT EXISTS NOSPEAR_LocalFileList(SEQ INTEGER PRIMARY KEY AUTOINCREMENT, TimeStamp TEXT not null DEFAULT (datetime('now', 'localtime')), FilePath TEXT NOT NULL, ZoneIdentifier INTEGER, ProcessName TEXT, NOSPEAR INTEGER, DiagnoseDate TEXT, Serverity INTEGER);");
+    liveProtectDB.ExecuteSqlite(L"CREATE TABLE IF NOT EXISTS NOSPEAR_LocalFileList(FilePath TEXT NOT NULL PRIMARY KEY, ZoneIdentifier INTEGER, ProcessName TEXT, NOSPEAR INTEGER, DiagnoseDate TEXT, Serverity INTEGER, FileType TEXT, TimeStamp TEXT not null DEFAULT (datetime('now', 'localtime')));");
     
 }
 

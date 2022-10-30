@@ -22,7 +22,6 @@ typedef struct _SCANNER_REPLY_MESSAGE {
 
 static bool threadstatus = false;
 static std::set<CString> safeDocList;
-static std::map<CString, CString> adsZoneList;
 static SQLITE liveProtectDB;
 
 class LIVEPROTECT{
@@ -34,6 +33,7 @@ class LIVEPROTECT{
     static unsigned short ReadNospearADS(CString filepath);
     static bool WriteNospearADS(CString filepath, unsigned short value);
     static bool WriteZoneIdentifierADS(CString filepath, CString processName);
+    static bool ReadZoneIdentifierADS(CString filepath);
     static PWCHAR GetCharPointerW(PWCHAR pwStr, WCHAR wLetter, int Count);
     static DWORD ScannerWorker(PSCANNER_THREAD_CONTEXT Context);
     static CString GetProcessName(unsigned long pid);

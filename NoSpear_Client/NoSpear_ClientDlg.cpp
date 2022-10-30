@@ -327,25 +327,33 @@ void CNoSpearClientDlg::OnBnClickedButton2(){
 }
 
 void CNoSpearClientDlg::OnBnClickedButton3(){
+	CString strInsQuery;
+	CString type = L"DOCUMENT";
+	int zoneid = 3;
+	int nospear = 1;
 
-	SQLITE temp;
-	if (temp.DatabaseOpen(L"NOSPEAR")) {
-		AfxTrace(TEXT("[LIVEPROTECT::LIVEPROTECT] Can't Create NOSPEAR_HISTORY DataBase.\n"));
-		return;
-	}
-	
-	sqlite3_select p_selResult = temp.SelectSqlite(L"select NOSPEAR, ZoneIdentifier, ProcessName from NOSPEAR_LocalFileList WHERE FilePath='" + filepath + L"' LIMIT 1;");
-	if (p_selResult.pnRow != 0) {
-		//std::string sel1 = p_selResult.pazResult[3];
-		//std::string sel2 = p_selResult.pazResult[4];
-		//std::string sel3 = p_selResult.pazResult[5];
-		int nospear = stoi(p_selResult.pazResult[3]);
-		int zone = stoi(p_selResult.pazResult[4]);
-		CString ProcessName(p_selResult.pazResult[5]);
-		AfxTrace(TEXT("FIND Local DB ADS : %d, Zone : %d\, ProcessName : %s\n"), nospear, zone, ProcessName);
-		if (zone != 0)
-			AfxTrace(TEXT("Attatch Zone.Identifier Zone : %d\, ProcessName : %s\n"), zone, ProcessName);
-	}
+	strInsQuery.Format(TEXT("REPLACE INTO NOSPEAR_LocalFileList(FilePath, ZoneIdentifier, ProcessName, NOSPEAR, DiagnoseDate, Serverity, FileType) VALUES ('%ws','%d','%ws','%d','-','0','%ws');"), filepath, zoneid, L"sfjldsjflsjfsdldjs.exe", nospear, type);
+
+	AfxMessageBox(strInsQuery);
+
+	//SQLITE temp;
+	//if (temp.DatabaseOpen(L"NOSPEAR")) {
+	//	AfxTrace(TEXT("[LIVEPROTECT::LIVEPROTECT] Can't Create NOSPEAR_HISTORY DataBase.\n"));
+	//	return;
+	//}
+	//
+	//sqlite3_select p_selResult = temp.SelectSqlite(L"select NOSPEAR, ZoneIdentifier, ProcessName from NOSPEAR_LocalFileList WHERE FilePath='" + filepath + L"' LIMIT 1;");
+	//if (p_selResult.pnRow != 0) {
+	//	//std::string sel1 = p_selResult.pazResult[3];
+	//	//std::string sel2 = p_selResult.pazResult[4];
+	//	//std::string sel3 = p_selResult.pazResult[5];
+	//	int nospear = stoi(p_selResult.pazResult[3]);
+	//	int zone = stoi(p_selResult.pazResult[4]);
+	//	CString ProcessName(p_selResult.pazResult[5]);
+	//	AfxTrace(TEXT("FIND Local DB ADS : %d, Zone : %d\, ProcessName : %s\n"), nospear, zone, ProcessName);
+	//	if (zone != 0)
+	//		AfxTrace(TEXT("Attatch Zone.Identifier Zone : %d\, ProcessName : %s\n"), zone, ProcessName);
+	//}
 
 
 
