@@ -1,7 +1,6 @@
 #include "pch.h"
 #include "sqlite3.h"
 #include "SQLITE.h"
-#pragma comment(lib,"sqlite3.lib")
 
 SQLITE::SQLITE(){
 	dbref = NULL;
@@ -13,7 +12,7 @@ SQLITE::~SQLITE(){
 	if (errmsg != NULL) errmsg = NULL;
 }
 
-// Create Database
+//Create Database
 int SQLITE::DatabaseOpen(CString dbname){
 	int rc;
 	CT2CA pszConvertedAnsiString(dbname);
@@ -26,7 +25,7 @@ int SQLITE::DatabaseOpen(CString dbname){
 	return rc;
 }
 
-//  Exec Query(create, insert, update, delete)
+//Exec Query(create, insert, update, delete)
 int SQLITE::ExecuteSqlite(CString query){
 	int rc = 0;
 	//CString to UTF-8
@@ -36,16 +35,16 @@ int SQLITE::ExecuteSqlite(CString query){
 	return rc;
 }
 
-// Select Query
+//Select Query
 sqlite3_select SQLITE::SelectSqlite(CString query){
 	sqlite3_select selectResult;
-	CT2CA pszConvertedAnsiString(query);
+	std::string strQuery = CW2A(query, CP_UTF8);;
+
 	char** results = NULL;
 	int rows;
 	int columns;
-	//const char *sqlSelect = "SELECT * FROM TB_SETTING;";
 
-	int rc = sqlite3_get_table(dbref, pszConvertedAnsiString, &results, &rows, &columns, &errmsg);
+	sqlite3_get_table(dbref, strQuery.c_str(), &results, &rows, &columns, &errmsg);
 	//sqlite3_get_table(pDbRef, sqlSelect, &results, &rows, &columns, &m_ErrMsg);
 
 	selectResult.pazResult = results;

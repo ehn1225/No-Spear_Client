@@ -297,26 +297,58 @@ NOSPEAR* CNoSpearClientDlg::GetClientPtr(){
 	return client;
 }
 
+bool IsOfficeFile(CString ext) {
+	set<CString> list;
+	list.insert(L".doc");
+	list.insert(L".docx");
+	list.insert(L".xls");
+	list.insert(L".xlsx");
+	list.insert(L".pptx");
+	list.insert(L".ppsx");
+	//list.insert(L"hwp");
+	//list.insert(L"hwpx");
+	//list.insert(L"pdf");
+
+	//Lowercase 필요할까?
+	set<CString>::iterator it = list.find(ext);
+
+	if (it != list.end())
+		return true;
+	else
+		return false;
+}
 
 void CNoSpearClientDlg::OnBnClickedButton2(){
-	CStdioFile ads_stream;
-	CFileException e;
-	if (!ads_stream.Open(filepath + L":NOSPEAR", CStdioFile::modeCreate | CStdioFile::modeWrite, &e)) {
-		AfxTrace(TEXT("WriteNospearADS 부착 실패 %d\n"), 1);
-		return;
-	}
-	CString str;
-	str.Format(TEXT("%d"), 1);
-	ads_stream.WriteString(str);
-	AfxTrace(TEXT("WriteNospearADS 부착 성공 %d\n"), 1);
+	CString ext = PathFindExtension(filepath);
+	bool result = IsOfficeFile(ext);
+	ext.Format(TEXT("RESULT : % s"), (result) ? L"TRUE" : L"FALSE");
+	AfxMessageBox(ext);
 	return;
 }
 
 void CNoSpearClientDlg::OnBnClickedButton3(){
-	//if (database.DatabaseOpen(L"NOSPEAR")) {
-	//	AfxTrace(TEXT("[LIVEPROTECT::LIVEPROTECT] Can't Create NOSPEAR_HISTORY DataBase.\n"));
-	//	return;
-	//}
+
+	SQLITE temp;
+	if (temp.DatabaseOpen(L"NOSPEAR")) {
+		AfxTrace(TEXT("[LIVEPROTECT::LIVEPROTECT] Can't Create NOSPEAR_HISTORY DataBase.\n"));
+		return;
+	}
+	
+	sqlite3_select p_selResult = temp.SelectSqlite(L"select NOSPEAR, ZoneIdentifier, ProcessName from NOSPEAR_LocalFileList WHERE FilePath='" + filepath + L"' LIMIT 1;");
+	if (p_selResult.pnRow != 0) {
+		//std::string sel1 = p_selResult.pazResult[3];
+		//std::string sel2 = p_selResult.pazResult[4];
+		//std::string sel3 = p_selResult.pazResult[5];
+		int nospear = stoi(p_selResult.pazResult[3]);
+		int zone = stoi(p_selResult.pazResult[4]);
+		CString ProcessName(p_selResult.pazResult[5]);
+		AfxTrace(TEXT("FIND Local DB ADS : %d, Zone : %d\, ProcessName : %s\n"), nospear, zone, ProcessName);
+		if (zone != 0)
+			AfxTrace(TEXT("Attatch Zone.Identifier Zone : %d\, ProcessName : %s\n"), zone, ProcessName);
+	}
+
+
+
 
 	////CString strInsQuery = _T("Insert into helloworld VALUES( NULL,'" + filepath + "');");
 	////int rc = database.ExecuteSqlite(strInsQuery);

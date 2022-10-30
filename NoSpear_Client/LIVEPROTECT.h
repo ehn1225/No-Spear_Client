@@ -38,6 +38,7 @@ class LIVEPROTECT{
     static DWORD ScannerWorker(PSCANNER_THREAD_CONTEXT Context);
     static CString GetProcessName(unsigned long pid);
     static bool IsOfficeProgram(unsigned long pid);
+    static bool LIVEPROTECT::IsOfficeFile(CString ext);
 
     HANDLE port, completion;
     //문서프로그램 배열 필요함
