@@ -160,15 +160,15 @@ BOOL CNoSpearClientDlg::OnInitDialog()
 		client = new NOSPEAR();
 	}
 
-	//ZeroMemory(&nid, sizeof(nid));
-	//nid.cbSize = sizeof(NOTIFYICONDATA);
-	//nid.uID = 0;    // 트레이 구조체 아이디.
-	//nid.uFlags = NIF_ICON | NIF_TIP | NIF_MESSAGE;
-	//nid.hWnd = m_hWnd;
-	//nid.hIcon = AfxGetApp()->LoadIconW(IDR_MAINFRAME);
-	//nid.uCallbackMessage = WM_TRAY_NOTIFYICACTION;
-	//lstrcpy(nid.szTip, _T("No-Spear"));
-	//::Shell_NotifyIcon(NIM_ADD, &nid);
+	ZeroMemory(&nid, sizeof(nid));
+	nid.cbSize = sizeof(NOTIFYICONDATA);
+	nid.uID = 0;    // 트레이 구조체 아이디.
+	nid.uFlags = NIF_ICON | NIF_TIP | NIF_MESSAGE;
+	nid.hWnd = m_hWnd;
+	nid.hIcon = AfxGetApp()->LoadIconW(IDR_MAINFRAME);
+	nid.uCallbackMessage = WM_TRAY_NOTIFYICACTION;
+	lstrcpy(nid.szTip, _T("No-Spear"));
+	::Shell_NotifyIcon(NIM_ADD, &nid);
 
 	return TRUE;  // 포커스를 컨트롤에 설정하지 않으면 TRUE를 반환합니다.
 }
