@@ -16,13 +16,13 @@ protected:
 	afx_msg void OnPaint();
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
-
-private:
+	LRESULT OnTrayNotifyAction(WPARAM wParam, LPARAM lParam);
 	CString filename;
 	CString filepath;
 	NOSPEAR* client = NULL;
 	bool Has_ADS(CString filepath);
 	void PrintFolder(CString folderpath);
+	NOTIFYICONDATA nid;
 
 public:
 	afx_msg void OnBnClickedselectfile();
@@ -34,4 +34,5 @@ public:
 	NOSPEAR* GetClientPtr();
 	afx_msg void OnBnClickedButton2();
 	afx_msg void OnBnClickedButton3();
+	afx_msg void OnTrayExit();
 };

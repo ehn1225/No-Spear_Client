@@ -7,6 +7,7 @@
 #include "LIVEPROTECT.h"
 #include "NOSPEAR.h"
 #include "FILELISTVIEWER.h"
+#define WM_TRAY_NOTIFYICACTION (WM_USER + 10)
 
 namespace fs = std::filesystem;
 
@@ -63,11 +64,6 @@ void CAboutDlg::DoDataExchange(CDataExchange* pDX)
 BEGIN_MESSAGE_MAP(CAboutDlg, CDialogEx)
 END_MESSAGE_MAP()
 
-
-// CNoSpearClientDlg 대화 상자
-
-
-
 CNoSpearClientDlg::CNoSpearClientDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_NOSPEAR_CLIENT_DIALOG, pParent)
 	, filename(_T(""))
@@ -93,6 +89,8 @@ BEGIN_MESSAGE_MAP(CNoSpearClientDlg, CDialogEx)
 	ON_WM_DROPFILES()
 	ON_BN_CLICKED(IDC_BUTTON2, &CNoSpearClientDlg::OnBnClickedButton2)
 	ON_BN_CLICKED(IDC_BUTTON3, &CNoSpearClientDlg::OnBnClickedButton3)
+	ON_MESSAGE(WM_TRAY_NOTIFYICACTION, OnTrayNotifyAction)
+	ON_COMMAND(ID_TRAY_EXIT, &CNoSpearClientDlg::OnTrayExit)
 END_MESSAGE_MAP()
 
 
@@ -103,7 +101,6 @@ BOOL CNoSpearClientDlg::OnInitDialog()
 	CDialogEx::OnInitDialog();
 
 	// 시스템 메뉴에 "정보..." 메뉴 항목을 추가합니다.
-
 	// IDM_ABOUTBOX는 시스템 명령 범위에 있어야 합니다.
 	ASSERT((IDM_ABOUTBOX & 0xFFF0) == IDM_ABOUTBOX);
 	ASSERT(IDM_ABOUTBOX < 0xF000);
@@ -163,20 +160,63 @@ BOOL CNoSpearClientDlg::OnInitDialog()
 		client = new NOSPEAR();
 	}
 
-
+	//ZeroMemory(&nid, sizeof(nid));
+	//nid.cbSize = sizeof(NOTIFYICONDATA);
+	//nid.uID = 0;    // 트레이 구조체 아이디.
+	//nid.uFlags = NIF_ICON | NIF_TIP | NIF_MESSAGE;
+	//nid.hWnd = m_hWnd;
+	//nid.hIcon = AfxGetApp()->LoadIconW(IDR_MAINFRAME);
+	//nid.uCallbackMessage = WM_TRAY_NOTIFYICACTION;
+	//lstrcpy(nid.szTip, _T("No-Spear"));
+	//::Shell_NotifyIcon(NIM_ADD, &nid);
 
 	return TRUE;  // 포커스를 컨트롤에 설정하지 않으면 TRUE를 반환합니다.
 }
 
+LRESULT CNoSpearClientDlg::OnTrayNotifyAction(WPARAM wParam, LPARAM lParam)
+{
+	switch (lParam)	{
+	case WM_RBUTTONDOWN:
+	{
+		CPoint ptMouse;
+		::GetCursorPos(&ptMouse);
+
+		CMenu menu;
+		menu.LoadMenu(IDR_TRAY_MENU);
+
+		CMenu* pMenu = menu.GetSubMenu(0);
+		pMenu->TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, ptMouse.x, ptMouse.y, AfxGetMainWnd());
+	}
+	break;
+
+	case WM_LBUTTONDBLCLK:
+		ShowWindow(SW_SHOW);
+	break;
+	}
+
+	return 1;
+}
 void CNoSpearClientDlg::OnSysCommand(UINT nID, LPARAM lParam)
 {
-	if ((nID & 0xFFF0) == IDM_ABOUTBOX)
-	{
+	if ((nID & 0xFFF0) == IDM_ABOUTBOX){
 		CAboutDlg dlgAbout;
 		dlgAbout.DoModal();
 	}
-	else
-	{
+	//else if (nID == SC_CLOSE) {
+	//	ShowWindow(SW_HIDE);
+	//	ZeroMemory(&nid, sizeof(nid));
+	//	nid.cbSize = sizeof(nid);
+	//	nid.dwInfoFlags = NIIF_INFO;
+	//	nid.uFlags = NIF_MESSAGE | NIF_INFO | NIF_ICON;
+	//	nid.uTimeout = 3000;
+	//	nid.hWnd = AfxGetApp()->m_pMainWnd->m_hWnd;
+	//	nid.uCallbackMessage = WM_TRAY_NOTIFYICACTION;
+	//	nid.hIcon = AfxGetApp()->LoadIconW(IDR_MAINFRAME);
+	//	lstrcpy(nid.szInfoTitle, L"No-Spear 프로그램이 백그라운드 모드로 전환되었습니다.");
+	//	lstrcpy(nid.szInfo, L"프로그램을 종료하려면 작업 표시줄 아이콘을 마우스 오른쪽 버튼으로 클릭하세요.");
+	//	::Shell_NotifyIcon(NIM_MODIFY, &nid);
+	//}
+	else{
 		CDialogEx::OnSysCommand(nID, lParam);
 	}
 }
@@ -216,8 +256,16 @@ HCURSOR CNoSpearClientDlg::OnQueryDragIcon()
 {
 	return static_cast<HCURSOR>(m_hIcon);
 }
-
-
+void CNoSpearClientDlg::OnTrayExit(){
+	NOTIFYICONDATA nid;
+	ZeroMemory(&nid, sizeof(nid));
+	nid.cbSize = sizeof(nid);
+	nid.uID = 0;
+	nid.hWnd = GetSafeHwnd();
+	if (!::Shell_NotifyIcon(NIM_DELETE, &nid))	{
+	}
+	EndDialog(0);
+}
 void CNoSpearClientDlg::OnBnClickedselectfile(){
 	// Manual Diagnose
 	// 수동검사의 파일선택 버튼을 눌렀을 때 작동을 구현
@@ -255,25 +303,6 @@ void CNoSpearClientDlg::OnBnClickedinactivelive(){
 }
 
 void CNoSpearClientDlg::OnBnClickedButton1(){
-	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
-
-	//Create Time
-	//UpdateData(TRUE);
-	//struct __stat64 buffer;
-	//_wstat64(filepath, &buffer);
-	//struct tm* timeinfo = localtime(&buffer.st_ctime); // or gmtime() depending on what you want
-	//CString tmp = CString(asctime(timeinfo));
-	////AfxMessageBox(tmp);
-
-	//time_t timeinfo1 = buffer.st_ctime; // or gmtime() depending on what you want
-	//tmp.Format(TEXT("time : %ld"), timeinfo1);
-	//AfxMessageBox(tmp);
-
-	/*time_t result = time(nullptr);
-	tmp.Format(TEXT("time : %ld"), result);
-	AfxMessageBox(tmp);*/
-
-	//SQLite 테스트
 
 	FILELISTVIEWER dlg;
 	dlg.DoModal();
@@ -297,44 +326,21 @@ NOSPEAR* CNoSpearClientDlg::GetClientPtr(){
 	return client;
 }
 
-bool IsOfficeFile(CString ext) {
-	set<CString> list;
-	list.insert(L".doc");
-	list.insert(L".docx");
-	list.insert(L".xls");
-	list.insert(L".xlsx");
-	list.insert(L".pptx");
-	list.insert(L".ppsx");
-	//list.insert(L"hwp");
-	//list.insert(L"hwpx");
-	//list.insert(L"pdf");
-
-	//Lowercase 필요할까?
-	set<CString>::iterator it = list.find(ext);
-
-	if (it != list.end())
-		return true;
-	else
-		return false;
-}
-
 void CNoSpearClientDlg::OnBnClickedButton2(){
-	CString ext = PathFindExtension(filepath);
-	bool result = IsOfficeFile(ext);
-	ext.Format(TEXT("RESULT : % s"), (result) ? L"TRUE" : L"FALSE");
-	AfxMessageBox(ext);
-	return;
+
+
+
 }
 
 void CNoSpearClientDlg::OnBnClickedButton3(){
-	CString strInsQuery;
-	CString type = L"DOCUMENT";
-	int zoneid = 3;
-	int nospear = 1;
+	//CString strInsQuery;
+	//CString type = L"DOCUMENT";
+	//int zoneid = 3;
+	//int nospear = 1;
 
-	strInsQuery.Format(TEXT("REPLACE INTO NOSPEAR_LocalFileList(FilePath, ZoneIdentifier, ProcessName, NOSPEAR, DiagnoseDate, Serverity, FileType) VALUES ('%ws','%d','%ws','%d','-','0','%ws');"), filepath, zoneid, L"sfjldsjflsjfsdldjs.exe", nospear, type);
+	//strInsQuery.Format(TEXT("REPLACE INTO NOSPEAR_LocalFileList(FilePath, ZoneIdentifier, ProcessName, NOSPEAR, DiagnoseDate, Serverity, FileType) VALUES ('%ws','%d','%ws','%d','-','0','%ws');"), filepath, zoneid, L"sfjldsjflsjfsdldjs.exe", nospear, type);
 
-	AfxMessageBox(strInsQuery);
+	//AfxMessageBox(strInsQuery);
 
 	//SQLITE temp;
 	//if (temp.DatabaseOpen(L"NOSPEAR")) {

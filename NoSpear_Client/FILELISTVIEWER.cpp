@@ -14,8 +14,7 @@ IMPLEMENT_DYNAMIC(FILELISTVIEWER, CDialogEx)
 FILELISTVIEWER::FILELISTVIEWER(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_FILELISTVIEWDIALOG, pParent)
 {
-	m_hIcon = AfxGetApp()->LoadIcon(IDI_ICON1);
-
+	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
 
 FILELISTVIEWER::~FILELISTVIEWER(){
