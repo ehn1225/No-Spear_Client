@@ -107,5 +107,29 @@
     <Image Include="res\NoSpear.ico">
       <Filter>리소스 파일</Filter>
     </Image>
+    <Image Include="res\2124221_search_document_app_essential_icon.ico">
+      <Filter>리소스 파일</Filter>
+    </Image>
+    <Image Include="res\315198_document_search_icon.ico">
+      <Filter>리소스 파일</Filter>
+    </Image>
+    <Image Include="res\search.ico">
+      <Filter>리소스 파일</Filter>
+    </Image>
+    <Image Include="res\99821_powerpoint_icon.ico">
+      <Filter>리소스 파일</Filter>
+    </Image>
+    <Image Include="res\100155_excel_icon.ico">
+      <Filter>리소스 파일</Filter>
+    </Image>
+    <Image Include="res\1555988_document_extension_file_format_hwp_icon.ico">
+      <Filter>리소스 파일</Filter>
+    </Image>
+    <Image Include="res\pdf.ico">
+      <Filter>리소스 파일</Filter>
+    </Image>
+    <Image Include="res\word.ico">
+      <Filter>리소스 파일</Filter>
+    </Image>
   </ItemGroup>
 </Project>

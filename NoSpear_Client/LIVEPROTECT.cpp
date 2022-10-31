@@ -1,6 +1,8 @@
 ﻿#include "pch.h"
 #include "NoSpear_ClientDlg.h"
 #include "LIVEPROTECT.h"
+#include "resource.h"
+#define WM_TRAY_NOTIFYICACTION (WM_USER + 10)
 
 #pragma comment(lib,"fltLib.lib")
 
@@ -62,7 +64,6 @@ bool LIVEPROTECT::WriteZoneIdentifierADS(CString filepath, CString processName){
         AfxTrace(L"WriteZoneIdentifierADS 부착 실패\n");
         return false;
     }
-    //processName.Format(TEXT("ProcessName=%ws"), processName);
     ads_stream.WriteString(L"[ZoneTransfer]\n");
     ads_stream.WriteString(L"ZoneId=3\n");
     ads_stream.WriteString(L"ADS Appended By No-Spear Client\n");
@@ -202,6 +203,7 @@ DWORD LIVEPROTECT::ScannerWorker(PSCANNER_THREAD_CONTEXT Context) {
             CString processname = GetProcessName(pid);
             CString ext = PathFindExtension(path);
             int passcode = 0;
+            unsigned short ads_result = 0;
 
             if (mode == TYPE_CREATE || ext == L".part" || ext == L".download") {
                 isMailicious = false;
@@ -234,7 +236,6 @@ DWORD LIVEPROTECT::ScannerWorker(PSCANNER_THREAD_CONTEXT Context) {
                 liveProtectDB.ExecuteSqlite(strInsQuery);
             }
             else {
-                unsigned short ads_result = 0;
                 ads_result = ReadNospearADS(path);
                 switch (ads_result) {
                     case 0:
@@ -245,17 +246,35 @@ DWORD LIVEPROTECT::ScannerWorker(PSCANNER_THREAD_CONTEXT Context) {
                         isMailicious = IsOfficeProgram(pid);
                         if (isMailicious) {
                             //ADS:NOSPEAR = 1인 파일을 사용자가 Office Program으로 실행할 때
+                            ZeroMemory(&nid, sizeof(nid));
+                            nid.cbSize = sizeof(nid);
+                            nid.dwInfoFlags = NIIF_WARNING;
+                            nid.uFlags = NIF_MESSAGE | NIF_INFO | NIF_ICON;
+                            nid.uTimeout = 2000;
+                            nid.hWnd = AfxGetApp()->m_pMainWnd->m_hWnd;
+                            nid.uCallbackMessage = WM_TRAY_NOTIFYICACTION;
+                            nid.hIcon = AfxGetApp()->LoadIconW(IDR_MAINFRAME);
+                            CString filename = PathFindFileName(path);
+                            lstrcpy(nid.szInfoTitle, L"악성 의심 파일의 실행을 차단하였습니다");
+                            lstrcpy(nid.szInfo, (filename + L"은 사용자 컴퓨터에서 실행이 허용되지 않은 파일이므로 차단되었습니다."));
+                            ::Shell_NotifyIcon(NIM_MODIFY, &nid);
+
                             CString errMsg;
-                            errMsg.Format(TEXT("새로운 문서 파일이 실행되는 것을 탐지하였습니다.\n파일명 : %ws\n 검사를 진행하시겠습니까? "), PathFindFileName(path));
-                            if (AfxMessageBox(errMsg, MB_YESNO | MB_ICONWARNING) == IDYES) {
-                                AfxMessageBox(L"검사를 진행합니다.");
-                                isMailicious = true;
-                                passcode = 81;
-                            }
-                            else {
-                                WriteNospearADS(path, 2);
-                                isMailicious = false;
-                                passcode = 82;
+                            errMsg.Format(TEXT("새로운 문서 파일이 실행되는 것을 탐지하였습니다.\n파일명 : %ws\n 검사를 진행하시겠습니까?\n검사를 진행하려면 \"예\"를, 검사 없이 문서를 여시려면 \"아니요\", 문서 실행을 취소하려면 \"취소\"를 누르세요."), filename);
+                            switch (AfxMessageBox(errMsg, MB_YESNOCANCEL | MB_ICONWARNING)) {
+                                case IDYES:
+                                    AfxMessageBox(L"검사를 진행합니다.");
+                                case IDCANCEL:
+                                default:
+                                    passcode = 81;
+                                    break;
+                                case IDNO:
+                                    AfxMessageBox(L"검사없이 파일을 실행합니다.");
+                                    WriteNospearADS(path, 2);
+                                    ads_result = 2;
+                                    isMailicious = false;
+                                    passcode = 82;
+                                    break;
                             }
                         }
                         passcode = 4;
@@ -285,11 +304,14 @@ DWORD LIVEPROTECT::ScannerWorker(PSCANNER_THREAD_CONTEXT Context) {
                                 WriteNospearADS(path, nospear);
                                 if (zone != 0)
                                     WriteZoneIdentifierADS(path, ProcessName);
+                                if (nospear == 1 && IsOfficeProgram(pid))
+                                    isMailicious = true;
                                 passcode = 71;
                                 break;
                             }
                             else {
                                 //LocalFileDB에 없으면서 ADS:NOSPEAR도 없을 때
+                                //Office 프로그램이 생성한 파일은 CREATE로그가 존재하기에 여기에 안걸림
                                 //실시간 검사가 없을 때 생긴 파일이므로 DB에 추가함
                                 //악성문서일 가능성으로 인해 차단함
                                 WriteNospearADS(path, 1);
@@ -297,7 +319,10 @@ DWORD LIVEPROTECT::ScannerWorker(PSCANNER_THREAD_CONTEXT Context) {
                                 int zoneid = ReadZoneIdentifierADS(path) ? 3 : 0;
                                 strInsQuery.Format(TEXT("INSERT INTO NOSPEAR_LocalFileList(FilePath, ZoneIdentifier, ProcessName, NOSPEAR, DiagnoseDate, Serverity, FileType) VALUES ('%ws','%d','%ws','1','-','0','DOCUMENT');"), path, zoneid, processname);
                                 liveProtectDB.ExecuteSqlite(strInsQuery);
-                                isMailicious = true;
+                                //Office 프로그램 한정 차단
+                                if (IsOfficeProgram(pid)) {
+                                    isMailicious = true;
+                                }
                                 passcode = 72;
                                 break;
                             }                           
@@ -305,16 +330,17 @@ DWORD LIVEPROTECT::ScannerWorker(PSCANNER_THREAD_CONTEXT Context) {
                         
                         break;
                 }
+               
+
             }
 
-            CString tmp;
-            tmp.Format(TEXT("process name : %ws, FilePath : %ws, MODE : %d, Permit : %ws(%d), Pass Code : %d\n"), processname, path, mode, ((isMailicious) ? L"BLOCK" : L"ALLOW"), passcode);
-            AfxTrace(tmp);
-
-            CString str_mode[] = {L"OPEN",  L"CREATE", L"DELETE"};
+            CString str_mode[] = { L"OPEN",  L"CREATE", L"DELETE" };
             //최종결과를 NOSPEAR:NOSPEAR_HISTORY 테이블에 저장 
-            CString strInsQuery = _T("INSERT INTO NOSPEAR_HISTORY(FilePath, ProcessName, Operation, Permission) VALUES ('" + path + "','" + processname +"','" + str_mode[mode] + "','" + ((isMailicious) ? L"BLOCKED" : L"ALLOWED") + "');");
+            CString strInsQuery;
+            strInsQuery.Format(TEXT("INSERT INTO NOSPEAR_HISTORY(FilePath, ProcessName, Operation, NOSPEAR, Permission) VALUES ('%ws','%ws','%ws','%d','%ws');"), path, processname, str_mode[mode], ads_result, ((isMailicious) ? L"BLOCKED" : L"ALLOWED"));
             liveProtectDB.ExecuteSqlite(strInsQuery);
+            AfxTrace(strInsQuery);
+
         }
        
         replyMessage.ReplyHeader.Status = 0;
@@ -358,7 +384,8 @@ LIVEPROTECT::LIVEPROTECT() {
         AfxTrace(TEXT("[LIVEPROTECT::LIVEPROTECT] Can't Create NOSPEAR_HISTORY DataBase.\n"));
         return;
     }
-    liveProtectDB.ExecuteSqlite(L"CREATE TABLE IF NOT EXISTS NOSPEAR_HISTORY(SEQ INTEGER PRIMARY KEY AUTOINCREMENT, TimeStamp TEXT not null DEFAULT (datetime('now', 'localtime')), FilePath TEXT NOT NULL, ProcessName TEXT, Operation TEXT, Permission TEXT);");
+
+    liveProtectDB.ExecuteSqlite(L"CREATE TABLE IF NOT EXISTS NOSPEAR_HISTORY(SEQ INTEGER PRIMARY KEY AUTOINCREMENT, TimeStamp TEXT not null DEFAULT (datetime('now', 'localtime')), FilePath TEXT NOT NULL, ProcessName TEXT, Operation TEXT, NOSPEAR INTEGER, Permission TEXT);");
     liveProtectDB.ExecuteSqlite(L"CREATE TABLE IF NOT EXISTS NOSPEAR_LocalFileList(FilePath TEXT NOT NULL PRIMARY KEY, ZoneIdentifier INTEGER, ProcessName TEXT, NOSPEAR INTEGER, DiagnoseDate TEXT, Serverity INTEGER, FileType TEXT, TimeStamp TEXT not null DEFAULT (datetime('now', 'localtime')));");
     
 }

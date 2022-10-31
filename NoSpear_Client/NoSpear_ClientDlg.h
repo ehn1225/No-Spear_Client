@@ -23,6 +23,7 @@ protected:
 	bool Has_ADS(CString filepath);
 	void PrintFolder(CString folderpath);
 	NOTIFYICONDATA nid;
+	CBrush   m_background;
 
 public:
 	afx_msg void OnBnClickedselectfile();
@@ -35,4 +36,5 @@ public:
 	afx_msg void OnBnClickedButton2();
 	afx_msg void OnBnClickedButton3();
 	afx_msg void OnTrayExit();
+	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 };

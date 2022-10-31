@@ -44,4 +44,8 @@ public:
 	afx_msg void OnCbnSelchangeCombo1();
 	CComboBox file_check_combo;
 	afx_msg void OnBnClickeddiagnose();
+	CStatic btn_search;
+	CBrush   m_background;
+	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
+	afx_msg void OnStnClickedsearch();
 };

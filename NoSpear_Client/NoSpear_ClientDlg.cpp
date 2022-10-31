@@ -68,7 +68,7 @@ CNoSpearClientDlg::CNoSpearClientDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_NOSPEAR_CLIENT_DIALOG, pParent)
 	, filename(_T(""))
 {
-	m_hIcon = AfxGetApp()->LoadIcon(IDI_ICON1);
+	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
 
 void CNoSpearClientDlg::DoDataExchange(CDataExchange* pDX)
@@ -91,6 +91,7 @@ BEGIN_MESSAGE_MAP(CNoSpearClientDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON3, &CNoSpearClientDlg::OnBnClickedButton3)
 	ON_MESSAGE(WM_TRAY_NOTIFYICACTION, OnTrayNotifyAction)
 	ON_COMMAND(ID_TRAY_EXIT, &CNoSpearClientDlg::OnTrayExit)
+	ON_WM_CTLCOLOR()
 END_MESSAGE_MAP()
 
 
@@ -169,6 +170,7 @@ BOOL CNoSpearClientDlg::OnInitDialog()
 	nid.uCallbackMessage = WM_TRAY_NOTIFYICACTION;
 	lstrcpy(nid.szTip, _T("No-Spear"));
 	::Shell_NotifyIcon(NIM_ADD, &nid);
+	m_background.CreateSolidBrush(RGB(255, 255, 255));
 
 	return TRUE;  // 포커스를 컨트롤에 설정하지 않으면 TRUE를 반환합니다.
 }
@@ -325,9 +327,31 @@ void CNoSpearClientDlg::OnDropFiles(HDROP hDropInfo){
 NOSPEAR* CNoSpearClientDlg::GetClientPtr(){
 	return client;
 }
+#define UPDATECHECK_BROWSER_STRING _T("No-Spear Update")
 
 void CNoSpearClientDlg::OnBnClickedButton2(){
+	CWaitCursor wait;
+	HINTERNET hInet = InternetOpen(UPDATECHECK_BROWSER_STRING, INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, NULL);
+	HINTERNET hUrl = InternetOpenUrl(hInet, CString("http://localhost/"), NULL, -1L,
+		INTERNET_FLAG_RELOAD | INTERNET_FLAG_PRAGMA_NOCACHE |
+		INTERNET_FLAG_NO_CACHE_WRITE | WININET_API_FLAG_ASYNC, NULL);
+	if (hUrl){
+		AfxTrace(L"in\n");
+		char szBuffer[512] = {0, };
+		DWORD dwRead;
+		if (InternetReadFile(hUrl, szBuffer, sizeof(szBuffer), &dwRead) && dwRead > 0)
+		{
 
+				CString fileversion(szBuffer);
+				AfxTrace(fileversion);
+
+		}
+		InternetCloseHandle(hUrl);
+	}
+	else {
+		AfxTrace(L"nope\n");
+	}
+	InternetCloseHandle(hInet);
 
 
 }
@@ -392,4 +416,11 @@ void CNoSpearClientDlg::OnBnClickedButton3(){
 	//	}
 
 	//}
+}
+
+
+HBRUSH CNoSpearClientDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor){
+	HBRUSH hbr = CDialogEx::OnCtlColor(pDC, pWnd, nCtlColor);
+	hbr = (HBRUSH)m_background;
+	return hbr;
 }

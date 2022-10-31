@@ -23,6 +23,7 @@ typedef struct _SCANNER_REPLY_MESSAGE {
 static bool threadstatus = false;
 static std::set<CString> safeDocList;
 static SQLITE liveProtectDB;
+static NOTIFYICONDATA nid;
 
 class LIVEPROTECT{
     const DWORD requestCount = SCANNER_DEFAULT_REQUEST_COUNT;
@@ -39,10 +40,7 @@ class LIVEPROTECT{
     static CString GetProcessName(unsigned long pid);
     static bool IsOfficeProgram(unsigned long pid);
     static bool LIVEPROTECT::IsOfficeFile(CString ext);
-
     HANDLE port, completion;
-    //문서프로그램 배열 필요함
-    //캐시 배열 필요함(ADS:Block 이지만, 허용하고 싶어)
 
 public:
     LIVEPROTECT();

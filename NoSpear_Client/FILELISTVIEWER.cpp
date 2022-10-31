@@ -4,7 +4,7 @@
 #include "afxdialogex.h"
 #include "FILELISTVIEWER.h"
 #include "NOSPEAR.h"
-
+#include "afxwin.h"
 
 using namespace std;
 namespace fs = std::filesystem;
@@ -24,6 +24,7 @@ void FILELISTVIEWER::DoDataExchange(CDataExchange* pDX){
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_FileListCtrl, filelistbox);
 	DDX_Control(pDX, IDC_COMBO1, file_check_combo);
+	DDX_Control(pDX, IDC_search, btn_search);
 }
 
 BOOL FILELISTVIEWER::OnInitDialog(){
@@ -54,6 +55,7 @@ BOOL FILELISTVIEWER::OnInitDialog(){
 	m_iDlgLimitMinWidth = rcWin.Width();
 	m_iDlgLimitMinHeight = rcWin.Height();
 
+	m_background.CreateSolidBrush(RGB(255,255,255));
 	return 0;
 }
 
@@ -82,6 +84,8 @@ BEGIN_MESSAGE_MAP(FILELISTVIEWER, CDialogEx)
 	ON_NOTIFY(NM_DBLCLK, IDC_FileListCtrl, &FILELISTVIEWER::OnNMDblclkFilelistctrl)
 	ON_CBN_SELCHANGE(IDC_COMBO1, &FILELISTVIEWER::OnCbnSelchangeCombo1)
 	ON_BN_CLICKED(btn_diagnose, &FILELISTVIEWER::OnBnClickeddiagnose)
+ON_WM_CTLCOLOR()
+ON_STN_CLICKED(IDC_search, &FILELISTVIEWER::OnStnClickedsearch)
 END_MESSAGE_MAP()
 
 void FILELISTVIEWER::OnGetMinMaxInfo(MINMAXINFO* lpMMI){
@@ -208,7 +212,7 @@ void FILELISTVIEWER::OnHdnItemclickFilelistctrl(NMHDR* pNMHDR, LRESULT* pResult)
 }
 
 void FILELISTVIEWER::OnBnClickedButton1(){
-	PrintFolder(L"C:\\Users");
+	//PrintFolder(L"C:\\Users");
 }
 
 void FILELISTVIEWER::OnBnClickedSelectfolder(){
@@ -293,4 +297,15 @@ void FILELISTVIEWER::OnBnClickeddiagnose(){
 
 	//완료되면 List Control 새로고침
 	
+}
+
+HBRUSH FILELISTVIEWER::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor){
+	HBRUSH hbr = CDialogEx::OnCtlColor(pDC, pWnd, nCtlColor);
+	hbr = (HBRUSH)m_background;
+	return hbr;
+}
+
+
+void FILELISTVIEWER::OnStnClickedsearch(){
+	PrintFolder(L"C:\\Users");
 }
