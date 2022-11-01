@@ -1,11 +1,26 @@
-﻿#pragma once
+﻿struct SORTPARAM {
+	int iSortColumn;
+	bool bSortDirect;
+	CListCtrl* pList;
+};
+struct LOCALFILELISTDB {
+	CString FilePath;
+	CString ZoneIdentifier;
+	CString ProcessName;
+	CString NOSPEAR;
+	CString DiagnoseDate;
+	CString Serverity;
+	CString FileType;
+	CString TimeStamp;
+};
+class SQLITE;
 class FILELISTVIEWER : public CDialogEx
 {
 	DECLARE_DYNAMIC(FILELISTVIEWER)
 
 public:
 	FILELISTVIEWER(CWnd* pParent = nullptr);   // 표준 생성자입니다.
-	virtual ~FILELISTVIEWER();
+	~FILELISTVIEWER();
 
 // 대화 상자 데이터입니다.
 #ifdef AFX_DESIGN_TIME
@@ -13,6 +28,8 @@ public:
 #endif
 
 protected:
+	NOSPEAR* nospear_ptr = NULL;
+	SQLITE* fileViewerDB;
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 지원입니다.
 	virtual BOOL OnInitDialog();
 	DECLARE_MESSAGE_MAP()
@@ -20,32 +37,32 @@ protected:
 	HICON m_hIcon;
 	int m_iDlgLimitMinWidth;
 	int m_iDlgLimitMinHeight;
-	NOSPEAR* nospear_ptr= NULL;
-
-public:
-
+	std::set<CString> office_file_ext_list;
 	afx_msg void OnGetMinMaxInfo(MINMAXINFO* lpMMI);
-	bool Has_ADS(CString filepath);
-	void PrintFolder(CString folderpath);
+	bool HasZoneIdentifierADS(CString filepath);
+	bool IsOfficeFile(CString ext);
 	static int CALLBACK CompareItem(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
 	CListCtrl filelistbox;
-	int nSortColumn;
+	NOTIFYICONDATA nid;
 	bool bAscending;
-	struct SORTPARAM {
-		int iSortColumn;
-		bool bSortDirect;
-		CListCtrl* pList;
-	};
+	CBrush   m_background;
+	CComboBox file_check_combo;
+	CToolTipCtrl tooltip;
+	bool DB_status;
+	std::vector<LOCALFILELISTDB> filelist;
+	std::map<CString, bool> ext_filter;
+	void ScanLocalFile(CString rootPath);
+	unsigned short ReadNospearADS(CString filepath);
+
+public:
 	afx_msg void OnHdnItemclickFilelistctrl(NMHDR* pNMHDR, LRESULT* pResult);
-	afx_msg void OnBnClickedButton1();
-	afx_msg void OnBnClickedSelectfolder();
 	afx_msg void OnHdnItemdblclickFilelistctrl(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnNMDblclkFilelistctrl(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnCbnSelchangeCombo1();
-	CComboBox file_check_combo;
 	afx_msg void OnBnClickeddiagnose();
-	CStatic btn_search;
-	CBrush   m_background;
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
-	afx_msg void OnStnClickedsearch();
+	virtual BOOL PreTranslateMessage(MSG* pMsg);
+	afx_msg void OnStnClickedrefreshlist();
+	afx_msg void OnCheckBoxChange(UINT nID);
+	afx_msg void OnStnClickedrefreshdb();
 };

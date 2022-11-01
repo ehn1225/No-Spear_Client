@@ -112,40 +112,20 @@ CString LIVEPROTECT::GetProcessName(unsigned long pid){
 }
 
 bool LIVEPROTECT::IsOfficeProgram(unsigned long pid){
-    set<CString> list;
-    list.insert(L"POWERPNT.EXE");       //MS Office PowerPoint
-    list.insert(L"WINWORD.EXE");        //MS Office Word
-    list.insert(L"EXCEL.EXE");          //MS Office Excel
-    list.insert(L"HwpViewer.exe");      //Hancom hangule Viewer
-    list.insert(L"scalc.exe");          //LibreOffice Excel
-    list.insert(L"swriter.exe");        //LibreOffice Word
-    list.insert(L"simpress.exe");       //LibreOffice PowerPoint
-
     //Lowercase 필요할까?
     CString programName = GetProcessName(pid);
     programName = PathFindFileName(programName);
-    set<CString>::iterator it = list.find(programName);
+    set<CString>::iterator it = office_program_list.find(programName);
 
-    if (it != list.end())
+    if (it != office_program_list.end())
         return true;
     else
         return false;
 }
 bool LIVEPROTECT::IsOfficeFile(CString ext) {
-    set<CString> list;
-    list.insert(L".doc");
-    list.insert(L".docx");
-    list.insert(L".xls");
-    list.insert(L".xlsx");
-    list.insert(L".pptx");
-    list.insert(L".ppsx");
-    list.insert(L"hwp");
-    list.insert(L"hwpx");
-    list.insert(L"pdf");
+    set<CString>::iterator it = office_file_ext_list.find(ext);
 
-    set<CString>::iterator it = list.find(ext);
-
-    if (it != list.end())
+    if (it != office_file_ext_list.end())
         return true;
     else
         return false;
@@ -388,6 +368,23 @@ LIVEPROTECT::LIVEPROTECT() {
     liveProtectDB.ExecuteSqlite(L"CREATE TABLE IF NOT EXISTS NOSPEAR_HISTORY(SEQ INTEGER PRIMARY KEY AUTOINCREMENT, TimeStamp TEXT not null DEFAULT (datetime('now', 'localtime')), FilePath TEXT NOT NULL, ProcessName TEXT, Operation TEXT, NOSPEAR INTEGER, Permission TEXT);");
     liveProtectDB.ExecuteSqlite(L"CREATE TABLE IF NOT EXISTS NOSPEAR_LocalFileList(FilePath TEXT NOT NULL PRIMARY KEY, ZoneIdentifier INTEGER, ProcessName TEXT, NOSPEAR INTEGER, DiagnoseDate TEXT, Serverity INTEGER, FileType TEXT, TimeStamp TEXT not null DEFAULT (datetime('now', 'localtime')));");
     
+    office_file_ext_list.insert(L".doc");
+    office_file_ext_list.insert(L".docx");
+    office_file_ext_list.insert(L".xls");
+    office_file_ext_list.insert(L".xlsx");
+    office_file_ext_list.insert(L".pptx");
+    office_file_ext_list.insert(L".ppsx");
+    office_file_ext_list.insert(L".hwp");
+    office_file_ext_list.insert(L".hwpx");
+    office_file_ext_list.insert(L".pdf");
+
+     office_program_list.insert(L"POWERPNT.EXE");       //MS Office PowerPoint
+    office_program_list.insert(L"WINWORD.EXE");        //MS Office Word
+    office_program_list.insert(L"EXCEL.EXE");          //MS Office Excel
+    office_program_list.insert(L"HwpViewer.exe");      //Hancom hangule Viewer
+    office_program_list.insert(L"scalc.exe");          //LibreOffice Excel
+    office_program_list.insert(L"swriter.exe");        //LibreOffice Word
+    office_program_list.insert(L"simpress.exe");       //LibreOffice PowerPoint
 }
 
 LIVEPROTECT::~LIVEPROTECT() {

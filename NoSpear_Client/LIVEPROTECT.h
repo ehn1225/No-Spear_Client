@@ -24,6 +24,9 @@ static bool threadstatus = false;
 static std::set<CString> safeDocList;
 static SQLITE liveProtectDB;
 static NOTIFYICONDATA nid;
+static std::set<CString> office_file_ext_list;
+static std::set<CString> office_program_list;
+
 
 class LIVEPROTECT{
     const DWORD requestCount = SCANNER_DEFAULT_REQUEST_COUNT;

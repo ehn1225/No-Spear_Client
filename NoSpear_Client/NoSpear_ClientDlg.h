@@ -1,5 +1,5 @@
-﻿class LIVEPROTECT;
-class NOSPEAR;
+﻿class NOSPEAR;
+class FILELISTVIEWER;
 class CNoSpearClientDlg : public CDialogEx{
 public:
 	CNoSpearClientDlg(CWnd* pParent = nullptr);
@@ -19,11 +19,12 @@ protected:
 	LRESULT OnTrayNotifyAction(WPARAM wParam, LPARAM lParam);
 	CString filename;
 	CString filepath;
-	NOSPEAR* client = NULL;
 	bool Has_ADS(CString filepath);
 	void PrintFolder(CString folderpath);
 	NOTIFYICONDATA nid;
-	CBrush   m_background;
+	CBrush m_background;
+	NOSPEAR* client = NULL;
+	FILELISTVIEWER* fileListViewer = NULL;
 
 public:
 	afx_msg void OnBnClickedselectfile();
@@ -37,4 +38,6 @@ public:
 	afx_msg void OnBnClickedButton3();
 	afx_msg void OnTrayExit();
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
+	afx_msg void OnClose();
+
 };

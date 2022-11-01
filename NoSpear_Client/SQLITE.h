@@ -14,5 +14,6 @@ public:
 	int DatabaseOpen(CString dbname);
 	int ExecuteSqlite(CString query);
 	sqlite3_select SelectSqlite(CString query);
+	static CString Utf8ToCString(char *);
 };
 

@@ -5,9 +5,11 @@
 #include "FILELISTVIEWER.h"
 #include "NOSPEAR.h"
 #include "afxwin.h"
+#include "SQLITE.h"
 
 using namespace std;
 namespace fs = std::filesystem;
+#define WM_TRAY_NOTIFYICACTION (WM_USER + 10)
 
 IMPLEMENT_DYNAMIC(FILELISTVIEWER, CDialogEx)
 
@@ -15,6 +17,7 @@ FILELISTVIEWER::FILELISTVIEWER(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_FILELISTVIEWDIALOG, pParent)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
+	
 }
 
 FILELISTVIEWER::~FILELISTVIEWER(){
@@ -24,20 +27,21 @@ void FILELISTVIEWER::DoDataExchange(CDataExchange* pDX){
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_FileListCtrl, filelistbox);
 	DDX_Control(pDX, IDC_COMBO1, file_check_combo);
-	DDX_Control(pDX, IDC_search, btn_search);
 }
 
 BOOL FILELISTVIEWER::OnInitDialog(){
 	CDialogEx::OnInitDialog();
 	nospear_ptr = ((CNoSpearClientDlg*)GetParent())->GetClientPtr();
+	fileViewerDB = nospear_ptr->GetSQLitePtr();
 
 	filelistbox.InsertColumn(0, L"파일명", LVCFMT_LEFT, 200, -1);
-	filelistbox.InsertColumn(1, L"확장자", LVCFMT_CENTER, 70, -1);
-	filelistbox.InsertColumn(2, L"파일경로", LVCFMT_LEFT, 150, -1);
-	filelistbox.InsertColumn(3, L"위험도", LVCFMT_CENTER, 90, -1);
+	filelistbox.InsertColumn(1, L"ADS:Zone.Identifier", LVCFMT_CENTER, 90, -1);
+	filelistbox.InsertColumn(2, L"Create Process", LVCFMT_CENTER, 100, -1);
+	filelistbox.InsertColumn(3, L"ADS:NOSPEAR", LVCFMT_CENTER, 90, -1);
 	filelistbox.InsertColumn(4, L"검사 날짜", LVCFMT_LEFT, 100, -1);
-	filelistbox.InsertColumn(5, L"ADS:Zone.Identifier", LVCFMT_CENTER, 70, -1);
-	filelistbox.InsertColumn(6, L"ADS:NOSPEAR", LVCFMT_CENTER, 70, -1);
+	filelistbox.InsertColumn(5, L"위험도", LVCFMT_CENTER, 50, -1);
+	filelistbox.InsertColumn(6, L"생성 일자", LVCFMT_CENTER, 140, -1);
+	filelistbox.InsertColumn(7, L"파일경로", LVCFMT_CENTER, 0, -1);
 	filelistbox.SetExtendedStyle(LVS_EX_CHECKBOXES | LVS_EX_FULLROWSELECT);
 
 	CRect rctComboBox, rctDropDown;
@@ -56,6 +60,50 @@ BOOL FILELISTVIEWER::OnInitDialog(){
 	m_iDlgLimitMinHeight = rcWin.Height();
 
 	m_background.CreateSolidBrush(RGB(255,255,255));
+
+	office_file_ext_list.insert(L".doc");
+	office_file_ext_list.insert(L".docx");
+	office_file_ext_list.insert(L".xls");
+	office_file_ext_list.insert(L".xlsx");
+	office_file_ext_list.insert(L".pptx");
+	office_file_ext_list.insert(L".ppsx");
+	office_file_ext_list.insert(L".hwp");
+	office_file_ext_list.insert(L".hwpx");
+	office_file_ext_list.insert(L".pdf");
+	tooltip.Create(this);
+	tooltip.AddTool(GetDlgItem(IDC_refreshDB), L"DB 새로고침");
+	tooltip.AddTool(GetDlgItem(IDC_refreshlist), L"화면 새로고침");
+	tooltip.AddTool(GetDlgItem(IDC_search2), L"한글 문서 선택");
+	tooltip.AddTool(GetDlgItem(IDC_search3), L"PDF 문서 선택");
+	tooltip.AddTool(GetDlgItem(IDC_search4), L"PPT 문서 선택");
+	tooltip.AddTool(GetDlgItem(IDC_search5), L"WORD 문서 선택");
+	tooltip.AddTool(GetDlgItem(IDC_search6), L"EXCEL 문서 선택");
+	tooltip.AddTool(GetDlgItem(btn_diagnose), L"체크한 문서를 검사합니다.");
+
+	if (fileViewerDB->DatabaseOpen(L"NOSPEAR")) {
+		AfxTrace(TEXT("[LIVEPROTECT::LIVEPROTECT] Can't Create NOSPEAR_HISTORY DataBase.\n"));
+		DB_status = false;
+	}
+	else{
+		DB_status = true;
+		fileViewerDB->ExecuteSqlite(L"CREATE TABLE IF NOT EXISTS NOSPEAR_LocalFileList(FilePath TEXT NOT NULL PRIMARY KEY, ZoneIdentifier INTEGER, ProcessName TEXT, NOSPEAR INTEGER, DiagnoseDate TEXT, Serverity INTEGER, FileType TEXT, TimeStamp TEXT not null DEFAULT (datetime('now', 'localtime')));");
+	}
+	ext_filter.insert(make_pair(".doc", true));
+	ext_filter.insert(make_pair(".docx", true));
+	ext_filter.insert(make_pair(".xls", true));
+	ext_filter.insert(make_pair(".xlsx", true));
+	ext_filter.insert(make_pair(".pptx", true));
+	ext_filter.insert(make_pair(".ppsx", true));
+	ext_filter.insert(make_pair(".hwp", true));
+	ext_filter.insert(make_pair(".hwpx", true));
+	ext_filter.insert(make_pair(".pdf", true));
+	((CButton*)GetDlgItem(IDC_CHECK1))->SetCheck(true);
+	((CButton*)GetDlgItem(IDC_CHECK2))->SetCheck(true);
+	((CButton*)GetDlgItem(IDC_CHECK3))->SetCheck(true);
+	((CButton*)GetDlgItem(IDC_CHECK4))->SetCheck(true);
+	((CButton*)GetDlgItem(IDC_CHECK5))->SetCheck(true);
+
+	OnStnClickedrefreshlist();
 	return 0;
 }
 
@@ -79,13 +127,13 @@ void FILELISTVIEWER::OnPaint(){
 BEGIN_MESSAGE_MAP(FILELISTVIEWER, CDialogEx)
 	ON_WM_GETMINMAXINFO()
 	ON_NOTIFY(HDN_ITEMCLICK, 0, &FILELISTVIEWER::OnHdnItemclickFilelistctrl)
-	ON_BN_CLICKED(IDC_BUTTON1, &FILELISTVIEWER::OnBnClickedButton1)
-	ON_BN_CLICKED(btn_SelectFolder, &FILELISTVIEWER::OnBnClickedSelectfolder)
 	ON_NOTIFY(NM_DBLCLK, IDC_FileListCtrl, &FILELISTVIEWER::OnNMDblclkFilelistctrl)
 	ON_CBN_SELCHANGE(IDC_COMBO1, &FILELISTVIEWER::OnCbnSelchangeCombo1)
 	ON_BN_CLICKED(btn_diagnose, &FILELISTVIEWER::OnBnClickeddiagnose)
-ON_WM_CTLCOLOR()
-ON_STN_CLICKED(IDC_search, &FILELISTVIEWER::OnStnClickedsearch)
+	ON_WM_CTLCOLOR()
+	ON_STN_CLICKED(IDC_refreshlist, &FILELISTVIEWER::OnStnClickedrefreshlist)
+	ON_COMMAND_RANGE(IDC_CHECK1, IDC_CHECK5, &FILELISTVIEWER::OnCheckBoxChange)
+	ON_STN_CLICKED(IDC_refreshDB, &FILELISTVIEWER::OnStnClickedrefreshdb)
 END_MESSAGE_MAP()
 
 void FILELISTVIEWER::OnGetMinMaxInfo(MINMAXINFO* lpMMI){
@@ -94,48 +142,54 @@ void FILELISTVIEWER::OnGetMinMaxInfo(MINMAXINFO* lpMMI){
 	CDialogEx::OnGetMinMaxInfo(lpMMI);
 }
 
-bool FILELISTVIEWER::Has_ADS(CString filepath) {
-	//filepath로 주어진 파일의 ADS를 확인해보고, Zone.Identifier가 있으면 true, 없으면 false 리턴
-	//여기서 Zone.Identifier, NOSPEAR, NOSPEAR value 다 확인해서 구조체로 넘겨주자
-	WIN32_FIND_STREAM_DATA fsd;
-	HANDLE hFind = NULL;
-
-	try {
-		hFind = ::FindFirstStreamW(filepath, FindStreamInfoStandard, &fsd, 0);
-		if (hFind == INVALID_HANDLE_VALUE) throw ::GetLastError();
-
-		for (;;) {
-			CString tmp;
-			tmp.Format(TEXT("%s"), fsd.cStreamName);
-			if (tmp == L":Zone.Identifier:$DATA") {
-				return true;
-			}
-			if (!::FindNextStreamW(hFind, &fsd)) {
-				DWORD dr = ::GetLastError();
-				if (dr != ERROR_HANDLE_EOF) throw dr;
-				break;
-			}
-		}
+bool FILELISTVIEWER::HasZoneIdentifierADS(CString filepath) {
+	CStdioFile ads_stream;
+	CFileException e;
+	if (!ads_stream.Open(filepath + L":Zone.Identifier", CFile::modeRead, &e)) {
+		return false;
 	}
-	catch (DWORD err) {
-		AfxTrace(TEXT("Error! Windows error code: %u\n", err));
-	}
-
-	if (hFind != NULL) ::FindClose(hFind);
-
-	return false;
+	return true;
 }
 
-void FILELISTVIEWER::PrintFolder(CString folderpath) {
-	//매개변수로 입력된 폴더 경로를 재귀 탐색하여 문서 파일을 Listview에 출력해줌.
+bool FILELISTVIEWER::IsOfficeFile(CString ext) {
+	set<CString>::iterator it = office_file_ext_list.find(ext);
+
+	if (it != office_file_ext_list.end())
+		return true;
+	else
+		return false;
+}
+
+unsigned short FILELISTVIEWER::ReadNospearADS(CString filepath) {
+
+	CStdioFile ads_stream;
+	CFileException e;
+	if (!ads_stream.Open(filepath + L":NOSPEAR", CFile::modeRead, &e)) {
+		return -1;
+	}
+
+	CString str;
+	ads_stream.ReadString(str);
+
+	if (str == L"0")
+		return 0;
+	else if (str == L"1")
+		return 1;
+	else if (str == L"2")
+		return 2;
+	else {
+		return -1;
+	}
+}
+
+void FILELISTVIEWER::ScanLocalFile(CString rootPath) {
+	//매개변수로 입력된 폴더 경로를 재귀 탐색하여 문서 파일을 DB에 저장함
+	//Host -> DB 방향 검사
 	//filesystem test, https://stackoverflow.com/questions/62988629/c-stdfilesystemfilesystem-error-exception-trying-to-read-system-volume-inf
 
-	string strfilepath = string(CT2CA(folderpath));
+	string strfilepath = string(CT2CA(rootPath));
 	fs::path rootdir(strfilepath);
 	CString rootname = CString(rootdir.root_name().string().c_str()) + "\\";
-
-	//기존 리스트 컨트롤 아이템 삭제
-	filelistbox.DeleteAllItems();
 
 	//NTFS 파일 시스템만 ADS지원함
 	bool bNTFS = false;
@@ -150,37 +204,56 @@ void FILELISTVIEWER::PrintFolder(CString folderpath) {
 	auto end_iter = fs::end(iter);
 	auto ec = std::error_code();
 	int count = 0;
+	int rc = 0;
 
 	for (; iter != end_iter; iter.increment(ec)) {
 		if (ec) {
 			continue;
 		}
 
-		//파일 타입이 폴더일 경우 제외 필요함
+		CString ext(iter->path().extension().string().c_str());
+		CString path(iter->path().string().c_str());
 
-		string ext = iter->path().extension().string();
-		//One-Drive상의 일부 폴더 탐색 안되는 문제 있음
-		//*.hwp; *.hwpx; *.pdf; *.doc; *.docx; *.xls; *.xlsx;
-		if (ext == ".hwp" || ext == ".hwpx" || ext == ".pdf" || ext == ".doc" || ext == ".docx" || ext == ".xls" || ext == ".xlsx") {
-			CString path = CString(iter->path().string().c_str());
-			AfxTrace(path + "\n");
-			//추후 Listview 입력부는 따로 분리해야 함.
-			//DB와 연동해야하기 때문임
-			filelistbox.InsertItem(count, iter->path().filename().c_str());
-			filelistbox.SetItem(count, 1, LVIF_TEXT, CString((ext.substr(1, 4)).c_str()), 0, 0, 0, NULL);
-			filelistbox.SetItem(count, 2, LVIF_TEXT, path, 0, 0, 0, NULL);
-			filelistbox.SetItem(count, 3, LVIF_TEXT, (count % 5 == 1) ? L"미검사" : L"안전", 0, 0, 0, NULL);
-			filelistbox.SetItem(count, 4, LVIF_TEXT, L"-", 0, 0, 0, NULL);
-			if (bNTFS && Has_ADS(path)) {
-				filelistbox.SetItem(count, 5, LVIF_TEXT, L"O", 0, 0, 0, NULL);
+		if (ext == L".exe") {
+			CString tmp = path;
+			CString tmp_ext;
+			while ((tmp_ext = PathFindExtension(tmp)).GetLength() != 0) {
+				if (IsOfficeFile(tmp_ext)) {
+					ZeroMemory(&nid, sizeof(nid));
+					nid.cbSize = sizeof(nid);
+					nid.dwInfoFlags = NIIF_WARNING;
+					nid.uFlags = NIF_MESSAGE | NIF_INFO | NIF_ICON;
+					nid.uTimeout = 2000;
+					nid.hWnd = AfxGetApp()->m_pMainWnd->m_hWnd;
+					nid.uCallbackMessage = WM_TRAY_NOTIFYICACTION;
+					nid.hIcon = AfxGetApp()->LoadIconW(IDR_MAINFRAME);
+					lstrcpy(nid.szInfoTitle, L"문서로 위장한 실행 파일을 발견하였습니다.");
+					lstrcpy(nid.szInfo, path);
+					::Shell_NotifyIcon(NIM_MODIFY, &nid);
+					break;
+				}
+				AfxTrace(TEXT("Find Ext : %ws\n"), tmp_ext);
+				tmp.Replace(tmp_ext, L"");
+				tmp.Trim();
 			}
-			count++;
+		}
+		if (IsOfficeFile(ext)) {
+			CString strInsQuery;
+			int nospear = 2, zoneid = 0;
+			if (bNTFS && HasZoneIdentifierADS(path)) {
+				nospear = 1;
+				zoneid = 3;
+			}
+			strInsQuery.Format(TEXT("INSERT INTO NOSPEAR_LocalFileList(FilePath, ZoneIdentifier, ProcessName, NOSPEAR, DiagnoseDate, Serverity, FileType) VALUES ('%ws','%d','No-Spear Client','%d','-','0','DOCUMENT');"), path, zoneid, nospear);
+			int rc = fileViewerDB->ExecuteSqlite(strInsQuery);
+			if (rc == 0)
+				count++;
+			AfxTrace(path + "\n");
 		}
 	}
 	CString tmp;
-	tmp.Format(TEXT("Folder Search Complete. Find %d"), count);
+	tmp.Format(TEXT("새로운 %d개의 문서가 LocalFileListDB에 추가되었습니다.\n"), count);
 	AfxTrace(tmp);
-
 }
 int FILELISTVIEWER::CompareItem(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort) {
 	CListCtrl* pList = ((SORTPARAM*)lParamSort)->pList;
@@ -211,25 +284,12 @@ void FILELISTVIEWER::OnHdnItemclickFilelistctrl(NMHDR* pNMHDR, LRESULT* pResult)
 	*pResult = 0;
 }
 
-void FILELISTVIEWER::OnBnClickedButton1(){
-	//PrintFolder(L"C:\\Users");
-}
-
-void FILELISTVIEWER::OnBnClickedSelectfolder(){
-	CFolderPickerDialog Picker(_T("C:\\Users"), OFN_FILEMUSTEXIST, NULL, 0);
-	if (Picker.DoModal() == IDOK) {
-		CString strFolderPath = Picker.GetPathName();
-		//PC에서 다운로드한 파일을 USB에 복사할 경우, ADS는 복사가 안되기에 내부로 출력될 수 있음.
-		PrintFolder(strFolderPath);
-	}
-}
-
 void FILELISTVIEWER::OnNMDblclkFilelistctrl(NMHDR* pNMHDR, LRESULT* pResult){
 	//List Control을 더블클릭하면 파일탐색기로 파일 위치로 이동해줌
 	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
 	int row = pNMItemActivate->iItem;
 	if (row != -1) {
-		CString filepath = filelistbox.GetItemText(row, 2);
+		CString filepath = filelistbox.GetItemText(row, 7);
 		ShellExecute(NULL, _T("open"), _T("explorer"), _T("/select,") + filepath, NULL, SW_SHOW);
 	}
 	*pResult = 0;
@@ -251,14 +311,14 @@ void FILELISTVIEWER::OnCbnSelchangeCombo1(){
 			case 1:
 				//미검사 문서 선택 column 3
 				for (int i = 0; i < filelistbox.GetItemCount(); i++) {
-					if (filelistbox.GetItemText(i, 3) == L"미검사")
+					if (filelistbox.GetItemText(i, 4) == L"-")
 						filelistbox.SetCheck(i, TRUE);
 				}
 				break;
 			case 2:
 				//외부 문서 선택 column 5
 				for (int i = 0; i < filelistbox.GetItemCount(); i++) {
-					if (filelistbox.GetItemText(i, 5) == L"O")
+					if (filelistbox.GetItemText(i, 1) == L"3")
 						filelistbox.SetCheck(i, TRUE);
 				}
 				break;
@@ -279,7 +339,7 @@ void FILELISTVIEWER::OnBnClickeddiagnose(){
 	std::vector<CString> files;
 	for (int i = 0; i < filelistbox.GetItemCount(); i++) {
 		if (filelistbox.GetCheck(i)) {
-			files.push_back(filelistbox.GetItemText(i, 2));
+			files.push_back(filelistbox.GetItemText(i, 7));
 		}
 	}
 	
@@ -295,7 +355,7 @@ void FILELISTVIEWER::OnBnClickeddiagnose(){
 	std::vector<DIAGNOSE_RESULT> result;
 	result = nospear_ptr->MultipleDiagnose(files);
 
-	//완료되면 List Control 새로고침
+	//완료되면 List 9Control 새로고침
 	
 }
 
@@ -305,7 +365,84 @@ HBRUSH FILELISTVIEWER::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor){
 	return hbr;
 }
 
-
-void FILELISTVIEWER::OnStnClickedsearch(){
-	PrintFolder(L"C:\\Users");
+BOOL FILELISTVIEWER::PreTranslateMessage(MSG* pMsg){
+	tooltip.RelayEvent(pMsg);
+	return CDialogEx::PreTranslateMessage(pMsg);
 }
+
+void FILELISTVIEWER::OnStnClickedrefreshlist(){
+	LOCALFILELISTDB row;
+	filelist.clear();
+	sqlite3_select p_selResult = fileViewerDB->SelectSqlite(L"select * from NOSPEAR_LocalFileList WHERE FileType='DOCUMENT';");
+	if (p_selResult.pnRow != 0) {
+		for (int i = 1; i <= p_selResult.pnRow; i++)		{
+			int colCtr = 0;
+			int nCol = 1;
+			int cellPosition = (i * p_selResult.pnColumn) + colCtr;
+
+			row.FilePath = SQLITE::Utf8ToCString(p_selResult.pazResult[cellPosition++]);
+			row.ZoneIdentifier = CString(p_selResult.pazResult[cellPosition++]);
+			row.ProcessName = SQLITE::Utf8ToCString(p_selResult.pazResult[cellPosition++]);
+			row.NOSPEAR = CString(p_selResult.pazResult[cellPosition++]);
+			row.DiagnoseDate = SQLITE::Utf8ToCString(p_selResult.pazResult[cellPosition++]);
+			row.Serverity = CString(p_selResult.pazResult[cellPosition++]);
+			row.FileType = SQLITE::Utf8ToCString(p_selResult.pazResult[cellPosition++]);
+			row.TimeStamp = SQLITE::Utf8ToCString(p_selResult.pazResult[cellPosition++]);
+			filelist.push_back(row);
+		}
+	}
+	OnCheckBoxChange(0);
+}
+
+void FILELISTVIEWER::OnCheckBoxChange(UINT nID){
+	//DB새로고침하고 여기로 넘어옴
+	//체크박스에서 변경사항이 있을 때 마다 여기로 옴
+	bool hwp = ((CButton*)GetDlgItem(IDC_CHECK1))->GetCheck();
+	ext_filter[L".hwp"] = ((CButton*)GetDlgItem(IDC_CHECK1))->GetCheck();
+	ext_filter[L".hwpx"] = ((CButton*)GetDlgItem(IDC_CHECK1))->GetCheck();
+	ext_filter[L".doc"] = ((CButton*)GetDlgItem(IDC_CHECK4))->GetCheck();
+	ext_filter[L".docx"] = ((CButton*)GetDlgItem(IDC_CHECK4))->GetCheck();
+	ext_filter[L".xls"] = ((CButton*)GetDlgItem(IDC_CHECK5))->GetCheck();
+	ext_filter[L".xlsx"] = ((CButton*)GetDlgItem(IDC_CHECK5))->GetCheck();
+	ext_filter[L".pptx"] = ((CButton*)GetDlgItem(IDC_CHECK3))->GetCheck();
+	ext_filter[L".ppsx"] = ((CButton*)GetDlgItem(IDC_CHECK3))->GetCheck();
+	ext_filter[L".pdf"] = ((CButton*)GetDlgItem(IDC_CHECK2))->GetCheck();
+
+	filelistbox.DeleteAllItems();
+	int count = 0;
+
+	std::vector<LOCALFILELISTDB>::iterator it;
+	for (it = filelist.begin(); it != filelist.end(); it++) {
+		//체크박스 여부에 따른 필터 구현
+		CString ext = PathFindExtension(it->FilePath);
+		if (!ext_filter.at(ext))
+			continue;
+
+		filelistbox.InsertItem(count, PathFindFileName(it->FilePath));
+		filelistbox.SetItem(count, 1, LVIF_TEXT, it->ZoneIdentifier, 0, 0, 0, NULL);
+		filelistbox.SetItem(count, 2, LVIF_TEXT, it->ProcessName, 0, 0, 0, NULL);
+		filelistbox.SetItem(count, 3, LVIF_TEXT, it->NOSPEAR, 0, 0, 0, NULL);
+		filelistbox.SetItem(count, 4, LVIF_TEXT, it->DiagnoseDate, 0, 0, 0, NULL);
+		filelistbox.SetItem(count, 5, LVIF_TEXT, it->Serverity, 0, 0, 0, NULL);
+		filelistbox.SetItem(count, 6, LVIF_TEXT, it->TimeStamp, 0, 0, 0, NULL);
+		filelistbox.SetItem(count, 7, LVIF_TEXT, it->FilePath, 0, 0, 0, NULL);
+	}
+}
+
+
+void FILELISTVIEWER::OnStnClickedrefreshdb() {
+	LOCALFILELISTDB row;
+	sqlite3_select p_selResult = fileViewerDB->SelectSqlite(L"select count(*) from NOSPEAR_LocalFileList Where FileType='DOCUMENT';");
+	if (p_selResult.pnRow != 0) {
+		int count = stoi(p_selResult.pazResult[1]);
+		if (count == 0) {
+			AfxMessageBox(L"프로그램의 최초 실행");
+			ScanLocalFile(L"C:\\Users");
+		}
+		else {
+			AfxMessageBox(L"처음은 아니네");
+			ScanLocalFile(L"C:\\Users");
+		}
+	}
+}
+

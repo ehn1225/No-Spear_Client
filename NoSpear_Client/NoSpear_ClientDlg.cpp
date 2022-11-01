@@ -92,6 +92,7 @@ BEGIN_MESSAGE_MAP(CNoSpearClientDlg, CDialogEx)
 	ON_MESSAGE(WM_TRAY_NOTIFYICACTION, OnTrayNotifyAction)
 	ON_COMMAND(ID_TRAY_EXIT, &CNoSpearClientDlg::OnTrayExit)
 	ON_WM_CTLCOLOR()
+	ON_WM_CLOSE()
 END_MESSAGE_MAP()
 
 
@@ -204,20 +205,20 @@ void CNoSpearClientDlg::OnSysCommand(UINT nID, LPARAM lParam)
 		CAboutDlg dlgAbout;
 		dlgAbout.DoModal();
 	}
-	//else if (nID == SC_CLOSE) {
-	//	ShowWindow(SW_HIDE);
-	//	ZeroMemory(&nid, sizeof(nid));
-	//	nid.cbSize = sizeof(nid);
-	//	nid.dwInfoFlags = NIIF_INFO;
-	//	nid.uFlags = NIF_MESSAGE | NIF_INFO | NIF_ICON;
-	//	nid.uTimeout = 3000;
-	//	nid.hWnd = AfxGetApp()->m_pMainWnd->m_hWnd;
-	//	nid.uCallbackMessage = WM_TRAY_NOTIFYICACTION;
-	//	nid.hIcon = AfxGetApp()->LoadIconW(IDR_MAINFRAME);
-	//	lstrcpy(nid.szInfoTitle, L"No-Spear 프로그램이 백그라운드 모드로 전환되었습니다.");
-	//	lstrcpy(nid.szInfo, L"프로그램을 종료하려면 작업 표시줄 아이콘을 마우스 오른쪽 버튼으로 클릭하세요.");
-	//	::Shell_NotifyIcon(NIM_MODIFY, &nid);
-	//}
+	else if (nID == SC_CLOSE) {
+		ShowWindow(SW_HIDE);
+		ZeroMemory(&nid, sizeof(nid));
+		nid.cbSize = sizeof(nid);
+		nid.dwInfoFlags = NIIF_INFO;
+		nid.uFlags = NIF_MESSAGE | NIF_INFO | NIF_ICON;
+		nid.uTimeout = 1000;
+		nid.hWnd = AfxGetApp()->m_pMainWnd->m_hWnd;
+		nid.uCallbackMessage = WM_TRAY_NOTIFYICACTION;
+		nid.hIcon = AfxGetApp()->LoadIconW(IDR_MAINFRAME);
+		lstrcpy(nid.szInfoTitle, L"No-Spear 프로그램이 백그라운드 모드로 전환되었습니다.");
+		lstrcpy(nid.szInfo, L"프로그램을 종료하려면 작업 표시줄 아이콘을 마우스 오른쪽 버튼으로 클릭하세요.");
+		::Shell_NotifyIcon(NIM_MODIFY, &nid);
+	}
 	else{
 		CDialogEx::OnSysCommand(nID, lParam);
 	}
@@ -254,18 +255,21 @@ void CNoSpearClientDlg::OnPaint()
 
 // 사용자가 최소화된 창을 끄는 동안에 커서가 표시되도록 시스템에서
 //  이 함수를 호출합니다.
-HCURSOR CNoSpearClientDlg::OnQueryDragIcon()
-{
+HCURSOR CNoSpearClientDlg::OnQueryDragIcon(){
 	return static_cast<HCURSOR>(m_hIcon);
 }
 void CNoSpearClientDlg::OnTrayExit(){
-	NOTIFYICONDATA nid;
 	ZeroMemory(&nid, sizeof(nid));
 	nid.cbSize = sizeof(nid);
 	nid.uID = 0;
 	nid.hWnd = GetSafeHwnd();
-	if (!::Shell_NotifyIcon(NIM_DELETE, &nid))	{
+	::Shell_NotifyIcon(NIM_DELETE, &nid);
+	if (fileListViewer != NULL) {
+		fileListViewer->EndDialog(0);
+		delete(fileListViewer);
 	}
+	if (client != NULL) delete(client);
+
 	EndDialog(0);
 }
 void CNoSpearClientDlg::OnBnClickedselectfile(){
@@ -305,10 +309,8 @@ void CNoSpearClientDlg::OnBnClickedinactivelive(){
 }
 
 void CNoSpearClientDlg::OnBnClickedButton1(){
-
-	FILELISTVIEWER dlg;
-	dlg.DoModal();
-
+	fileListViewer = new FILELISTVIEWER();
+	fileListViewer->DoModal();
 }
 
 void CNoSpearClientDlg::OnDropFiles(HDROP hDropInfo){
@@ -416,11 +418,32 @@ void CNoSpearClientDlg::OnBnClickedButton3(){
 	//	}
 
 	//}
-}
+	// 
+	//exe한정 실행
+	CString tmp = filepath;
+	CString tmp_ext;
+	while ((tmp_ext = PathFindExtension(tmp)).GetLength() != 0) {
+		//Document 로직if()
+		AfxTrace(TEXT("Find Ext : %ws\n"), tmp_ext);
+		tmp.Replace(tmp_ext, L"");
+		tmp.Trim();
+	}
 
+
+}
 
 HBRUSH CNoSpearClientDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor){
 	HBRUSH hbr = CDialogEx::OnCtlColor(pDC, pWnd, nCtlColor);
 	hbr = (HBRUSH)m_background;
 	return hbr;
+}
+
+void CNoSpearClientDlg::OnClose(){
+	//이제 필요 없을 듯
+	ZeroMemory(&nid, sizeof(nid));
+	nid.cbSize = sizeof(nid);
+	nid.uID = 0;
+	nid.hWnd = GetSafeHwnd();
+	::Shell_NotifyIcon(NIM_DELETE, &nid);
+	CDialogEx::OnClose();
 }

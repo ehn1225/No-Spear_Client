@@ -11,12 +11,13 @@
 #define IDD_FILELISTVIEWDIALOG          131
 #define IDI_ICON1                       135
 #define IDB_PNG1                        136
-#define IDI_ICON4                       151
-#define IDI_ICON2                       152
-#define IDI_ICON3                       153
-#define IDI_ICON5                       154
-#define IDI_ICON6                       155
-#define IDI_ICON7                       156
+#define IDI_ICON2                       162
+#define IDI_ICON3                       164
+#define IDI_ICON4                       166
+#define IDI_ICON5                       167
+#define IDI_ICON6                       168
+#define IDI_ICON7                       169
+#define IDI_ICON8                       170
 #define btn_selectfile                  1001
 #define btn_uploadfile                  1002
 #define edit_filepath                   1003
@@ -37,6 +38,7 @@
 #define IDC_BUTTON3                     1024
 #define IDC_openfolder                  1025
 #define IDC_search                      1026
+#define IDC_refreshDB                   1026
 #define IDC_CHECK1                      1027
 #define IDC_search2                     1028
 #define IDC_search3                     1029
@@ -47,6 +49,7 @@
 #define IDC_CHECK4                      1034
 #define IDC_search6                     1035
 #define IDC_CHECK5                      1036
+#define IDC_refreshlist                 1037
 #define ID_TRAY_NO                      32771
 #define ID_TRAY_EXIT                    32772
 
@@ -54,9 +57,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        157
+#define _APS_NEXT_RESOURCE_VALUE        171
 #define _APS_NEXT_COMMAND_VALUE         32773
-#define _APS_NEXT_CONTROL_VALUE         1030
+#define _APS_NEXT_CONTROL_VALUE         1038
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

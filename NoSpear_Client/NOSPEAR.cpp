@@ -28,6 +28,7 @@ void NOSPEAR::Deletefile(NOSPEAR_FILE file){
 
 DIAGNOSE_RESULT NOSPEAR::FileUpload(CString filepath){
 	DIAGNOSE_RESULT diagnose_return;
+	diagnose_return.filepath = filepath;
 	CFileFind pFind;
 	BOOL bRet = pFind.FindFile(filepath);
 
@@ -212,13 +213,30 @@ vector<DIAGNOSE_RESULT> NOSPEAR::MultipleDiagnose(vector<CString> files){
 	return diagnose_result;
 }
 
+SQLITE* NOSPEAR::GetSQLitePtr(){
+	return nospearDB;
+}
+
 NOSPEAR::NOSPEAR(){
 	//기본생성자
 	//일반 사용자 환경에서는 하드코딩된 서버 주소로 접속함
+	nospearDB = new SQLITE();
+}
+
+NOSPEAR::~NOSPEAR(){
+	if (nospearDB != NULL) {
+		nospearDB->~SQLITE();
+		delete(nospearDB);
+	}
+	if (liveprotect != NULL) {
+		ActivateLiveProtect(false);
+		delete(liveprotect);
+	}
 }
 
 NOSPEAR::NOSPEAR(std::string ip, unsigned short port){
 	//config.dat 파일이 있을 때 사용되는 생성자
 	SERVER_IP = ip;
 	SERVER_PORT = port;
+	nospearDB = new SQLITE();
 }

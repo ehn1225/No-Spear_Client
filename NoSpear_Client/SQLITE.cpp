@@ -54,3 +54,10 @@ sqlite3_select SQLITE::SelectSqlite(CString query){
 
 	return selectResult;
 }
+
+CString SQLITE::Utf8ToCString(char* stringArr){
+	wchar_t arr[256] = { 0, };
+	int nLen = MultiByteToWideChar(CP_UTF8, 0, stringArr, strlen(stringArr), NULL, NULL);
+	MultiByteToWideChar(CP_UTF8, 0, stringArr, strlen(stringArr), arr, nLen);
+	return CString(arr);
+}
