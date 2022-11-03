@@ -12,6 +12,7 @@ NOSPEAR_FILE::NOSPEAR_FILE(CString filepath) {
 	unsigned int readsize = 0;
 	unsigned char filebuffer[FILE_BUFFER_SIZE] = {0, };
 	unsigned char digest[SHA256::DIGEST_SIZE] = {0, };
+	char temp[65] = { 0, }; //sha256 is 64byte
 
 	SHA256 ctx = SHA256();
 	FILE* fp = _wfopen(filepath, L"rb");
@@ -22,8 +23,9 @@ NOSPEAR_FILE::NOSPEAR_FILE(CString filepath) {
 	ctx.final(digest);
 
 	for (int i = 0; i < SHA256::DIGEST_SIZE; i++)
-		sprintf(filehash + i * 2, "%02x", digest[i]);
+		sprintf(temp + i * 2, "%02x", digest[i]);
 	//취약 포인트. sprintf에서 sprintf_s로 변경해야 함. or snprintf
+	filehash = CString(temp);
 
 	//Get file size
 	fseek(fp, 0, SEEK_END);
@@ -40,7 +42,7 @@ CString NOSPEAR_FILE::Getfilepath() {
 	return filepath;
 }
 
-char * NOSPEAR_FILE::Getfilehash() {
+CString NOSPEAR_FILE::Getfilehash() {
 	return filehash;
 }
 

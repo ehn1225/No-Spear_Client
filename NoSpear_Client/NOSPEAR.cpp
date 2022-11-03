@@ -2,6 +2,7 @@
 #include "NOSPEAR_FILE.h"
 #include "LIVEPROTECT.h"
 #include "NOSPEAR.h"
+#include "resource.h"
 
 #pragma warning(disable:4996)
 #pragma comment(lib,"ws2_32.lib")
@@ -10,14 +11,14 @@
 #pragma comment(lib,"wininet.lib")
 #pragma comment(lib,"fltLib.lib")
 #pragma comment(lib,"sqlite3.lib")
+#define WM_TRAY_NOTIFYICACTION (WM_USER + 10)
 
 SOCKET s;
 sockaddr_in dA, aa;
 int slen = sizeof(sockaddr_in);
 
-void NOSPEAR::Deletefile(NOSPEAR_FILE file){
+void NOSPEAR::Deletefile(CString filepath){
 	CFileFind pFind;
-	CString filepath = file.Getfilepath();
 	BOOL bRet = pFind.FindFile(filepath);
 	if (bRet == TRUE) {
 		if (DeleteFile(filepath) == TRUE) {
@@ -26,33 +27,17 @@ void NOSPEAR::Deletefile(NOSPEAR_FILE file){
 	}
 }
 
-DIAGNOSE_RESULT NOSPEAR::FileUpload(CString filepath){
-	DIAGNOSE_RESULT diagnose_return;
-	diagnose_return.filepath = filepath;
-	CFileFind pFind;
-	BOOL bRet = pFind.FindFile(filepath);
-
-	if (!bRet) {
-		AfxTrace(TEXT("[NOSPEAR::FileUpload] 파일이 유효하지 않음\n"));
-		diagnose_return.result_msg = L"[NOSPEAR::FileUpload] 파일이 유효하지 않음";
-		diagnose_return.result_code = -1;
-		return diagnose_return;
-	}
-
-	NOSPEAR_FILE file = NOSPEAR_FILE(filepath);
-
+bool NOSPEAR::FileUpload(NOSPEAR_FILE& file){
 	AfxTrace(TEXT("[NOSPEAR::FileUpload] 파일 업로드 시작\n"));
 	AfxTrace(TEXT("[NOSPEAR::FileUpload] name : " + file.Getfilename() + "\n"));
 	AfxTrace(TEXT("[NOSPEAR::FileUpload] path : " + file.Getfilepath() + "\n"));
 	AfxTrace(TEXT("[NOSPEAR::FileUpload] hash : " + CString(file.Getfilehash()) + "\n"));
 
-
 	//validation 호출
 	if (file.Checkvalidation() == false) {
 		AfxTrace(TEXT("[NOSPEAR::FileUpload] 제약되는 파일으로 확인\n"));
-		diagnose_return.result_msg = TEXT("[NOSPEAR::FileUpload] 업로드가 제약되는 파일입니다.");
-		diagnose_return.result_code = -1;
-		return diagnose_return;
+		file.diag_result.result_code = -1;
+		return false;
 	}
 
 	unsigned long inaddr;
@@ -67,9 +52,8 @@ DIAGNOSE_RESULT NOSPEAR::FileUpload(CString filepath){
 	s = socket(AF_INET, SOCK_STREAM, 0);
 	if (connect(s, (sockaddr*)&dA, slen) < 0){
 		AfxTrace(TEXT("[NOSPEAR::FileUpload] 서버에 연결할 수 없음\n"));
-		diagnose_return.result_msg = TEXT("[NOSPEAR::FileUpload] 서버에 연결할 수 없습니다.");
-		diagnose_return.result_code = -2;
-		return diagnose_return;
+		file.diag_result.result_code = -2;
+		return false;
 	}
 
 	getpeername(s, (sockaddr*)&aa, &slen);
@@ -86,7 +70,10 @@ DIAGNOSE_RESULT NOSPEAR::FileUpload(CString filepath){
 	send(s, utf8_filename.c_str(), (UINT)utf8_filename.size(), 0);
 
 	//Send File Hash
-	send(s, file.Getfilehash(), 64, 0);
+	//CString to UTF-8
+	CString filehash = file.Getfilehash();
+	std::string utf8_filehash = CW2A(filehash, CP_UTF8);
+	send(s, utf8_filehash.c_str(), 64, 0);
 
 	unsigned int filesize = htonl(file.Getfilesize());
 	send(s, (char*)&filesize, 4, 0);
@@ -97,10 +84,9 @@ DIAGNOSE_RESULT NOSPEAR::FileUpload(CString filepath){
 	FILE* fp = _wfopen(file.Getfilepath(), L"rb");
 	if (fp == NULL) {
 		AfxTrace(TEXT("[NOSPEAR::FileUpload] 파일이 유효하지 않습니다.\n"));
-		diagnose_return.result_msg = TEXT("[NOSPEAR::FileUpload] 파일이 유효하지 않습니다.");
 		closesocket(s);
-		diagnose_return.result_code = -3;
-		return diagnose_return;
+		file.diag_result.result_code = -3;
+		return false;
 	}
 
 	while ((read_size = fread(file_buffer, 1, NOSPEAR::FILE_BUFFER_SIZE, fp)) != 0) {
@@ -108,55 +94,56 @@ DIAGNOSE_RESULT NOSPEAR::FileUpload(CString filepath){
 	}
 
 	AfxTrace(TEXT("[NOSPEAR::FileUpload] 파일 업로드 완료\n"));
-	diagnose_return.result_msg = TEXT("[NOSPEAR::FileUpload] 파일 업로드 완료");
 
 	//검사 결과를 리턴 받습니다. 동기 방식을 사용
-	unsigned short result = 0;
-	recv(s, (char*)&result, 2, 0);
-	result = ntohs(result);
+	unsigned short diag_result = 0;
+	recv(s, (char*)&diag_result, 2, 0);
+	file.diag_result.result_code = ntohs(diag_result);
 
 	fclose(fp);
 	closesocket(s);
 
-	diagnose_return.result_code = result;
-
-	//여기에서 DB에 검사결과 저장
-
-	return diagnose_return;
+	return true;
 }
 
-void NOSPEAR::GetMsgFromCode(DIAGNOSE_RESULT& result){
-
-	//result_code < 0 : 이미 msg에 내용이 들어가있음.
-	if (result.result_code < 0) {
-		return;
-	}
-
-	switch (result.result_code) {
+CString NOSPEAR::GetMsgFromErrCode(short err_code){
+	switch (err_code) {
+		case -1:
+			return L"업로드 제약 파일";
+		case -2:
+			return L"서버 연결 실패";
+		case -3:
+			return L"파일이 유효하지 않음";
 		case TYPE_NORMAL:
-			result.result_msg = L"분석 결과 : 정상 파일";
-			break;
+			return L"정상";
 		case TYPE_MALWARE:
-			result.result_msg = L"분석 결과 : 악성 파일";
-			break;
+			return L"악성";
 		case TYPE_SUSPICIOUS:
-			result.result_msg = L"분석 결과 : 악성 의심 파일";
-			break;
+			return L"악성 의심";
 		case TYPE_UNEXPECTED:
-			result.result_msg = L"분석 결과 : 알 수 없는 파일";
-			break;
+			return L"알 수 없음";
 		case TYPE_NOFILE:
-			result.result_msg = L"분석 결과 : 문서 파일이 아님";
-			break;
+			return L"문서 파일 아님";
 		case TYPE_RESEND:
-			result.result_msg = L"파일을 업로드하는 중 오류가 발생하였습니다";
-			break;
+			return L"파일 업로드 오류";
 		case TYPE_REJECT:
-			result.result_msg = L"서버에서 검사를 거부하였습니다.";
-			break;
+			return L"검사 거부";
+		case TYPE_LOCAL:
+			return L"로컬";
 		default:
-			result.result_msg = L"Unknown Response";
-			break;
+			return L"Error";
+	}
+}
+CString NOSPEAR::GetMsgFromNospear(short nospear) {
+	switch (nospear) {
+		case 0:
+			return L"모두 차단";
+		case 1:
+			return L"문서 차단";
+		case 2:
+			return L"전체 허용";
+		default:
+			return L"Error";
 	}
 }
 
@@ -194,23 +181,58 @@ void NOSPEAR::ActivateLiveProtect(bool status){
 	}
 }
 
-DIAGNOSE_RESULT NOSPEAR::SingleDiagnose(CString file){
-	DIAGNOSE_RESULT dignose_result;
-	dignose_result = FileUpload(file);
-	GetMsgFromCode(dignose_result);
-	return dignose_result;
+bool NOSPEAR::Diagnose(NOSPEAR_FILE& file){
+	bool result = FileUpload(file);
+	file.diag_result.result_msg = GetMsgFromErrCode(file.diag_result.result_code);
+	if (result) {
+		CString strInsQuery;
+		strInsQuery.Format(TEXT("UPDATE NOSPEAR_LocalFileList SET DiagnoseDate=(datetime('now', 'localtime')), Hash='%ws', Serverity='%d' WHERE FilePath='%ws';"), file.Getfilehash(), file.diag_result.result_code, file.Getfilepath());
+		nospearDB->ExecuteSqlite(strInsQuery);
+	}
+	return result;
 }
 
-vector<DIAGNOSE_RESULT> NOSPEAR::MultipleDiagnose(vector<CString> files){
-	vector<DIAGNOSE_RESULT> diagnose_result;
+void NOSPEAR::Notification(CString title, CString body) {
+	ZeroMemory(&nid, sizeof(nid));
+	nid.cbSize = sizeof(nid);
+	nid.dwInfoFlags = NIIF_WARNING;
+	nid.uFlags = NIF_MESSAGE | NIF_INFO | NIF_ICON;
+	nid.uTimeout = 2000;
+	nid.hWnd = AfxGetApp()->m_pMainWnd->m_hWnd;
+	nid.uCallbackMessage = WM_TRAY_NOTIFYICACTION;
+	nid.hIcon = AfxGetApp()->LoadIconW(IDR_MAINFRAME);
+	lstrcpy(nid.szInfoTitle, title);
+	lstrcpy(nid.szInfo, body);
+	::Shell_NotifyIcon(NIM_MODIFY, &nid);
+}
 
-	for (int i = 0; i < files.size(); i++) {
-		DIAGNOSE_RESULT tmp;
-		tmp = FileUpload(files.at(i));
-		GetMsgFromCode(tmp);
-		diagnose_result.push_back(tmp);
+void NOSPEAR::AutoDiagnose() {
+	int total = 0, success = 0;
+	total = request_diagnose_queue.size();
+	while (request_diagnose_queue.size() != 0) {
+		CString filepath = request_diagnose_queue.front();
+		CFileFind pFind;
+		BOOL bRet = pFind.FindFile(filepath);
+		if (bRet == FALSE) {
+			request_diagnose_queue.pop();
+			continue;
+		}
+		NOSPEAR_FILE file(filepath);
+		bRet = Diagnose(file);
+		if (!bRet && file.diag_result.result_code == -2) {
+			Notification(L"No-Spear 서버 연결 실패", L"No-Spear 서버 연결에 실패하였습니다. 서버 주소와 포트를 확인하세요.");
+			break;
+		};
+		if (bRet) {
+			success++;
+		}
+		
+		request_diagnose_queue.pop();
 	}
-	return diagnose_result;
+	CString result;
+	result.Format(TEXT("전체 %d개 중 %d개 검사가 완료되었습니다."), total, success);
+	Notification(L"No-Spear 검사 결과", result);
+
 }
 
 SQLITE* NOSPEAR::GetSQLitePtr(){
@@ -239,4 +261,79 @@ NOSPEAR::NOSPEAR(std::string ip, unsigned short port){
 	SERVER_IP = ip;
 	SERVER_PORT = port;
 	nospearDB = new SQLITE();
+}
+bool NOSPEAR::HasZoneIdentifierADS(CString filepath) {
+	CStdioFile ads_stream;
+	CFileException e;
+	if (!ads_stream.Open(filepath + L":Zone.Identifier", CFile::modeRead, &e)) {
+		return false;
+	}
+	return true;
+}
+unsigned short NOSPEAR::ReadNospearADS(CString filepath) {
+
+	CStdioFile ads_stream;
+	CFileException e;
+	if (!ads_stream.Open(filepath + L":NOSPEAR", CFile::modeRead, &e)) {
+		return -1;
+	}
+
+	CString str;
+	ads_stream.ReadString(str);
+
+	if (str == L"0")
+		return 0;
+	else if (str == L"1")
+		return 1;
+	else if (str == L"2")
+		return 2;
+	else {
+		return -1;
+	}
+}
+bool NOSPEAR::WriteNospearADS(CString filepath, unsigned short value) {
+	//value 값으로 ADS:NOSPEAR 생성
+	CString strInsQuery;
+	strInsQuery.Format(TEXT("UPDATE NOSPEAR_LocalFileList SET NOSPEAR='%d' WHERE FilePath='%ws';"), value, filepath);
+	nospearDB->ExecuteSqlite(strInsQuery);
+
+	CStdioFile ads_stream;
+	CFileException e;
+	if (!ads_stream.Open(filepath + L":NOSPEAR", CStdioFile::modeCreate | CStdioFile::modeWrite, &e)) {
+		AfxTrace(TEXT("WriteNospearADS 부착 실패 %d\n"), value);
+		return false;
+	}
+	CString str;
+	str.Format(TEXT("%d"), value);
+	ads_stream.WriteString(str);
+	AfxTrace(TEXT("WriteNospearADS 부착 성공 %d\n"), value);
+
+	return true;
+}
+
+bool NOSPEAR::WriteZoneIdentifierADS(CString filepath, CString processName) {
+	//pid를 이용해서 ProcessName으로 ADS:Zone.Identifier 생성
+	CStdioFile ads_stream;
+	CFileException e;
+	if (!ads_stream.Open(filepath + L":Zone.Identifier", CStdioFile::modeCreate | CStdioFile::modeWrite, &e)) {
+		AfxTrace(L"WriteZoneIdentifierADS 부착 실패\n");
+		return false;
+	}
+	ads_stream.WriteString(L"[ZoneTransfer]\n");
+	ads_stream.WriteString(L"ZoneId=3\n");
+	ads_stream.WriteString(L"ADS Appended By No-Spear Client\n");
+	ads_stream.WriteString(L"ProcessName=" + processName);
+	AfxTrace(L"WriteZoneIdentifierADS 부착 성공\n");
+
+	CString strInsQuery;
+	strInsQuery.Format(TEXT("UPDATE NOSPEAR_LocalFileList SET ZoneIdentifier='3', ProcessName='%ws' WHERE FilePath='%ws';"), processName, filepath);
+	nospearDB->ExecuteSqlite(strInsQuery);
+	return true;
+}
+
+bool NOSPEAR::DeleteZoneIdentifierADS(CString filepath) {
+	CString strInsQuery;
+	strInsQuery.Format(TEXT("UPDATE NOSPEAR_LocalFileList SET ZoneIdentifier='0' WHERE FilePath='%ws';"), filepath);
+	nospearDB->ExecuteSqlite(strInsQuery);
+	return DeleteFile(filepath + L":Zone.Identifier");
 }

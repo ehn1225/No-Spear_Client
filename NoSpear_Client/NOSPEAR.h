@@ -1,30 +1,37 @@
 #include "sqlite3.h"
-
-struct DIAGNOSE_RESULT {
-	CString filepath;
-	short result_code = 0;
-	CString result_msg;
-};
-class NOSPEAR_FILE;
 class LIVEPROTECT;
+class NOSPEAR_FILE;
+class DIAGNOSE_RESULT;
+
 class NOSPEAR {
+	NOTIFYICONDATA nid;
 	std::string SERVER_IP = "15.164.98.211";
 	unsigned short SERVER_PORT = 42524;
 	static const short FILE_BUFFER_SIZE = 4096;
-	void Deletefile(NOSPEAR_FILE file);
+	CString clientUpdateUrl = L"http://4nul.org:3000/";
+	//http://4nul.org:3000/version
+	//http://4nul.org:3000/NoSpear_Client.2.2.3.4.exe
+	void Deletefile(CString filepath);
 	LIVEPROTECT* liveprotect = NULL;
 	SQLITE* nospearDB;
 	bool live_protect_status = false;
-	DIAGNOSE_RESULT FileUpload(CString file);
-	void GetMsgFromCode(DIAGNOSE_RESULT& result);
-	std::queue<CString> request_diagnose_queue;
+	bool FileUpload(NOSPEAR_FILE& file);
 public:
 	NOSPEAR();
 	~NOSPEAR();
 	NOSPEAR(std::string ip, unsigned short port);
 	void ActivateLiveProtect(bool status);
-	DIAGNOSE_RESULT SingleDiagnose(CString file);
-	std::vector<DIAGNOSE_RESULT> MultipleDiagnose(std::vector<CString> files);
+	bool Diagnose(NOSPEAR_FILE& file);
+	void AutoDiagnose();
+	void Notification(CString title, CString body);
 	SQLITE* GetSQLitePtr();
-};
+	std::queue<CString> request_diagnose_queue;
+	CString GetMsgFromErrCode(short err_code);
+	CString GetMsgFromNospear(short nospear);
+	unsigned short ReadNospearADS(CString filepath);
+	bool WriteNospearADS(CString filepath, unsigned short value);
+	bool HasZoneIdentifierADS(CString filepath);
+	bool WriteZoneIdentifierADS(CString filepath, CString processName);
+	bool DeleteZoneIdentifierADS(CString filepath);
 
+};

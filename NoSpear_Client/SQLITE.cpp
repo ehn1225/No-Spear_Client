@@ -61,3 +61,6 @@ CString SQLITE::Utf8ToCString(char* stringArr){
 	MultiByteToWideChar(CP_UTF8, 0, stringArr, strlen(stringArr), arr, nLen);
 	return CString(arr);
 }
+CString SQLITE::GetErrMessage() {
+	return CString(errmsg);
+}

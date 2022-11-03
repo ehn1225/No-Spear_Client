@@ -128,5 +128,23 @@
     <Image Include="res\186390_refresh_sync_icon.ico">
       <Filter>리소스 파일</Filter>
     </Image>
+    <Image Include="res\icons8-microsoft-word-2019-240.bmp">
+      <Filter>리소스 파일</Filter>
+    </Image>
+    <Image Include="res\icons8-microsoft-excel-2019-240.bmp">
+      <Filter>리소스 파일</Filter>
+    </Image>
+    <Image Include="res\icons8-microsoft-powerpoint-2019-240.bmp">
+      <Filter>리소스 파일</Filter>
+    </Image>
+    <Image Include="res\icons8-microsoft-powerpoint-2019-240 (1).ico">
+      <Filter>리소스 파일</Filter>
+    </Image>
+    <Image Include="res\icons8-microsoft-word-2019-240 (1).ico">
+      <Filter>리소스 파일</Filter>
+    </Image>
+    <Image Include="res\icons8-microsoft-excel-2019-240 (1).ico">
+      <Filter>리소스 파일</Filter>
+    </Image>
   </ItemGroup>
 </Project>

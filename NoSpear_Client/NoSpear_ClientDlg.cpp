@@ -289,10 +289,8 @@ void CNoSpearClientDlg::OnBnClickedselectfile(){
 void CNoSpearClientDlg::OnBnClickeduploadfile(){
 	// Manual Diagnose
 	// 수동검사의 검사 버튼을 눌렀을 때 작동을 구현
-	UpdateData(TRUE);
-	DIAGNOSE_RESULT diagnose_resut;
-	diagnose_resut = client->SingleDiagnose(filepath);
-	AfxMessageBox(diagnose_resut.result_msg);
+	NOSPEAR_FILE file(filepath);
+	client->Diagnose(file);
 }
 
 
@@ -420,14 +418,7 @@ void CNoSpearClientDlg::OnBnClickedButton3(){
 	//}
 	// 
 	//exe한정 실행
-	CString tmp = filepath;
-	CString tmp_ext;
-	while ((tmp_ext = PathFindExtension(tmp)).GetLength() != 0) {
-		//Document 로직if()
-		AfxTrace(TEXT("Find Ext : %ws\n"), tmp_ext);
-		tmp.Replace(tmp_ext, L"");
-		tmp.Trim();
-	}
+	DeleteFile(filepath + L":Zone.Identifier");
 
 
 }

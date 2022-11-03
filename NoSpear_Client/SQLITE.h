@@ -15,5 +15,6 @@ public:
 	int ExecuteSqlite(CString query);
 	sqlite3_select SelectSqlite(CString query);
 	static CString Utf8ToCString(char *);
+	CString GetErrMessage();
 };
 

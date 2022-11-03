@@ -191,11 +191,13 @@ DWORD LIVEPROTECT::ScannerWorker(PSCANNER_THREAD_CONTEXT Context) {
                 CString type = L"DOCUMENT";
                 int zoneid = 3;
                 int nospear = 1;
+                int serverity = TYPE_SUSPICIOUS;
                 passcode = 14;
                 if (IsOfficeProgram(pid)) {
                     safeDocList.insert(path);
                     zoneid = 0;
                     nospear = 2;
+                    serverity = TYPE_LOCAL;
                     passcode = 11;
                 }
                 else {
@@ -212,7 +214,8 @@ DWORD LIVEPROTECT::ScannerWorker(PSCANNER_THREAD_CONTEXT Context) {
                         }
                     }
                 }
-                strInsQuery.Format(TEXT("REPLACE INTO NOSPEAR_LocalFileList(FilePath, ZoneIdentifier, ProcessName, NOSPEAR, DiagnoseDate, Serverity, FileType) VALUES ('%ws','%d','%ws','%d','-','0','%ws');"), path, zoneid, processname, nospear, type);
+                //Create이기에, 새로운 파일이므로 덮어씌워야함
+                strInsQuery.Format(TEXT("REPLACE INTO NOSPEAR_LocalFileList(FilePath, ZoneIdentifier, ProcessName, NOSPEAR, DiagnoseDate, Hash, Serverity, FileType) VALUES ('%ws','%d','%ws','%d','-', '-', '%d','%ws');"), path, zoneid, processname, nospear, serverity, type);
                 liveProtectDB.ExecuteSqlite(strInsQuery);
             }
             else {
@@ -297,7 +300,7 @@ DWORD LIVEPROTECT::ScannerWorker(PSCANNER_THREAD_CONTEXT Context) {
                                 WriteNospearADS(path, 1);
                                 CString strInsQuery;
                                 int zoneid = ReadZoneIdentifierADS(path) ? 3 : 0;
-                                strInsQuery.Format(TEXT("INSERT INTO NOSPEAR_LocalFileList(FilePath, ZoneIdentifier, ProcessName, NOSPEAR, DiagnoseDate, Serverity, FileType) VALUES ('%ws','%d','%ws','1','-','0','DOCUMENT');"), path, zoneid, processname);
+                                strInsQuery.Format(TEXT("INSERT INTO NOSPEAR_LocalFileList(FilePath, ZoneIdentifier, ProcessName, NOSPEAR, DiagnoseDate, Hash, Serverity, FileType) VALUES ('%ws','%d','%ws','1','-', '-', '2','DOCUMENT');"), path, zoneid, processname);
                                 liveProtectDB.ExecuteSqlite(strInsQuery);
                                 //Office 프로그램 한정 차단
                                 if (IsOfficeProgram(pid)) {
@@ -366,7 +369,7 @@ LIVEPROTECT::LIVEPROTECT() {
     }
 
     liveProtectDB.ExecuteSqlite(L"CREATE TABLE IF NOT EXISTS NOSPEAR_HISTORY(SEQ INTEGER PRIMARY KEY AUTOINCREMENT, TimeStamp TEXT not null DEFAULT (datetime('now', 'localtime')), FilePath TEXT NOT NULL, ProcessName TEXT, Operation TEXT, NOSPEAR INTEGER, Permission TEXT);");
-    liveProtectDB.ExecuteSqlite(L"CREATE TABLE IF NOT EXISTS NOSPEAR_LocalFileList(FilePath TEXT NOT NULL PRIMARY KEY, ZoneIdentifier INTEGER, ProcessName TEXT, NOSPEAR INTEGER, DiagnoseDate TEXT, Serverity INTEGER, FileType TEXT, TimeStamp TEXT not null DEFAULT (datetime('now', 'localtime')));");
+    liveProtectDB.ExecuteSqlite(L"CREATE TABLE IF NOT EXISTS NOSPEAR_LocalFileList(FilePath TEXT NOT NULL PRIMARY KEY, ZoneIdentifier INTEGER, ProcessName TEXT, NOSPEAR INTEGER, DiagnoseDate TEXT, Hash TEXT, Serverity INTEGER, FileType TEXT, TimeStamp TEXT not null DEFAULT (datetime('now', 'localtime')));");
     
     office_file_ext_list.insert(L".doc");
     office_file_ext_list.insert(L".docx");
