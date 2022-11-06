@@ -57,6 +57,12 @@
     <ClInclude Include="SQLITE.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="MainView.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="SettingView.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="NoSpear_Client.cpp">
@@ -87,6 +93,12 @@
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="SQLITE.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="MainView.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="SettingView.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
@@ -144,6 +156,39 @@
       <Filter>리소스 파일</Filter>
     </Image>
     <Image Include="res\icons8-microsoft-excel-2019-240 (1).ico">
+      <Filter>리소스 파일</Filter>
+    </Image>
+    <Image Include="res\2931150_building_home_homepage_house_architecture_icon.ico">
+      <Filter>리소스 파일</Filter>
+    </Image>
+    <Image Include="res\2931152_adjust_control_gear_settings_setup_icon.ico">
+      <Filter>리소스 파일</Filter>
+    </Image>
+    <Image Include="res\2931145_bullet_list_menu_note_playlist_icon.ico">
+      <Filter>리소스 파일</Filter>
+    </Image>
+    <Image Include="res\2931167_doc_document_file_sheet_text_icon.ico">
+      <Filter>리소스 파일</Filter>
+    </Image>
+    <Image Include="res\4894514_data_download_cloud_ui_interface_icon.ico">
+      <Filter>리소스 파일</Filter>
+    </Image>
+    <Image Include="res\4567745_app_file_interface_internet_page_icon.ico">
+      <Filter>리소스 파일</Filter>
+    </Image>
+    <Image Include="res\5172979_engine_gear_internet_option_security_icon.ico">
+      <Filter>리소스 파일</Filter>
+    </Image>
+    <Image Include="res\5172965_data_hosting_information_internet_security_icon.ico">
+      <Filter>리소스 파일</Filter>
+    </Image>
+    <Image Include="res\5172998_bug_danger_internet_malware_search_icon.ico">
+      <Filter>리소스 파일</Filter>
+    </Image>
+    <Image Include="res\314709_document_scan_icon.ico">
+      <Filter>리소스 파일</Filter>
+    </Image>
+    <Image Include="res\314678_folder_search_icon.ico">
       <Filter>리소스 파일</Filter>
     </Image>
   </ItemGroup>

@@ -1,5 +1,5 @@
-#ifndef DOCUMENTVALIDATE_H
-#define DOCUMENTVALIDATE_H
+#ifndef __DOCUMENTVALIDATE_H__
+#define __DOCUMENTVALIDATE_H__
 
 class DocumentValidate
 {

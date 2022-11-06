@@ -1,8 +1,9 @@
-#include "sqlite3.h"
+#ifndef NOSPEAR_H
+#define NOSPEAR_H
 class LIVEPROTECT;
 class NOSPEAR_FILE;
 class DIAGNOSE_RESULT;
-
+class SQLITE;
 class NOSPEAR {
 	NOTIFYICONDATA nid;
 	std::string SERVER_IP = "15.164.98.211";
@@ -16,6 +17,8 @@ class NOSPEAR {
 	SQLITE* nospearDB;
 	bool live_protect_status = false;
 	bool FileUpload(NOSPEAR_FILE& file);
+	std::queue<CString> request_diagnose_queue;
+
 public:
 	NOSPEAR();
 	~NOSPEAR();
@@ -25,7 +28,6 @@ public:
 	void AutoDiagnose();
 	void Notification(CString title, CString body);
 	SQLITE* GetSQLitePtr();
-	std::queue<CString> request_diagnose_queue;
 	CString GetMsgFromErrCode(short err_code);
 	CString GetMsgFromNospear(short nospear);
 	unsigned short ReadNospearADS(CString filepath);
@@ -33,5 +35,6 @@ public:
 	bool HasZoneIdentifierADS(CString filepath);
 	bool WriteZoneIdentifierADS(CString filepath, CString processName);
 	bool DeleteZoneIdentifierADS(CString filepath);
-
+	void AppendDiagnoseQueue(CString filepath);
 };
+#endif

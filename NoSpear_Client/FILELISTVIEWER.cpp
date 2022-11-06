@@ -335,7 +335,7 @@ void FILELISTVIEWER::OnBnClickeddiagnose(){
 	std::vector<CString>::iterator it;
 	for (it = files.begin(); it != files.end(); it++) {
 		AfxTrace(L"Request Diagnose " + * it + L"\n");
-		nospear_ptr->request_diagnose_queue.push(*it);
+		nospear_ptr->AppendDiagnoseQueue(*it);
 	}
 	CString tmp;
 	tmp.Format(TEXT("%d개의 문서에 대한 검사를 요청하였습니다."), files.size());
@@ -457,10 +457,10 @@ void FILELISTVIEWER::OnNMRClickFilelistctrl(NMHDR* pNMHDR, LRESULT* pResult){
 }
 void FILELISTVIEWER::OnManu1() {
 	//검사요청
-	CString filepath = filelistbox.GetItemText(select_index, 8);
 	CString tmp;
+	CString filepath = filelistbox.GetItemText(select_index, 8);
+	nospear_ptr->AppendDiagnoseQueue(filepath);
 	tmp.Format(TEXT("파일명 : %ws\n검사를 요청하였습니다."), filepath);
-	nospear_ptr->request_diagnose_queue.push(filepath);
 	nospear_ptr->Notification(L"No-Spear 검사 요청", tmp);
 	nospear_ptr->AutoDiagnose();
 }

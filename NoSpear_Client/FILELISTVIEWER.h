@@ -1,4 +1,5 @@
-﻿struct SORTPARAM {
+﻿#pragma once
+struct SORTPARAM {
 	int iSortColumn;
 	bool bSortDirect;
 	CListCtrl* pList;

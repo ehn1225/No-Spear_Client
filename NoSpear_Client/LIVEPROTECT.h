@@ -1,5 +1,5 @@
+#pragma once
 #include "SQLITE.h"
-
 #define SCANNER_DEFAULT_REQUEST_COUNT       5
 #define SCANNER_DEFAULT_THREAD_COUNT        2
 #define SCANNER_MAX_THREAD_COUNT            64

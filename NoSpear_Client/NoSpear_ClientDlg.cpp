@@ -7,6 +7,8 @@
 #include "LIVEPROTECT.h"
 #include "NOSPEAR.h"
 #include "FILELISTVIEWER.h"
+#include "MainView.h"
+#include "SettingView.h"
 #define WM_TRAY_NOTIFYICACTION (WM_USER + 10)
 
 namespace fs = std::filesystem;
@@ -66,7 +68,6 @@ END_MESSAGE_MAP()
 
 CNoSpearClientDlg::CNoSpearClientDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_NOSPEAR_CLIENT_DIALOG, pParent)
-	, filename(_T(""))
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -74,29 +75,20 @@ CNoSpearClientDlg::CNoSpearClientDlg(CWnd* pParent /*=nullptr*/)
 void CNoSpearClientDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
-	DDX_Text(pDX, label_filename, filename);
 }
 
 BEGIN_MESSAGE_MAP(CNoSpearClientDlg, CDialogEx)
 	ON_WM_SYSCOMMAND()
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
-	ON_BN_CLICKED(btn_selectfile, &CNoSpearClientDlg::OnBnClickedselectfile)
-	ON_BN_CLICKED(btn_uploadfile, &CNoSpearClientDlg::OnBnClickeduploadfile)
-	ON_BN_CLICKED(btn_activelive, &CNoSpearClientDlg::OnBnClickedactivelive)
-	ON_BN_CLICKED(btn_inactivelive, &CNoSpearClientDlg::OnBnClickedinactivelive)
-	ON_BN_CLICKED(IDC_BUTTON1, &CNoSpearClientDlg::OnBnClickedButton1)
-	ON_WM_DROPFILES()
-	ON_BN_CLICKED(IDC_BUTTON2, &CNoSpearClientDlg::OnBnClickedButton2)
-	ON_BN_CLICKED(IDC_BUTTON3, &CNoSpearClientDlg::OnBnClickedButton3)
+	ON_WM_DESTROY()
 	ON_MESSAGE(WM_TRAY_NOTIFYICACTION, OnTrayNotifyAction)
 	ON_COMMAND(ID_TRAY_EXIT, &CNoSpearClientDlg::OnTrayExit)
 	ON_WM_CTLCOLOR()
-	ON_WM_CLOSE()
+	ON_STN_CLICKED(IDC_fileviewer, &CNoSpearClientDlg::OnStnClickedfileviewer)
+	ON_STN_CLICKED(IDC_home, &CNoSpearClientDlg::OnStnClickedhome)
+	ON_STN_CLICKED(IDC_fileviewer2, &CNoSpearClientDlg::OnStnClickedfileviewer2)
 END_MESSAGE_MAP()
-
-
-// CNoSpearClientDlg 메시지 처리기
 
 BOOL CNoSpearClientDlg::OnInitDialog()
 {
@@ -172,6 +164,9 @@ BOOL CNoSpearClientDlg::OnInitDialog()
 	lstrcpy(nid.szTip, _T("No-Spear"));
 	::Shell_NotifyIcon(NIM_ADD, &nid);
 	m_background.CreateSolidBrush(RGB(255, 255, 255));
+
+	AllocForms();
+
 
 	return TRUE;  // 포커스를 컨트롤에 설정하지 않으면 TRUE를 반환합니다.
 }
@@ -259,168 +254,59 @@ HCURSOR CNoSpearClientDlg::OnQueryDragIcon(){
 	return static_cast<HCURSOR>(m_hIcon);
 }
 void CNoSpearClientDlg::OnTrayExit(){
+	EndDialog(0);
+}
+
+void CNoSpearClientDlg::AllocForms(){
+	CCreateContext context;
+	ZeroMemory(&context, sizeof(context));
+
+	CRect rectOfPanelArea;
+
+	GetDlgItem(IDC_FormViewer)->GetWindowRect(&rectOfPanelArea);
+	ScreenToClient(&rectOfPanelArea);
+
+	m_pForm1 = new MainView();
+	m_pForm1->Create(NULL, NULL, WS_CHILD | WS_VSCROLL | WS_HSCROLL, rectOfPanelArea, this, IDD_MainView, &context);
+	m_pForm1->OnInitialUpdate();
+	m_pForm1->ShowWindow(SW_SHOW);
+
+	m_pForm2 = new SettingView();
+	m_pForm2->Create(NULL, NULL, WS_CHILD | WS_VSCROLL | WS_HSCROLL, rectOfPanelArea, this, IDD_SettingView, &context);
+	m_pForm2->OnInitialUpdate();
+	m_pForm2->ShowWindow(SW_HIDE);
+
+	fileListViewer = new FILELISTVIEWER();
+	fileListViewer->Create(IDD_FILELISTVIEWDIALOG);
+
+	GetDlgItem(IDC_FormViewer)->DestroyWindow();
+}
+
+void CNoSpearClientDlg::OnDestroy(){
+	CDialogEx::OnDestroy();
+
+	if (m_pForm1 != NULL)	{
+		m_pForm1->DestroyWindow();
+	}
+
+	if (m_pForm2 != NULL)	{
+		m_pForm2->DestroyWindow();
+	}	
+	if (fileListViewer != NULL)	{
+		fileListViewer->DestroyWindow();
+	}
+
 	ZeroMemory(&nid, sizeof(nid));
 	nid.cbSize = sizeof(nid);
 	nid.uID = 0;
 	nid.hWnd = GetSafeHwnd();
 	::Shell_NotifyIcon(NIM_DELETE, &nid);
-	if (fileListViewer != NULL) {
-		fileListViewer->EndDialog(0);
-		delete(fileListViewer);
-	}
+
 	if (client != NULL) delete(client);
-
-	EndDialog(0);
-}
-void CNoSpearClientDlg::OnBnClickedselectfile(){
-	// Manual Diagnose
-	// 수동검사의 파일선택 버튼을 눌렀을 때 작동을 구현
-	//hwp, hwpx, pdf, doc, docx, xls, xlsx
-	CString szFilter = _T("문서 파일 (*.hwp, *.hwpx, *.pdf, *.doc, *.docx, *.xls, *.xlsx) | *.hwp; *.hwpx; *.pdf; *.doc; *.docx; *.xls; *.xlsx|");
-	CFileDialog dlg(TRUE, NULL, NULL, OFN_HIDEREADONLY | OFN_FILEMUSTEXIST, szFilter);
-
-	if (IDOK == dlg.DoModal())	{
-		filepath = dlg.GetPathName();
-		filename = dlg.GetFileName();
-		UpdateData(FALSE);
-	}
-}
-
-void CNoSpearClientDlg::OnBnClickeduploadfile(){
-	// Manual Diagnose
-	// 수동검사의 검사 버튼을 눌렀을 때 작동을 구현
-	NOSPEAR_FILE file(filepath);
-	client->Diagnose(file);
-}
-
-
-void CNoSpearClientDlg::OnBnClickedactivelive(){
-	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
-	client->ActivateLiveProtect(TRUE);
-	
-}
-
-
-void CNoSpearClientDlg::OnBnClickedinactivelive(){
-	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
-	client->ActivateLiveProtect(FALSE);
-}
-
-void CNoSpearClientDlg::OnBnClickedButton1(){
-	fileListViewer = new FILELISTVIEWER();
-	fileListViewer->DoModal();
-}
-
-void CNoSpearClientDlg::OnDropFiles(HDROP hDropInfo){
-	wchar_t buffer[512] = {0, };
-	// TODO: 여기에 메시지 처리기 코드를 추가 및/또는 기본값을 호출합니다.
-	//UINT count = DragQueryFile(hDropInfo, 0xFFFFFFFF, buffer, 512);
-	DragQueryFile(hDropInfo, 0, buffer, 512);
-	CString tmp = CString(buffer);
-	filepath = tmp;
-	filename = PathFindFileName(tmp);
-	UpdateData(FALSE);
-	DragFinish(hDropInfo);
-	CDialogEx::OnDropFiles(hDropInfo);
 }
 
 NOSPEAR* CNoSpearClientDlg::GetClientPtr(){
 	return client;
-}
-#define UPDATECHECK_BROWSER_STRING _T("No-Spear Update")
-
-void CNoSpearClientDlg::OnBnClickedButton2(){
-	CWaitCursor wait;
-	HINTERNET hInet = InternetOpen(UPDATECHECK_BROWSER_STRING, INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, NULL);
-	HINTERNET hUrl = InternetOpenUrl(hInet, CString("http://localhost/"), NULL, -1L,
-		INTERNET_FLAG_RELOAD | INTERNET_FLAG_PRAGMA_NOCACHE |
-		INTERNET_FLAG_NO_CACHE_WRITE | WININET_API_FLAG_ASYNC, NULL);
-	if (hUrl){
-		AfxTrace(L"in\n");
-		char szBuffer[512] = {0, };
-		DWORD dwRead;
-		if (InternetReadFile(hUrl, szBuffer, sizeof(szBuffer), &dwRead) && dwRead > 0)
-		{
-
-				CString fileversion(szBuffer);
-				AfxTrace(fileversion);
-
-		}
-		InternetCloseHandle(hUrl);
-	}
-	else {
-		AfxTrace(L"nope\n");
-	}
-	InternetCloseHandle(hInet);
-
-
-}
-
-void CNoSpearClientDlg::OnBnClickedButton3(){
-	//CString strInsQuery;
-	//CString type = L"DOCUMENT";
-	//int zoneid = 3;
-	//int nospear = 1;
-
-	//strInsQuery.Format(TEXT("REPLACE INTO NOSPEAR_LocalFileList(FilePath, ZoneIdentifier, ProcessName, NOSPEAR, DiagnoseDate, Serverity, FileType) VALUES ('%ws','%d','%ws','%d','-','0','%ws');"), filepath, zoneid, L"sfjldsjflsjfsdldjs.exe", nospear, type);
-
-	//AfxMessageBox(strInsQuery);
-
-	//SQLITE temp;
-	//if (temp.DatabaseOpen(L"NOSPEAR")) {
-	//	AfxTrace(TEXT("[LIVEPROTECT::LIVEPROTECT] Can't Create NOSPEAR_HISTORY DataBase.\n"));
-	//	return;
-	//}
-	//
-	//sqlite3_select p_selResult = temp.SelectSqlite(L"select NOSPEAR, ZoneIdentifier, ProcessName from NOSPEAR_LocalFileList WHERE FilePath='" + filepath + L"' LIMIT 1;");
-	//if (p_selResult.pnRow != 0) {
-	//	//std::string sel1 = p_selResult.pazResult[3];
-	//	//std::string sel2 = p_selResult.pazResult[4];
-	//	//std::string sel3 = p_selResult.pazResult[5];
-	//	int nospear = stoi(p_selResult.pazResult[3]);
-	//	int zone = stoi(p_selResult.pazResult[4]);
-	//	CString ProcessName(p_selResult.pazResult[5]);
-	//	AfxTrace(TEXT("FIND Local DB ADS : %d, Zone : %d\, ProcessName : %s\n"), nospear, zone, ProcessName);
-	//	if (zone != 0)
-	//		AfxTrace(TEXT("Attatch Zone.Identifier Zone : %d\, ProcessName : %s\n"), zone, ProcessName);
-	//}
-
-
-
-
-	////CString strInsQuery = _T("Insert into helloworld VALUES( NULL,'" + filepath + "');");
-	////int rc = database.ExecuteSqlite(strInsQuery);
-
-	//sqlite3_select p_selResult = database.SelectSqlite(L"select * from NOSPEAR_HISTORY ;");
-	//if (p_selResult.pnRow != 0) {
-	//	for (int i = 0; i <= p_selResult.pnRow; ++i)
-	//	{
-	//		int colCtr = 0;
-	//		int nCol = 1;
-	//		int cellPosition = (i * p_selResult.pnColumn) + colCtr;
-
-	//		std::string sel1 = p_selResult.pazResult[cellPosition++];
-	//		CString zSeq1(sel1.c_str());
-	//		std::string sel2 = p_selResult.pazResult[cellPosition++];
-	//		CString zSeq2(sel2.c_str());
-	//		std::string sel3 = p_selResult.pazResult[cellPosition++];
-	//		CString zSeq3(sel3.c_str());
-	//		std::string sel4 = p_selResult.pazResult[cellPosition++];
-	//		CString zSeq4(sel4.c_str());
-	//		AfxTrace(zSeq1 + L", " + zSeq2 + L", " + zSeq3 + L", " + zSeq4 + L"\n");
-
-	//		if (i == 0) {
-	//			continue;
-	//		}
-
-	//	}
-
-	//}
-	// 
-	//exe한정 실행
-	DeleteFile(filepath + L":Zone.Identifier");
-
-
 }
 
 HBRUSH CNoSpearClientDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor){
@@ -429,12 +315,29 @@ HBRUSH CNoSpearClientDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor){
 	return hbr;
 }
 
-void CNoSpearClientDlg::OnClose(){
-	//이제 필요 없을 듯
-	ZeroMemory(&nid, sizeof(nid));
-	nid.cbSize = sizeof(nid);
-	nid.uID = 0;
-	nid.hWnd = GetSafeHwnd();
-	::Shell_NotifyIcon(NIM_DELETE, &nid);
-	CDialogEx::OnClose();
+void CNoSpearClientDlg::OnStnClickedfileviewer(){
+	fileListViewer->ShowWindow(SW_SHOW);
+}
+
+void CNoSpearClientDlg::OnStnClickedhome(){
+	ShowForm(0);
+}
+
+
+void CNoSpearClientDlg::OnStnClickedfileviewer2(){
+	ShowForm(1);
+}
+
+void CNoSpearClientDlg::ShowForm(int idx)
+{
+	switch (idx){
+	case 0:
+		m_pForm1->ShowWindow(SW_SHOW);
+		m_pForm2->ShowWindow(SW_HIDE);
+		break;
+	case 1:
+		m_pForm1->ShowWindow(SW_HIDE);
+		m_pForm2->ShowWindow(SW_SHOW);
+		break;
+	}
 }

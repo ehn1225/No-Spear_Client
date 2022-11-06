@@ -1,5 +1,8 @@
-﻿class NOSPEAR;
+﻿#pragma once
+class NOSPEAR;
 class FILELISTVIEWER;
+class MainView;
+class SettingView;
 class CNoSpearClientDlg : public CDialogEx{
 public:
 	CNoSpearClientDlg(CWnd* pParent = nullptr);
@@ -17,27 +20,23 @@ protected:
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
 	LRESULT OnTrayNotifyAction(WPARAM wParam, LPARAM lParam);
-	CString filename;
-	CString filepath;
 	bool Has_ADS(CString filepath);
 	void PrintFolder(CString folderpath);
 	NOTIFYICONDATA nid;
 	CBrush m_background;
 	NOSPEAR* client = NULL;
 	FILELISTVIEWER* fileListViewer = NULL;
+	MainView* m_pForm1;
+	SettingView* m_pForm2;
+	void AllocForms();
+	void ShowForm(int idx);
+	afx_msg void OnDestroy();
 
 public:
-	afx_msg void OnBnClickedselectfile();
-	afx_msg void OnBnClickeduploadfile();
-	afx_msg void OnBnClickedactivelive();
-	afx_msg void OnBnClickedinactivelive();
-	afx_msg void OnBnClickedButton1();
-	afx_msg void OnDropFiles(HDROP hDropInfo);
 	NOSPEAR* GetClientPtr();
-	afx_msg void OnBnClickedButton2();
-	afx_msg void OnBnClickedButton3();
 	afx_msg void OnTrayExit();
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
-	afx_msg void OnClose();
-
+	afx_msg void OnStnClickedfileviewer();
+	afx_msg void OnStnClickedhome();
+	afx_msg void OnStnClickedfileviewer2();
 };

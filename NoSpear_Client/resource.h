@@ -6,9 +6,11 @@
 #define IDM_ABOUTBOX                    0x0010
 #define IDD_ABOUTBOX                    100
 #define IDS_ABOUTBOX                    101
+#define IDD_MainView                    101
 #define IDD_NOSPEAR_CLIENT_DIALOG       102
 #define IDR_MAINFRAME                   127
 #define IDD_FILELISTVIEWDIALOG          131
+#define IDD_SettingView                 132
 #define IDB_PNG1                        136
 #define IDI_ICON4                       166
 #define IDI_ICON5                       167
@@ -19,6 +21,13 @@
 #define IDI_ICON1                       178
 #define IDI_ICON2                       179
 #define IDI_ICON3                       180
+#define IDI_ICON9                       189
+#define IDI_ICON10                      190
+#define IDI_ICON11                      191
+#define IDI_ICON12                      192
+#define IDI_ICON13                      193
+#define IDI_ICON14                      194
+#define IDI_ICON15                      195
 #define btn_selectfile                  1001
 #define btn_uploadfile                  1002
 #define edit_filepath                   1003
@@ -50,6 +59,19 @@
 #define IDC_search4                     1035
 #define IDC_search5                     1036
 #define IDC_refreshlist                 1037
+#define IDC_home                        1038
+#define IDC_FormViewer                  1039
+#define btn_search                      1040
+#define IDC_menu                        1041
+#define btn_manualDiagnose              1041
+#define IDC_fileviewer                  1042
+#define IDC_filename                    1042
+#define IDC_fileviewer2                 1043
+#define IDC_STATIC2                     1043
+#define label_result_filename           1044
+#define label_result_filename2          1045
+#define label_result_text               1045
+#define label_result_report             1046
 #define ID_TRAY_NO                      32771
 #define ID_TRAY_EXIT                    32772
 #define ID_MANU_32773                   32773
@@ -78,9 +100,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        181
+#define _APS_NEXT_RESOURCE_VALUE        196
 #define _APS_NEXT_COMMAND_VALUE         32794
-#define _APS_NEXT_CONTROL_VALUE         1038
+#define _APS_NEXT_CONTROL_VALUE         1047
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

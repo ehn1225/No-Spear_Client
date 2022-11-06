@@ -3,6 +3,7 @@
 #include "LIVEPROTECT.h"
 #include "NOSPEAR.h"
 #include "resource.h"
+#include "SQLITE.h"
 
 #pragma warning(disable:4996)
 #pragma comment(lib,"ws2_32.lib")
@@ -337,3 +338,12 @@ bool NOSPEAR::DeleteZoneIdentifierADS(CString filepath) {
 	nospearDB->ExecuteSqlite(strInsQuery);
 	return DeleteFile(filepath + L":Zone.Identifier");
 }
+
+void NOSPEAR::AppendDiagnoseQueue(CString filepath) {
+	int queue_size = request_diagnose_queue.size();
+	request_diagnose_queue.push(filepath);
+	if (queue_size == 0){
+		AutoDiagnose();
+	}
+}
+

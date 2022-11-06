@@ -1,3 +1,4 @@
+#pragma once
 struct DIAGNOSE_RESULT {
 	CString filepath;
 	short result_code = 0;

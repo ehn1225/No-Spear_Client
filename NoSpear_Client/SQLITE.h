@@ -1,3 +1,4 @@
+#pragma once
 typedef struct {
 	char** pazResult;    /* Results of the query */
 	int pnRow;           /* Number of result rows written here */
