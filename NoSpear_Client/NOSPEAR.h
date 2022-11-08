@@ -23,7 +23,7 @@ public:
 	NOSPEAR();
 	~NOSPEAR();
 	NOSPEAR(std::string ip, unsigned short port);
-	void ActivateLiveProtect(bool status);
+	bool ActivateLiveProtect(bool status);
 	bool Diagnose(NOSPEAR_FILE& file);
 	void AutoDiagnose();
 	void Notification(CString title, CString body);

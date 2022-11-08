@@ -1,4 +1,7 @@
-﻿class SettingView : public CFormView{
+﻿#include "AutoUpdate.h"
+
+class NOSPEAR;
+class SettingView : public CFormView{
 	DECLARE_DYNCREATE(SettingView)
 
 public:
@@ -15,12 +18,20 @@ public:
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 지원입니다.
 	DECLARE_MESSAGE_MAP()
+	CFont title;
+	NOSPEAR* nospear_ptr = NULL;
+	AutoUpdate au;
+
 public:
 	virtual BOOL Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID, CCreateContext* pContext = NULL);
 	virtual void OnInitialUpdate();
 	SettingView();           // 동적 만들기에 사용되는 protected 생성자입니다.
 	virtual ~SettingView();
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
+	virtual void OnDraw(CDC* /*pDC*/);
+	CString strVersionNow;
+	CString strVersionNew;
+	afx_msg void OnBnClickedButton1();
 };
 
 

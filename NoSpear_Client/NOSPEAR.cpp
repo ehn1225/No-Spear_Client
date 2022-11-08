@@ -148,10 +148,10 @@ CString NOSPEAR::GetMsgFromNospear(short nospear) {
 	}
 }
 
-void NOSPEAR::ActivateLiveProtect(bool status){
+bool NOSPEAR::ActivateLiveProtect(bool status){
 	//입력값과 현재 값이 같을 경우 함수 실행 취소
 	if (live_protect_status == status)
-		return;
+		return status;
 
 	//LIVEPROTECT 객체 생성
 	if (status) {
@@ -165,8 +165,13 @@ void NOSPEAR::ActivateLiveProtect(bool status){
 				live_protect_status = true;
 			}
 			else {
-				resultext.Format(_T("LIVEPROTECT::Init() return : %ld\n"), result);
-				AfxMessageBox(resultext);
+				if (result == 2)
+					AfxMessageBox(L"드라이버가 실행 중이지 않습니다.");
+				else {
+					resultext.Format(_T("LIVEPROTECT::Init() return : %ld\n"), result);
+					AfxMessageBox(resultext);
+				}
+				
 				delete(liveprotect);
 				liveprotect = NULL;
 			}
@@ -180,6 +185,7 @@ void NOSPEAR::ActivateLiveProtect(bool status){
 		AfxMessageBox(_T("드라이버 연결 종료\n"));
 		live_protect_status = false;
 	}
+	return live_protect_status;
 }
 
 bool NOSPEAR::Diagnose(NOSPEAR_FILE& file){

@@ -28,6 +28,10 @@
 #define IDI_ICON13                      193
 #define IDI_ICON14                      194
 #define IDI_ICON15                      195
+#define IDI_ICON16                      196
+#define IDI_ICON17                      197
+#define IDB_BITMAP1                     198
+#define IDB_BITMAP2                     199
 #define btn_selectfile                  1001
 #define btn_uploadfile                  1002
 #define edit_filepath                   1003
@@ -38,11 +42,14 @@
 #define IDC_LIST3                       1015
 #define btn_inactivelive                1016
 #define IDC_BUTTON1                     1018
+#define btn_activate                    1018
+#define btn_updateClient                1018
 #define IDC_LIST2                       1019
 #define FileList                        1019
 #define IDC_FileListCtrl                1019
 #define IDC_BUTTON2                     1020
 #define btn_diagnose                    1020
+#define btn_inactivateLive              1020
 #define btn_SelectFolder                1022
 #define IDC_COMBO1                      1023
 #define IDC_BUTTON3                     1024
@@ -72,6 +79,14 @@
 #define label_result_filename2          1045
 #define label_result_text               1045
 #define label_result_report             1046
+#define img_liveprotect                 1047
+#define img_logo                        1047
+#define IDC_STATIC3                     1047
+#define logo_frame                      1048
+#define IDC_diagnose_status             1049
+#define btn_activateLive                1050
+#define version_now                     1051
+#define version_new                     1052
 #define ID_TRAY_NO                      32771
 #define ID_TRAY_EXIT                    32772
 #define ID_MANU_32773                   32773
@@ -100,9 +115,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        196
+#define _APS_NEXT_RESOURCE_VALUE        200
 #define _APS_NEXT_COMMAND_VALUE         32794
-#define _APS_NEXT_CONTROL_VALUE         1047
+#define _APS_NEXT_CONTROL_VALUE         1053
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

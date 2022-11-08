@@ -31,6 +31,7 @@ protected:
 	void AllocForms();
 	void ShowForm(int idx);
 	afx_msg void OnDestroy();
+	CStatic logo_ctl;
 
 public:
 	NOSPEAR* GetClientPtr();
@@ -39,4 +40,6 @@ public:
 	afx_msg void OnStnClickedfileviewer();
 	afx_msg void OnStnClickedhome();
 	afx_msg void OnStnClickedfileviewer2();
+	afx_msg void OnStnClickedframe();
+
 };

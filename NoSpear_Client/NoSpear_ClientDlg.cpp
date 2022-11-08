@@ -75,6 +75,7 @@ CNoSpearClientDlg::CNoSpearClientDlg(CWnd* pParent /*=nullptr*/)
 void CNoSpearClientDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
+	DDX_Control(pDX, logo_frame, logo_ctl);
 }
 
 BEGIN_MESSAGE_MAP(CNoSpearClientDlg, CDialogEx)
@@ -88,6 +89,7 @@ BEGIN_MESSAGE_MAP(CNoSpearClientDlg, CDialogEx)
 	ON_STN_CLICKED(IDC_fileviewer, &CNoSpearClientDlg::OnStnClickedfileviewer)
 	ON_STN_CLICKED(IDC_home, &CNoSpearClientDlg::OnStnClickedhome)
 	ON_STN_CLICKED(IDC_fileviewer2, &CNoSpearClientDlg::OnStnClickedfileviewer2)
+	ON_STN_CLICKED(logo_frame, &CNoSpearClientDlg::OnStnClickedframe)
 END_MESSAGE_MAP()
 
 BOOL CNoSpearClientDlg::OnInitDialog()
@@ -164,15 +166,12 @@ BOOL CNoSpearClientDlg::OnInitDialog()
 	lstrcpy(nid.szTip, _T("No-Spear"));
 	::Shell_NotifyIcon(NIM_ADD, &nid);
 	m_background.CreateSolidBrush(RGB(255, 255, 255));
-
 	AllocForms();
-
 
 	return TRUE;  // 포커스를 컨트롤에 설정하지 않으면 TRUE를 반환합니다.
 }
 
-LRESULT CNoSpearClientDlg::OnTrayNotifyAction(WPARAM wParam, LPARAM lParam)
-{
+LRESULT CNoSpearClientDlg::OnTrayNotifyAction(WPARAM wParam, LPARAM lParam){
 	switch (lParam)	{
 	case WM_RBUTTONDOWN:
 	{
@@ -219,18 +218,10 @@ void CNoSpearClientDlg::OnSysCommand(UINT nID, LPARAM lParam)
 	}
 }
 
-// 대화 상자에 최소화 단추를 추가할 경우 아이콘을 그리려면
-//  아래 코드가 필요합니다.  문서/뷰 모델을 사용하는 MFC 애플리케이션의 경우에는
-//  프레임워크에서 이 작업을 자동으로 수행합니다.
-
-void CNoSpearClientDlg::OnPaint()
-{
-	if (IsIconic())
-	{
+void CNoSpearClientDlg::OnPaint(){
+	if (IsIconic())	{
 		CPaintDC dc(this); // 그리기를 위한 디바이스 컨텍스트입니다.
-
 		SendMessage(WM_ICONERASEBKGND, reinterpret_cast<WPARAM>(dc.GetSafeHdc()), 0);
-
 		// 클라이언트 사각형에서 아이콘을 가운데에 맞춥니다.
 		int cxIcon = GetSystemMetrics(SM_CXICON);
 		int cyIcon = GetSystemMetrics(SM_CYICON);
@@ -238,18 +229,14 @@ void CNoSpearClientDlg::OnPaint()
 		GetClientRect(&rect);
 		int x = (rect.Width() - cxIcon + 1) / 2;
 		int y = (rect.Height() - cyIcon + 1) / 2;
-
 		// 아이콘을 그립니다.
 		dc.DrawIcon(x, y, m_hIcon);
 	}
-	else
-	{
+	else{
 		CDialogEx::OnPaint();
 	}
 }
 
-// 사용자가 최소화된 창을 끄는 동안에 커서가 표시되도록 시스템에서
-//  이 함수를 호출합니다.
 HCURSOR CNoSpearClientDlg::OnQueryDragIcon(){
 	return static_cast<HCURSOR>(m_hIcon);
 }
@@ -328,8 +315,7 @@ void CNoSpearClientDlg::OnStnClickedfileviewer2(){
 	ShowForm(1);
 }
 
-void CNoSpearClientDlg::ShowForm(int idx)
-{
+void CNoSpearClientDlg::ShowForm(int idx){
 	switch (idx){
 	case 0:
 		m_pForm1->ShowWindow(SW_SHOW);
@@ -340,4 +326,8 @@ void CNoSpearClientDlg::ShowForm(int idx)
 		m_pForm2->ShowWindow(SW_SHOW);
 		break;
 	}
+}
+
+void CNoSpearClientDlg::OnStnClickedframe(){
+	ShellExecute(this->m_hWnd, TEXT("open"), TEXT("IEXPLORE.EXE"), L"http://4nul.org/", NULL, SW_SHOW);
 }

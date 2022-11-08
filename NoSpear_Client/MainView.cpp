@@ -12,7 +12,9 @@ MainView::MainView()
 	, filename(L"파일명 : 선택한 파일이 없습니다.")
 	, result_filename(L"검사한 파일이 없습니다.")
 	, result_text(L"화면에 파일을 드래그 앤 드롭하거나 검사할 파일을 선택하세요")
-	, result_report(L"검사 후 이곳을 클릭하면 검사 결과 보고서를 웹브라우저로 출력합니다.")
+	, result_report(L"이곳을 클릭하면 검사 결과 보고서를 웹브라우저로 확인할 수 있습니다.")
+	, diagnose_status(L"진행 상태 : 검사 대기")
+	, filepath(L"")
 {
 
 }
@@ -26,18 +28,18 @@ void MainView::DoDataExchange(CDataExchange* pDX){
 	DDX_Text(pDX, label_result_filename, result_filename);
 	DDX_Text(pDX, label_result_text, result_text);
 	DDX_Text(pDX, label_result_report, result_report);
+	DDX_Text(pDX, IDC_diagnose_status, diagnose_status);
 }
 
 BEGIN_MESSAGE_MAP(MainView, CFormView)
 	ON_WM_CTLCOLOR()
+	ON_WM_DROPFILES()
 	ON_STN_CLICKED(btn_search, &MainView::OnStnClickedsearch)
 	ON_STN_CLICKED(btn_manualDiagnose, &MainView::OnStnClickedmanualdiagnose)
 	ON_STN_CLICKED(label_result_report, &MainView::OnStnClickedresultreport)
-	ON_WM_DROPFILES()
+	ON_BN_CLICKED(btn_activateLive, &MainView::OnBnClickedactivatelive)
+	ON_BN_CLICKED(btn_inactivateLive, &MainView::OnBnClickedinactivatelive)
 END_MESSAGE_MAP()
-
-
-// MainForm 진단
 
 #ifdef _DEBUG
 void MainView::AssertValid() const{
@@ -56,13 +58,13 @@ BOOL MainView::Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dwSty
 	return CFormView::Create(lpszClassName, lpszWindowName, dwStyle, rect, pParentWnd, nID, pContext);
 }
 
-
 void MainView::OnInitialUpdate(){
 	CFormView::OnInitialUpdate();
 	//title.CreateFontW(30, 20, 0, 0, 700, 0, 0, 0, 0, OUT_DEFAULT_PRECIS, 0, DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE, L"Malgun Gothic Semilight");
 	title.CreatePointFont(120, L"Malgun Gothic Semilight");
 	GetDlgItem(IDC_STATIC)->SetFont(&title);
 	GetDlgItem(IDC_STATIC2)->SetFont(&title);
+	GetDlgItem(IDC_STATIC3)->SetFont(&title);
 	nospear_ptr = ((CNoSpearClientDlg*)GetParent())->GetClientPtr();
 	UpdateData(FALSE);
 }
@@ -91,12 +93,21 @@ void MainView::OnStnClickedsearch(){
 }
 
 void MainView::OnStnClickedmanualdiagnose(){
+
+	if (filepath.IsEmpty()) {
+		AfxMessageBox(L"검사할 문서를 선택하세요");
+		return;
+	}
+
+	diagnose_status = L"진행 상태 : 검사 진행 중";
+	UpdateData(FALSE);
 	NOSPEAR_FILE file = NOSPEAR_FILE(filepath);
 	nospear_ptr->Diagnose(file);
-	nospear_ptr->Diagnose(file);
 	result_filename.Format(TEXT("파일명 : %ws"), file.Getfilename());
-	result_text.Format(TEXT("검사결과 : %ws"), file.diag_result.result_msg);
-	result_report.Format(TEXT("4nul.org/result?hash=%ws"), file.Getfilehash());
+	result_text.Format(TEXT("검사 결과 : %ws"), file.diag_result.result_msg);
+	report_url.Format(TEXT("4nul.org/result?hash=%ws"), file.Getfilehash());
+	result_report = L"검사 보고서 : " + report_url;
+	diagnose_status = L"진행 상태 : 검사 완료";
 	UpdateData(FALSE);
 }
 
@@ -111,7 +122,32 @@ void MainView::OnDropFiles(HDROP hDropInfo){
 	CFormView::OnDropFiles(hDropInfo);
 }
 
-
 void MainView::OnStnClickedresultreport(){
-	ShellExecute(this->m_hWnd, TEXT("open"), TEXT("IEXPLORE.EXE"), result_report, NULL, SW_SHOW);
+	ShellExecute(this->m_hWnd, TEXT("open"), TEXT("IEXPLORE.EXE"), report_url, NULL, SW_SHOW);
+}
+
+void MainView::OnDraw(CDC* /*pDC*/){
+	CRect rcWin;
+	GetWindowRect(&rcWin);
+	CClientDC dc(this);
+	dc.MoveTo(0, 0);
+	dc.LineTo(rcWin.Width(), 0);
+	dc.MoveTo(0, 140);
+	dc.LineTo(rcWin.Width(), 140);
+	dc.MoveTo(0, 310);
+	dc.LineTo(rcWin.Width(), 310);
+}
+
+void MainView::OnBnClickedactivatelive() {
+	if (nospear_ptr->ActivateLiveProtect(true)) {
+		GetDlgItem(btn_activateLive)->EnableWindow(false);
+		GetDlgItem(btn_inactivateLive)->EnableWindow(true);
+	}
+}
+
+void MainView::OnBnClickedinactivatelive(){
+	if (!nospear_ptr->ActivateLiveProtect(false)) {
+		GetDlgItem(btn_activateLive)->EnableWindow(true);
+		GetDlgItem(btn_inactivateLive)->EnableWindow(false);
+	}
 }

@@ -203,6 +203,7 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="AutoUpdate.h" />
     <ClInclude Include="documentValidate.h" />
     <ClInclude Include="FILELISTVIEWER.h" />
     <ClInclude Include="LIVEPROTECT.h" />
@@ -221,6 +222,7 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AutoUpdate.cpp" />
     <ClCompile Include="documentValidate.cpp" />
     <ClCompile Include="FILELISTVIEWER.cpp" />
     <ClCompile Include="LIVEPROTECT.cpp" />
@@ -256,6 +258,8 @@
     <Image Include="res\314709_document_scan_icon.ico" />
     <Image Include="res\4567745_app_file_interface_internet_page_icon.ico" />
     <Image Include="res\4894514_data_download_cloud_ui_interface_icon.ico" />
+    <Image Include="res\5172947_browser_internet_safe_security_shield_icon.ico" />
+    <Image Include="res\5172964_danger_internet_malware_security_virus_icon.ico" />
     <Image Include="res\5172965_data_hosting_information_internet_security_icon.ico" />
     <Image Include="res\5172979_engine_gear_internet_option_security_icon.ico" />
     <Image Include="res\5172998_bug_danger_internet_malware_search_icon.ico" />
@@ -272,6 +276,7 @@
     <Image Include="res\icons8-microsoft-word-2019-240.bmp" />
     <Image Include="res\icons8-microsoft-word-2019-240.ico" />
     <Image Include="res\NoSpear.ico" />
+    <Image Include="res\nospear_logo.bmp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
