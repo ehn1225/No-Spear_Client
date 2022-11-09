@@ -28,3 +28,7 @@ Vaccine client
 <h4>1.0.0 : ProtoType 1st(File Upload)</h4>
 <h4>2.0.0 : ProtoType 2nd(Mini Filter, File Viewer)</h4>
 <h4>2.1.0 : ProtoType 3rd_1(Live Protect History, ADS Rules)</h4>
+<h4>2.2.0 : ProtoType 3rd_2(LocalFileList DB, Tray Mode, Notification)</h4>
+<h4>2.3.0 : ProtoType 3rd_3(Local File Viewer, Tab Change, UI Design)</h4>
+<h4>2.4.0 : ProtoType 3rd_4(Live Protect, Diagnose Status, Auto Update, 화면 해상도 문제 수정)</h4>
+
