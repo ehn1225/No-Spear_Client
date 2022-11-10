@@ -3,6 +3,15 @@ class NOSPEAR;
 class FILELISTVIEWER;
 class MainView;
 class SettingView;
+class QuarantineView;
+static bool clientThreadStatus;
+static CWinThread* clientThread = NULL;
+struct STPARAM {
+	NOSPEAR *nospear;
+
+	STPARAM(NOSPEAR* ptr)
+		:nospear(ptr) {}
+};
 class CNoSpearClientDlg : public CDialogEx{
 public:
 	CNoSpearClientDlg(CWnd* pParent = nullptr);
@@ -28,10 +37,13 @@ protected:
 	FILELISTVIEWER* fileListViewer = NULL;
 	MainView* m_pForm1;
 	SettingView* m_pForm2;
+	QuarantineView* m_pForm3;
 	void AllocForms();
 	void ShowForm(int idx);
 	afx_msg void OnDestroy();
 	CStatic logo_ctl;
+	static UINT ClientThreadFunc(LPVOID param);
+
 
 public:
 	NOSPEAR* GetClientPtr();
@@ -39,7 +51,9 @@ public:
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 	afx_msg void OnStnClickedfileviewer();
 	afx_msg void OnStnClickedhome();
-	afx_msg void OnStnClickedfileviewer2();
+	afx_msg void OnStnClickedsetting();
+	afx_msg void OnStnClickedquarantine();
 	afx_msg void OnStnClickedframe();
 
+	afx_msg void OnBnClickedButton1();
 };

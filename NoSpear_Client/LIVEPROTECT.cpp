@@ -214,7 +214,7 @@ DWORD LIVEPROTECT::ScannerWorker(PSCANNER_THREAD_CONTEXT Context) {
                         }
                     }
                 }
-                //Create이기에, 새로운 파일이므로 덮어씌워야함
+                //Create이기에, 새로운 파일이므로 덮어씌워야함(기존에 해당 이름으로 파일이 있었는데, 덮어쓰는 경우)
                 strInsQuery.Format(TEXT("REPLACE INTO NOSPEAR_LocalFileList(FilePath, ZoneIdentifier, ProcessName, NOSPEAR, DiagnoseDate, Hash, Serverity, FileType) VALUES ('%ws','%d','%ws','%d','-', '-', '%d','%ws');"), path, zoneid, processname, nospear, serverity, type);
                 liveProtectDB.ExecuteSqlite(strInsQuery);
             }
@@ -227,7 +227,9 @@ DWORD LIVEPROTECT::ScannerWorker(PSCANNER_THREAD_CONTEXT Context) {
                         break;
                     case 1:
                         isMailicious = IsOfficeProgram(pid);
+                        passcode = 41;
                         if (isMailicious) {
+                            passcode = 42;
                             //ADS:NOSPEAR = 1인 파일을 사용자가 Office Program으로 실행할 때
                             ZeroMemory(&nid, sizeof(nid));
                             nid.cbSize = sizeof(nid);
@@ -238,11 +240,11 @@ DWORD LIVEPROTECT::ScannerWorker(PSCANNER_THREAD_CONTEXT Context) {
                             nid.uCallbackMessage = WM_TRAY_NOTIFYICACTION;
                             nid.hIcon = AfxGetApp()->LoadIconW(IDR_MAINFRAME);
                             CString filename = PathFindFileName(path);
-                            lstrcpy(nid.szInfoTitle, L"악성 의심 파일의 실행을 차단하였습니다");
-                            lstrcpy(nid.szInfo, (filename + L"은 사용자 컴퓨터에서 실행이 허용되지 않은 파일이므로 차단되었습니다."));
+                            lstrcpy(nid.szInfoTitle, L"악성 의심 문서 실행을 차단하였습니다");
+                            lstrcpy(nid.szInfo, (filename + L" 파일을 열려면 검사를 진행하거나, NOSPEAR 권한을 변경하세요."));
                             ::Shell_NotifyIcon(NIM_MODIFY, &nid);
 
-                            CString errMsg;
+                            /*CString errMsg;
                             errMsg.Format(TEXT("새로운 문서 파일이 실행되는 것을 탐지하였습니다.\n파일명 : %ws\n 검사를 진행하시겠습니까?\n검사를 진행하려면 \"예\"를, 검사 없이 문서를 여시려면 \"아니요\", 문서 실행을 취소하려면 \"취소\"를 누르세요."), filename);
                             switch (AfxMessageBox(errMsg, MB_YESNOCANCEL | MB_ICONWARNING)) {
                                 case IDYES:
@@ -258,9 +260,8 @@ DWORD LIVEPROTECT::ScannerWorker(PSCANNER_THREAD_CONTEXT Context) {
                                     isMailicious = false;
                                     passcode = 82;
                                     break;
-                            }
+                            }*/
                         }
-                        passcode = 4;
                         break;
                     case 2:
                         isMailicious = false;
@@ -364,12 +365,11 @@ DWORD LIVEPROTECT::ScannerWorker(PSCANNER_THREAD_CONTEXT Context) {
 
 LIVEPROTECT::LIVEPROTECT() {
     if (liveProtectDB.DatabaseOpen(L"NOSPEAR")) {
-        AfxTrace(TEXT("[LIVEPROTECT::LIVEPROTECT] Can't Create NOSPEAR_HISTORY DataBase.\n"));
+        AfxTrace(TEXT("[LIVEPROTECT::LIVEPROTECT] Can't OPEN NOSPEAR DataBase.\n"));
         return;
     }
 
-    liveProtectDB.ExecuteSqlite(L"CREATE TABLE IF NOT EXISTS NOSPEAR_HISTORY(SEQ INTEGER PRIMARY KEY AUTOINCREMENT, TimeStamp TEXT not null DEFAULT (datetime('now', 'localtime')), FilePath TEXT NOT NULL, ProcessName TEXT, Operation TEXT, NOSPEAR INTEGER, Permission TEXT);");
-    liveProtectDB.ExecuteSqlite(L"CREATE TABLE IF NOT EXISTS NOSPEAR_LocalFileList(FilePath TEXT NOT NULL PRIMARY KEY, ZoneIdentifier INTEGER, ProcessName TEXT, NOSPEAR INTEGER, DiagnoseDate TEXT, Hash TEXT, Serverity INTEGER, FileType TEXT, TimeStamp TEXT not null DEFAULT (datetime('now', 'localtime')));");
+
     
     office_file_ext_list.insert(L".doc");
     office_file_ext_list.insert(L".docx");

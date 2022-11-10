@@ -17,6 +17,8 @@ public:
 	CString Getfilename();
 	CString Getfilepath();
 	CString Getfilehash();
+	bool Quarantine();
+	bool InQuarantine(CString filepath);
 	bool Checkvalidation();
 	unsigned int Getfilesize();
 	DIAGNOSE_RESULT diag_result;

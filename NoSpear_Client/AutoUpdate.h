@@ -38,6 +38,7 @@ private:
 	bool tempversion;			// indicate this is a temp version
 	CString m_SelfFullPath;
 	CString m_SelfFileName;
+	//CString m_DownloadLink = _T("http://localhost/");
 	CString m_DownloadLink = _T("http://4nul.org:3000/");
 	CString m_NextVersion;
 	BOOL _downloading = FALSE;

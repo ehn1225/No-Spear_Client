@@ -9,6 +9,7 @@
 #include "FILELISTVIEWER.h"
 #include "MainView.h"
 #include "SettingView.h"
+#include "QuarantineView.h"
 #define WM_TRAY_NOTIFYICACTION (WM_USER + 10)
 
 namespace fs = std::filesystem;
@@ -88,8 +89,10 @@ BEGIN_MESSAGE_MAP(CNoSpearClientDlg, CDialogEx)
 	ON_WM_CTLCOLOR()
 	ON_STN_CLICKED(IDC_fileviewer, &CNoSpearClientDlg::OnStnClickedfileviewer)
 	ON_STN_CLICKED(IDC_home, &CNoSpearClientDlg::OnStnClickedhome)
-	ON_STN_CLICKED(IDC_fileviewer2, &CNoSpearClientDlg::OnStnClickedfileviewer2)
+	ON_STN_CLICKED(IDC_setting, &CNoSpearClientDlg::OnStnClickedsetting)
+	ON_STN_CLICKED(IDC_quarantine, &CNoSpearClientDlg::OnStnClickedquarantine)
 	ON_STN_CLICKED(logo_frame, &CNoSpearClientDlg::OnStnClickedframe)
+	ON_BN_CLICKED(IDC_BUTTON1, &CNoSpearClientDlg::OnBnClickedButton1)
 END_MESSAGE_MAP()
 
 BOOL CNoSpearClientDlg::OnInitDialog()
@@ -127,33 +130,41 @@ BOOL CNoSpearClientDlg::OnInitDialog()
 	// TODO: 여기에 추가 초기화 작업을 추가합니다.
 	CFileFind pFind;
 	BOOL bRet = pFind.FindFile(L"config.dat");
+	clientThreadStatus = true;
 
 	if (bRet) {
 		//서버 주소 설정 파일이 존재할 경우, 반영해서 NOSPEAR 객체를 생성함
 		/*
 			config.dat 파일 형식
 			첫번째 줄에 서버 주소
-			두번째 줄에 port
+			두번째 줄에 백신 서버 port
+			세번째 줄에 업데이트 서버 port
 
 			[example - config.dat]
 			127.0.0.1
 			12345
+			12345
 		*/
 		AfxTrace(TEXT("[CNoSpearClientDlg::OnInitDialog] 설정 파일 존재\n"));
 
-		std::string ip, port;
+		std::string ip, port, port2;
 		std::ifstream ifs;
 		ifs.open("config.dat");
 		if (ifs.is_open()) {
 			std::getline(ifs, ip);
 			std::getline(ifs, port);
+			std::getline(ifs, port2);
 		}
-		client = new NOSPEAR(ip, atoi(port.c_str()));
+		client = new NOSPEAR(ip, atoi(port.c_str()), atoi(port2.c_str()));
+		clientThread = AfxBeginThread(ClientThreadFunc, new STPARAM(client));
+
 	}
 	else {
 		//설정 파일이 없는 경우 기본 설정으로 진행
 		AfxTrace(TEXT("[CNoSpearClientDlg::OnInitDialog] 설정 파일 미존재\n"));
 		client = new NOSPEAR();
+		clientThread = AfxBeginThread(ClientThreadFunc, new STPARAM(client));
+
 	}
 
 	ZeroMemory(&nid, sizeof(nid));
@@ -166,6 +177,7 @@ BOOL CNoSpearClientDlg::OnInitDialog()
 	lstrcpy(nid.szTip, _T("No-Spear"));
 	::Shell_NotifyIcon(NIM_ADD, &nid);
 	m_background.CreateSolidBrush(RGB(255, 255, 255));
+
 	AllocForms();
 
 	return TRUE;  // 포커스를 컨트롤에 설정하지 않으면 TRUE를 반환합니다.
@@ -263,6 +275,11 @@ void CNoSpearClientDlg::AllocForms(){
 	m_pForm2->OnInitialUpdate();
 	m_pForm2->ShowWindow(SW_HIDE);
 
+	m_pForm3 = new QuarantineView();
+	m_pForm3->Create(NULL, NULL, WS_CHILD | WS_VSCROLL | WS_HSCROLL, rectOfPanelArea, this, IDD_SettingView, &context);
+	m_pForm3->OnInitialUpdate();
+	m_pForm3->ShowWindow(SW_HIDE);
+
 	fileListViewer = new FILELISTVIEWER();
 	fileListViewer->Create(IDD_FILELISTVIEWDIALOG);
 
@@ -279,6 +296,9 @@ void CNoSpearClientDlg::OnDestroy(){
 	if (m_pForm2 != NULL)	{
 		m_pForm2->DestroyWindow();
 	}	
+	if (m_pForm3 != NULL)	{
+		m_pForm3->DestroyWindow();
+	}	
 	if (fileListViewer != NULL)	{
 		fileListViewer->DestroyWindow();
 	}
@@ -288,7 +308,12 @@ void CNoSpearClientDlg::OnDestroy(){
 	nid.uID = 0;
 	nid.hWnd = GetSafeHwnd();
 	::Shell_NotifyIcon(NIM_DELETE, &nid);
-
+	if (clientThread != NULL) {
+		clientThreadStatus = false;
+		clientThread->SuspendThread();
+		delete clientThread;
+	}
+	
 	if (client != NULL) delete(client);
 }
 
@@ -310,9 +335,12 @@ void CNoSpearClientDlg::OnStnClickedhome(){
 	ShowForm(0);
 }
 
-
-void CNoSpearClientDlg::OnStnClickedfileviewer2(){
+void CNoSpearClientDlg::OnStnClickedsetting(){
 	ShowForm(1);
+}
+void CNoSpearClientDlg::OnStnClickedquarantine() {
+	ShowForm(2);
+	m_pForm3->RefrestList();
 }
 
 void CNoSpearClientDlg::ShowForm(int idx){
@@ -320,14 +348,53 @@ void CNoSpearClientDlg::ShowForm(int idx){
 	case 0:
 		m_pForm1->ShowWindow(SW_SHOW);
 		m_pForm2->ShowWindow(SW_HIDE);
+		m_pForm3->ShowWindow(SW_HIDE);
 		break;
 	case 1:
 		m_pForm1->ShowWindow(SW_HIDE);
 		m_pForm2->ShowWindow(SW_SHOW);
+		m_pForm3->ShowWindow(SW_HIDE);
+		break;
+	case 2:
+		m_pForm1->ShowWindow(SW_HIDE);
+		m_pForm2->ShowWindow(SW_HIDE);
+		m_pForm3->ShowWindow(SW_SHOW);
 		break;
 	}
 }
 
 void CNoSpearClientDlg::OnStnClickedframe(){
 	ShellExecute(this->m_hWnd, TEXT("open"), TEXT("IEXPLORE.EXE"), L"http://4nul.org/", NULL, SW_SHOW);
+}
+
+void CNoSpearClientDlg::OnBnClickedButton1(){
+	//CString filename = L"C:\\Users\\LYC\\OneDrive - 서울과학기술대학교\\바탕 화면\\04_Three Dimensional Viewing.pdf";
+	////client->Quarantine(filename);
+
+	//client->InQuarantine(filename);
+	client->UpdataBlackListDB();
+}
+
+UINT CNoSpearClientDlg::ClientThreadFunc(LPVOID pParam) {
+	STPARAM param = *(STPARAM*)pParam;
+	NOSPEAR* nospear = param.nospear;
+	while (clientThreadStatus) {
+		Sleep(5000);
+		//DB 동기화 및 정리
+		//nospear->ScanLocalFile(L"C:\\Users");
+		//nospear->ScanFileAvailability();
+
+		
+		//검사 요청 큐에 들어온 애들 검사 처리
+		if (!nospear->IsQueueEmpty()) {
+			nospear->AutoDiagnose();
+		}
+
+		//Zone.Identifier 붙혀주는 친구
+
+
+
+		AfxTrace(L"Thread Loop\n");
+	}
+	return 0;
 }

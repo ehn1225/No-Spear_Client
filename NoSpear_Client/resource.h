@@ -11,6 +11,7 @@
 #define IDR_MAINFRAME                   127
 #define IDD_FILELISTVIEWDIALOG          131
 #define IDD_SettingView                 132
+#define IDD_QuarantineView              133
 #define IDB_PNG1                        136
 #define IDI_ICON4                       166
 #define IDI_ICON5                       167
@@ -31,7 +32,9 @@
 #define IDI_ICON16                      196
 #define IDI_ICON17                      197
 #define IDB_BITMAP1                     198
-#define IDB_BITMAP2                     199
+#define IDB_BITMAP2                     200
+#define IDR_MENU1                       204
+#define IDR_Quarantine                  204
 #define btn_selectfile                  1001
 #define btn_uploadfile                  1002
 #define edit_filepath                   1003
@@ -39,6 +42,8 @@
 #define IDC_LIST1                       1012
 #define btn_test                        1012
 #define btn_activelive                  1012
+#define quarantin_list                  1012
+#define quarantine_list                 1012
 #define IDC_LIST3                       1015
 #define btn_inactivelive                1016
 #define IDC_BUTTON1                     1018
@@ -75,6 +80,7 @@
 #define IDC_filename                    1042
 #define IDC_fileviewer2                 1043
 #define IDC_STATIC2                     1043
+#define IDC_setting                     1043
 #define label_result_filename           1044
 #define label_result_filename2          1045
 #define label_result_text               1045
@@ -87,6 +93,7 @@
 #define btn_activateLive                1050
 #define version_now                     1051
 #define version_new                     1052
+#define IDC_quarantine                  1053
 #define ID_TRAY_NO                      32771
 #define ID_TRAY_EXIT                    32772
 #define ID_MANU_32773                   32773
@@ -110,14 +117,18 @@
 #define ID_MANU_32791                   32791
 #define ID_MANU_6                       32792
 #define ID_Menu                         32793
+#define ID_QUARANTINE_delete            32797
+#define ID_QUARANTINE_recover           32798
+#define ID_QUARANTINE_result            32799
+#define ID_QUARANTINE_report            32800
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        200
-#define _APS_NEXT_COMMAND_VALUE         32794
-#define _APS_NEXT_CONTROL_VALUE         1053
+#define _APS_NEXT_RESOURCE_VALUE        205
+#define _APS_NEXT_COMMAND_VALUE         32801
+#define _APS_NEXT_CONTROL_VALUE         1054
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

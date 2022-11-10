@@ -46,7 +46,7 @@
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
-    <UseOfMfc>Dynamic</UseOfMfc>
+    <UseOfMfc>Static</UseOfMfc>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -117,7 +117,7 @@
       <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Manifest>
-      <EnableDpiAwareness>true</EnableDpiAwareness>
+      <EnableDpiAwareness>false</EnableDpiAwareness>
     </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -199,7 +199,7 @@
       <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Manifest>
-      <EnableDpiAwareness>true</EnableDpiAwareness>
+      <EnableDpiAwareness>false</EnableDpiAwareness>
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -214,6 +214,7 @@
     <ClInclude Include="NoSpear_Client.h" />
     <ClInclude Include="NoSpear_ClientDlg.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="QuarantineView.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="SettingView.h" />
     <ClInclude Include="sha256.h" />
@@ -237,6 +238,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="QuarantineView.cpp" />
     <ClCompile Include="SettingView.cpp" />
     <ClCompile Include="sha256.cpp" />
     <ClCompile Include="SQLITE.cpp" />
@@ -259,6 +261,7 @@
     <Image Include="res\4567745_app_file_interface_internet_page_icon.ico" />
     <Image Include="res\4894514_data_download_cloud_ui_interface_icon.ico" />
     <Image Include="res\5172947_browser_internet_safe_security_shield_icon.ico" />
+    <Image Include="res\5172964_danger_internet_malware_security_virus_icon (1).ico" />
     <Image Include="res\5172964_danger_internet_malware_security_virus_icon.ico" />
     <Image Include="res\5172965_data_hosting_information_internet_security_icon.ico" />
     <Image Include="res\5172979_engine_gear_internet_option_security_icon.ico" />

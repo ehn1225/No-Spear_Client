@@ -69,13 +69,11 @@ void MainView::OnInitialUpdate(){
 	UpdateData(FALSE);
 }
 
-
 HBRUSH MainView::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor){
 	//HBRUSH hbr = CFormView::OnCtlColor(pDC, pWnd, nCtlColor);
 	HBRUSH hbr = CreateSolidBrush(RGB(255, 255, 255));
 	return hbr;
 }
-
 
 void MainView::OnStnClickedsearch(){
 	// Manual Diagnose
@@ -132,10 +130,10 @@ void MainView::OnDraw(CDC* /*pDC*/){
 	CClientDC dc(this);
 	dc.MoveTo(0, 0);
 	dc.LineTo(rcWin.Width(), 0);
-	dc.MoveTo(0, 140);
-	dc.LineTo(rcWin.Width(), 140);
-	dc.MoveTo(0, 310);
-	dc.LineTo(rcWin.Width(), 310);
+	dc.MoveTo(0, 110);
+	dc.LineTo(rcWin.Width(), 110);
+	dc.MoveTo(0, 250);
+	dc.LineTo(rcWin.Width(), 250);
 }
 
 void MainView::OnBnClickedactivatelive() {
@@ -146,6 +144,7 @@ void MainView::OnBnClickedactivatelive() {
 }
 
 void MainView::OnBnClickedinactivatelive(){
+
 	if (!nospear_ptr->ActivateLiveProtect(false)) {
 		GetDlgItem(btn_activateLive)->EnableWindow(true);
 		GetDlgItem(btn_inactivateLive)->EnableWindow(false);

@@ -38,10 +38,7 @@ protected:
 	bool DB_status;
 	std::vector<LOCALFILELISTDB> filelist;
 	std::map<CString, bool> ext_filter;
-	std::set<CString> office_file_ext_list;
 
-	bool IsOfficeFile(CString ext);
-	void ScanLocalFile(CString rootPath);
 	static int CALLBACK CompareItem(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
 	DECLARE_MESSAGE_MAP()
 	afx_msg void OnPaint();

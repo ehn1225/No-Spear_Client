@@ -66,6 +66,9 @@
     <ClInclude Include="AutoUpdate.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="QuarantineView.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="NoSpear_Client.cpp">
@@ -105,6 +108,9 @@
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="AutoUpdate.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="QuarantineView.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
@@ -204,6 +210,9 @@
       <Filter>리소스 파일</Filter>
     </Image>
     <Image Include="res\nospear_logo.bmp">
+      <Filter>리소스 파일</Filter>
+    </Image>
+    <Image Include="res\5172964_danger_internet_malware_security_virus_icon (1).ico">
       <Filter>리소스 파일</Filter>
     </Image>
   </ItemGroup>

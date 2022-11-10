@@ -59,6 +59,7 @@ void SettingView::OnInitialUpdate() {
 	CString version_offline = L"";
 	HINTERNET hInet = InternetOpen(UPDATECHECK_BROWSER_STRING, INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, NULL);
 	HINTERNET hUrl = InternetOpenUrl(hInet, CString("http://4nul.org:3000/version"), NULL, -1L,
+	//HINTERNET hUrl = InternetOpenUrl(hInet, CString("http://localhost"), NULL, -1L,
 		INTERNET_FLAG_RELOAD | INTERNET_FLAG_PRAGMA_NOCACHE |
 		INTERNET_FLAG_NO_CACHE_WRITE | WININET_API_FLAG_ASYNC, NULL);
 	if (hUrl) {
@@ -70,7 +71,6 @@ void SettingView::OnInitialUpdate() {
 		InternetCloseHandle(hUrl);
 	}
 	InternetCloseHandle(hInet);
-	strVersionNew = L"최신 버전 : " + version_online;
 
 	TCHAR szPath[MAX_PATH];
 	if (GetModuleFileName(NULL, szPath, MAX_PATH)) {
@@ -79,11 +79,18 @@ void SettingView::OnInitialUpdate() {
 		version_offline.Format(TEXT("%d.%d.%d.%d"), ver.Major, ver.Minor, ver.Revision, ver.SubRevision);
 		strVersionNow = L"현재 버전 : " + version_offline;
 	}
+	if (version_online == L"") {
+		strVersionNew = L"업데이트 서버 연결 실패";
+	}
+	else {
+		strVersionNew = L"최신 버전 : " + version_online;
+	}
+	UpdateData(false);
+
 	if (version_offline != L"" && version_online != L"") {
 		if (version_offline != version_online)
 			GetDlgItem(btn_updateClient)->EnableWindow(true);
 	}
-	UpdateData(false);
 }
 
 HBRUSH SettingView::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor){
@@ -102,5 +109,7 @@ void SettingView::OnDraw(CDC* /*pDC*/){
 }
 
 void SettingView::OnBnClickedButton1(){
-	au.CheckForUpdates();
+	if (au.CheckForUpdates() == false) {
+		AfxMessageBox(L"업데이트에 실패하였습니다.");
+	}
 }

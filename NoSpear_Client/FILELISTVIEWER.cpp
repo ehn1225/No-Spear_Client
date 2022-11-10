@@ -8,8 +8,6 @@
 #include "SQLITE.h"
 
 using namespace std;
-namespace fs = std::filesystem;
-#define WM_TRAY_NOTIFYICACTION (WM_USER + 10)
 
 IMPLEMENT_DYNAMIC(FILELISTVIEWER, CDialogEx)
 
@@ -37,12 +35,12 @@ BOOL FILELISTVIEWER::OnInitDialog(){
 	filelistbox.InsertColumn(0, L"파일명", LVCFMT_LEFT, 200, -1);
 	filelistbox.InsertColumn(1, L"실행 권한", LVCFMT_CENTER, 70, -1);
 	filelistbox.InsertColumn(2, L"외부파일", LVCFMT_CENTER, 60, -1);
-	filelistbox.InsertColumn(3, L"Create Process", LVCFMT_CENTER, 110, -1);
+	filelistbox.InsertColumn(3, L"Create Process", LVCFMT_LEFT, 110, -1);
 	filelistbox.InsertColumn(4, L"검사 날짜", LVCFMT_LEFT, 100, -1);
 	filelistbox.InsertColumn(5, L"SHA_256", LVCFMT_LEFT, 100, -1);
 	filelistbox.InsertColumn(6, L"위험도", LVCFMT_CENTER, 70, -1);
 	filelistbox.InsertColumn(7, L"생성 일자", LVCFMT_CENTER, 140, -1);
-	filelistbox.InsertColumn(8, L"파일경로", LVCFMT_CENTER, 100, -1);
+	filelistbox.InsertColumn(8, L"파일경로", LVCFMT_LEFT, 100, -1);
 	filelistbox.SetExtendedStyle(LVS_EX_CHECKBOXES | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER | LVS_EX_GRIDLINES);
 
 	CRect rctComboBox, rctDropDown;
@@ -62,15 +60,6 @@ BOOL FILELISTVIEWER::OnInitDialog(){
 
 	m_background.CreateSolidBrush(RGB(255,255,255));
 
-	office_file_ext_list.insert(L".doc");
-	office_file_ext_list.insert(L".docx");
-	office_file_ext_list.insert(L".xls");
-	office_file_ext_list.insert(L".xlsx");
-	office_file_ext_list.insert(L".pptx");
-	office_file_ext_list.insert(L".ppsx");
-	office_file_ext_list.insert(L".hwp");
-	office_file_ext_list.insert(L".hwpx");
-	office_file_ext_list.insert(L".pdf");
 	tooltip.Create(this);
 	tooltip.AddTool(GetDlgItem(IDC_refreshDB), L"DB 새로고침");
 	tooltip.AddTool(GetDlgItem(IDC_refreshlist), L"화면 새로고침");
@@ -159,89 +148,6 @@ void FILELISTVIEWER::OnGetMinMaxInfo(MINMAXINFO* lpMMI){
 	CDialogEx::OnGetMinMaxInfo(lpMMI);
 }
 
-bool FILELISTVIEWER::IsOfficeFile(CString ext) {
-	set<CString>::iterator it = office_file_ext_list.find(ext);
-
-	if (it != office_file_ext_list.end())
-		return true;
-	else
-		return false;
-}
-
-void FILELISTVIEWER::ScanLocalFile(CString rootPath) {
-	//매개변수로 입력된 폴더 경로를 재귀 탐색하여 문서 파일을 DB에 저장함
-	//Host -> DB 방향 검사
-	//filesystem test, https://stackoverflow.com/questions/62988629/c-stdfilesystemfilesystem-error-exception-trying-to-read-system-volume-inf
-
-	string strfilepath = string(CT2CA(rootPath));
-	fs::path rootdir(strfilepath);
-	CString rootname = CString(rootdir.root_name().string().c_str()) + "\\";
-
-	//NTFS 파일 시스템만 ADS지원함
-	bool bNTFS = false;
-	wchar_t szVolName[MAX_PATH], szFSName[MAX_PATH];
-	DWORD dwSN, dwMaxLen, dwVolFlags;
-
-	::GetVolumeInformation(rootname, szVolName, MAX_PATH, &dwSN, &dwMaxLen, &dwVolFlags, szFSName, MAX_PATH);
-	if (CString(szFSName) == L"NTFS")
-		bNTFS = true;
-
-	auto iter = fs::recursive_directory_iterator(rootdir, fs::directory_options::skip_permission_denied);
-	auto end_iter = fs::end(iter);
-	auto ec = std::error_code();
-	int count = 0;
-	int rc = 0;
-
-	for (; iter != end_iter; iter.increment(ec)) {
-		if (ec) {
-			continue;
-		}
-
-		CString ext(iter->path().extension().string().c_str());
-		CString path(iter->path().string().c_str());
-
-		if (ext == L".exe") {
-			CString tmp = path;
-			CString tmp_ext;
-			while ((tmp_ext = PathFindExtension(tmp)).GetLength() != 0) {
-				if (IsOfficeFile(tmp_ext)) {
-					ZeroMemory(&nid, sizeof(nid));
-					nid.cbSize = sizeof(nid);
-					nid.dwInfoFlags = NIIF_WARNING;
-					nid.uFlags = NIF_MESSAGE | NIF_INFO | NIF_ICON;
-					nid.uTimeout = 2000;
-					nid.hWnd = AfxGetApp()->m_pMainWnd->m_hWnd;
-					nid.uCallbackMessage = WM_TRAY_NOTIFYICACTION;
-					nid.hIcon = AfxGetApp()->LoadIconW(IDR_MAINFRAME);
-					lstrcpy(nid.szInfoTitle, L"문서로 위장한 실행 파일을 발견하였습니다.");
-					lstrcpy(nid.szInfo, path);
-					::Shell_NotifyIcon(NIM_MODIFY, &nid);
-					break;
-				}
-				AfxTrace(TEXT("Find Ext : %ws\n"), tmp_ext);
-				tmp.Replace(tmp_ext, L"");
-				tmp.Trim();
-			}
-		}
-		if (IsOfficeFile(ext)) {
-			CString strInsQuery;
-			int nospear = 2, zoneid = 0, serverity = TYPE_LOCAL;
-			if (bNTFS && nospear_ptr->HasZoneIdentifierADS(path)) {
-				nospear = 1;
-				zoneid = 3;
-				serverity = TYPE_SUSPICIOUS;
-			}
-			strInsQuery.Format(TEXT("INSERT INTO NOSPEAR_LocalFileList(FilePath, ZoneIdentifier, ProcessName, NOSPEAR, DiagnoseDate, Hash, Serverity, FileType) VALUES ('%ws','%d','No-Spear Client','%d','-', '-', '%d','DOCUMENT');"), path, zoneid, nospear, serverity);
-			int rc = fileViewerDB->ExecuteSqlite(strInsQuery);
-			if (rc == 0)
-				count++;
-			AfxTrace(path + "\n");
-		}
-	}
-	CString tmp;
-	tmp.Format(TEXT("새로운 %d개의 문서가 LocalFileListDB에 추가되었습니다.\n"), count);
-	AfxTrace(tmp);
-}
 int FILELISTVIEWER::CompareItem(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort) {
 	CListCtrl* pList = ((SORTPARAM*)lParamSort)->pList;
 	int iSortColumn = ((SORTPARAM*)lParamSort)->iSortColumn;
@@ -340,7 +246,6 @@ void FILELISTVIEWER::OnBnClickeddiagnose(){
 	CString tmp;
 	tmp.Format(TEXT("%d개의 문서에 대한 검사를 요청하였습니다."), files.size());
 	nospear_ptr->Notification(L"No-Spear 검사 요청", tmp);
-	nospear_ptr->AutoDiagnose();
 }
 
 HBRUSH FILELISTVIEWER::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor){
@@ -421,11 +326,11 @@ void FILELISTVIEWER::OnStnClickedrefreshdb() {
 		int count = stoi(p_selResult.pazResult[1]);
 		if (count == 0) {
 			AfxMessageBox(L"프로그램의 최초 실행");
-			ScanLocalFile(L"C:\\Users");
+			nospear_ptr->ScanLocalFile(L"C:\\Users");
 		}
 		else {
 			AfxMessageBox(L"처음은 아니네");
-			ScanLocalFile(L"C:\\Users");
+			nospear_ptr->ScanLocalFile(L"C:\\Users");
 		}
 	}
 	OnStnClickedrefreshlist();
@@ -502,9 +407,8 @@ void FILELISTVIEWER::OnManu5(){
 	}
 }
 void FILELISTVIEWER::OnManu6() {
-	AfxMessageBox(L"6");
+	nospear_ptr->Quarantine(filelistbox.GetItemText(select_index, 8));
 }
-
 
 void FILELISTVIEWER::OnNMClickFilelistctrl(NMHDR* pNMHDR, LRESULT* pResult){
 	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
@@ -514,7 +418,6 @@ void FILELISTVIEWER::OnNMClickFilelistctrl(NMHDR* pNMHDR, LRESULT* pResult){
 	}
 	*pResult = 0;
 }
-
 
 void FILELISTVIEWER::OnStnClickedsearch1(){
 	CButton* btn = (CButton*)GetDlgItem(IDC_CHECK1);

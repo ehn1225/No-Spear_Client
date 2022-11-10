@@ -82,6 +82,7 @@ void AutoUpdate::AddNextVersionToFileName(CString& ExeFile, SG_Version ver)
 	CString strVer;
 	HINTERNET hInet = InternetOpen(UPDATECHECK_BROWSER_STRING, INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, NULL);
 	HINTERNET hUrl = InternetOpenUrl(hInet, CString("http://4nul.org:3000/version"), NULL, -1L,
+	//HINTERNET hUrl = InternetOpenUrl(hInet, CString("http://localhost"), NULL, -1L,
 		INTERNET_FLAG_RELOAD | INTERNET_FLAG_PRAGMA_NOCACHE |
 		INTERNET_FLAG_NO_CACHE_WRITE | WININET_API_FLAG_ASYNC, NULL);
 	if (hUrl) {
