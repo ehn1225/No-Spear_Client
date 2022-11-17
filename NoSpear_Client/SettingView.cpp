@@ -3,6 +3,8 @@
 #include "SettingView.h"
 #include "NOSPEAR.h"
 #include "NoSpear_ClientDlg.h"
+#include "SQLITE.h"
+
 IMPLEMENT_DYNCREATE(SettingView, CFormView)
 #define UPDATECHECK_BROWSER_STRING _T("No-Spear Update")
 
@@ -10,6 +12,7 @@ SettingView::SettingView()
 	: CFormView(IDD_SettingView)
 	, strVersionNow(_T(""))
 	, strVersionNew(_T(""))
+	, strVersionPattern(_T(""))
 {
 }
 
@@ -20,11 +23,13 @@ void SettingView::DoDataExchange(CDataExchange* pDX){
 	CFormView::DoDataExchange(pDX);
 	DDX_Text(pDX, version_now, strVersionNow);
 	DDX_Text(pDX, version_new, strVersionNew);
+	DDX_Text(pDX, version_pattern, strVersionPattern);
 }
 
 BEGIN_MESSAGE_MAP(SettingView, CFormView)
 	ON_WM_CTLCOLOR()
 	ON_BN_CLICKED(IDC_BUTTON1, &SettingView::OnBnClickedButton1)
+	ON_STN_CLICKED(btn_update_pattren, &SettingView::OnStnClickedupdatepattren)
 END_MESSAGE_MAP()
 
 
@@ -42,6 +47,15 @@ void SettingView::Dump(CDumpContext& dc) const{
 #endif
 #endif //_DEBUG
 
+void SettingView::UpdatePatternInfo(){
+	sqlite3_select p_selResult = settingDB->SelectSqlite(L"select TimeStamp from NOSPEAR_VersionInfo WHERE VersionName='BlackListDB'");
+	CString timeStamp;
+	if (p_selResult.pnRow != 0) {
+		timeStamp = SQLITE::Utf8ToCString(p_selResult.pazResult[1]);
+		strVersionPattern = L"현재 패턴 버전 : " + timeStamp;
+	}
+}
+
 BOOL SettingView::Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID, CCreateContext* pContext) {
 	return CFormView::Create(lpszClassName, lpszWindowName, dwStyle, rect, pParentWnd, nID, pContext);
 }
@@ -54,6 +68,11 @@ void SettingView::OnInitialUpdate() {
 	GetDlgItem(IDC_STATIC)->SetFont(&title);
 	GetDlgItem(IDC_STATIC2)->SetFont(&title);
 	nospear_ptr = ((CNoSpearClientDlg*)GetParent())->GetClientPtr();
+	settingDB = nospear_ptr->GetSQLitePtr();
+
+	tooltip.Create(this);
+	tooltip.AddTool(GetDlgItem(btn_updateClient), L"클라이언트 프로그램을 최신 버전으로 업데이트 합니다");
+	tooltip.AddTool(GetDlgItem(btn_update_pattren), L"클라이언트 백신 패턴을 업데이트 합니다");
 
 	CString version_online = L"";
 	CString version_offline = L"";
@@ -85,12 +104,14 @@ void SettingView::OnInitialUpdate() {
 	else {
 		strVersionNew = L"최신 버전 : " + version_online;
 	}
-	UpdateData(false);
 
 	if (version_offline != L"" && version_online != L"") {
 		if (version_offline != version_online)
 			GetDlgItem(btn_updateClient)->EnableWindow(true);
 	}
+
+	UpdatePatternInfo();
+	UpdateData(false);
 }
 
 HBRUSH SettingView::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor){
@@ -112,4 +133,17 @@ void SettingView::OnBnClickedButton1(){
 	if (au.CheckForUpdates() == false) {
 		AfxMessageBox(L"업데이트에 실패하였습니다.");
 	}
+}
+
+
+BOOL SettingView::PreTranslateMessage(MSG* pMsg){
+	tooltip.RelayEvent(pMsg);
+	return CFormView::PreTranslateMessage(pMsg);
+}
+
+
+void SettingView::OnStnClickedupdatepattren(){
+	nospear_ptr->UpdataBlackListDB();
+	UpdatePatternInfo();
+	UpdateData(false);
 }

@@ -18,10 +18,10 @@ class NOSPEAR {
 	LIVEPROTECT* liveprotect = NULL;
 	SQLITE* nospearDB;
 	bool live_protect_status = false;
-	bool FileUpload(NOSPEAR_FILE& file);
+	bool NospearOnlineDiagnose(NOSPEAR_FILE& file);
+	bool NospearOfflineDiagnose(NOSPEAR_FILE& file);
 	std::queue<CString> request_diagnose_queue;
 	void InitNospear();
-	void SyncAdsToDB();
 	std::set<CString> office_file_ext_list;
 	bool IsOfficeFile(CString ext);
 public:
@@ -48,5 +48,6 @@ public:
 	bool IsQueueEmpty();
 	void Quarantine(CString filepath);
 	void InQuarantine(CString filepath);
+
 };
 #endif

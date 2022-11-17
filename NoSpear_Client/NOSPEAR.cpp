@@ -16,9 +16,10 @@
 namespace fs = std::filesystem;
 
 SOCKET s;
-sockaddr_in dA, aa;
-int slen = sizeof(sockaddr_in);
+sockaddr_in dA;
 
+SOCKET s2;
+sockaddr_in dA2;
 void NOSPEAR::Deletefile(CString filepath){
 	CFileFind pFind;
 	BOOL bRet = pFind.FindFile(filepath);
@@ -29,15 +30,15 @@ void NOSPEAR::Deletefile(CString filepath){
 	}
 }
 
-bool NOSPEAR::FileUpload(NOSPEAR_FILE& file){
-	AfxTrace(TEXT("[NOSPEAR::FileUpload] 파일 업로드 시작\n"));
-	AfxTrace(TEXT("[NOSPEAR::FileUpload] name : " + file.Getfilename() + "\n"));
-	AfxTrace(TEXT("[NOSPEAR::FileUpload] path : " + file.Getfilepath() + "\n"));
-	AfxTrace(TEXT("[NOSPEAR::FileUpload] hash : " + CString(file.Getfilehash()) + "\n"));
+bool NOSPEAR::NospearOnlineDiagnose(NOSPEAR_FILE& file){
+	AfxTrace(TEXT("[NOSPEAR::NospearOnlineDiagnose] 파일 업로드 시작\n"));
+	AfxTrace(TEXT("[NOSPEAR::NospearOnlineDiagnose] name : " + file.Getfilename() + "\n"));
+	AfxTrace(TEXT("[NOSPEAR::NospearOnlineDiagnose] path : " + file.Getfilepath() + "\n"));
+	AfxTrace(TEXT("[NOSPEAR::NospearOnlineDiagnose] hash : " + CString(file.Getfilehash()) + "\n"));
 
 	//validation 호출
 	if (file.Checkvalidation() == false) {
-		AfxTrace(TEXT("[NOSPEAR::FileUpload] 제약되는 파일으로 확인\n"));
+		AfxTrace(TEXT("[NOSPEAR::NospearOnlineDiagnose] 제약되는 파일으로 확인\n"));
 		file.diag_result.result_code = -1;
 		return false;
 	}
@@ -51,14 +52,12 @@ bool NOSPEAR::FileUpload(NOSPEAR_FILE& file){
 		memcpy(&dA.sin_addr, &inaddr, sizeof(inaddr));
 
 	dA.sin_port = htons(SERVER_Diagnose_PORT);
-	s = socket(AF_INET, SOCK_STREAM, 0);
-	if (connect(s, (sockaddr*)&dA, slen) < 0){
-		AfxTrace(TEXT("[NOSPEAR::FileUpload] 서버에 연결할 수 없음\n"));
+	s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	if (connect(s, (sockaddr*)&dA, sizeof(sockaddr_in)) < 0){
+		AfxTrace(TEXT("[NOSPEAR::NospearOnlineDiagnose] 서버에 연결할 수 없음\n"));
 		file.diag_result.result_code = -2;
 		return false;
 	}
-
-	getpeername(s, (sockaddr*)&aa, &slen);
 
 	//CString to UTF-8
 	CString filename = file.Getfilename();
@@ -85,7 +84,7 @@ bool NOSPEAR::FileUpload(NOSPEAR_FILE& file){
 
 	FILE* fp = _wfopen(file.Getfilepath(), L"rb");
 	if (fp == NULL) {
-		AfxTrace(TEXT("[NOSPEAR::FileUpload] 파일이 유효하지 않습니다.\n"));
+		AfxTrace(TEXT("[NOSPEAR::NospearOnlineDiagnose] 파일이 유효하지 않습니다.\n"));
 		closesocket(s);
 		file.diag_result.result_code = -3;
 		return false;
@@ -95,7 +94,7 @@ bool NOSPEAR::FileUpload(NOSPEAR_FILE& file){
 		send(s, file_buffer, read_size, 0);
 	}
 
-	AfxTrace(TEXT("[NOSPEAR::FileUpload] 파일 업로드 완료\n"));
+	AfxTrace(TEXT("[NOSPEAR::NospearOnlineDiagnose] 파일 업로드 완료\n"));
 
 	//검사 결과를 리턴 받습니다. 동기 방식을 사용
 	unsigned short diag_result = 0;
@@ -108,6 +107,20 @@ bool NOSPEAR::FileUpload(NOSPEAR_FILE& file){
 	return true;
 }
 
+bool NOSPEAR::NospearOfflineDiagnose(NOSPEAR_FILE& file){
+	//BlackList DB를 확인하고, 탐지되면 TRUE, 미탐지되면 FALSE 리턴
+	AfxTrace(TEXT("[NOSPEAR::NospearOfflineDiagnose] 블랙리스트 DB 검사 시작\n"));
+	
+	sqlite3_select p_selResult = nospearDB->SelectSqlite(L"select * from NOSPEAR_BlackList WHERE Hash='"+ file.Getfilehash() + L"'");
+	string timeStamp;
+	if (p_selResult.pnRow != 0) {
+		file.diag_result.result_code = TYPE_MALWARE;
+		return true;
+	}
+	return false;
+}
+
+
 void NOSPEAR::InitNospear(){
 	nospearDB = new SQLITE();
 	nospearDB->DatabaseOpen(L"NOSPEAR");
@@ -117,6 +130,7 @@ void NOSPEAR::InitNospear(){
 	nospearDB->ExecuteSqlite(L"CREATE TABLE IF NOT EXISTS NOSPEAR_VersionInfo(VersionName TEXT NOT NULL PRIMARY KEY, TimeStamp TEXT not null DEFAULT (datetime('now', 'localtime')));");
 	nospearDB->ExecuteSqlite(L"INSERT INTO NOSPEAR_VersionInfo(VersionName, TimeStamp) VALUES ('BlackListDB', '2022-09-01 00:00:00');");
 	nospearDB->ExecuteSqlite(L"CREATE TABLE IF NOT EXISTS NOSPEAR_Quarantine(FilePath TEXT NOT NULL PRIMARY KEY, FileHash TEXT, TimeStamp TEXT not null DEFAULT (datetime('now', 'localtime')));");
+	nospearDB->ExecuteSqlite(L"CREATE TABLE IF NOT EXISTS NOSPEAR_BlackList(Hash TEXT NOT NULL PRIMARY KEY, TimeStamp TEXT not null DEFAULT (datetime('now', 'localtime')));");
 
 	office_file_ext_list.insert(L".doc");
 	office_file_ext_list.insert(L".docx");
@@ -140,9 +154,9 @@ CString NOSPEAR::GetMsgFromErrCode(short err_code){
 		case -3:
 			return L"파일이 유효하지 않음";
 		case TYPE_NORMAL:
-			return L"정상";
+			return L"정상 파일";
 		case TYPE_MALWARE:
-			return L"악성";
+			return L"악성 파일";
 		case TYPE_SUSPICIOUS:
 			return L"악성 의심";
 		case TYPE_UNEXPECTED:
@@ -215,12 +229,40 @@ bool NOSPEAR::ActivateLiveProtect(bool status){
 }
 
 bool NOSPEAR::Diagnose(NOSPEAR_FILE& file){
-	bool result = FileUpload(file);
+	//BlackList DB를 먼저 확인하고, BlackList DB에 없다면 OnLine 검사 요청
+	bool result = NospearOfflineDiagnose(file);
+	if (!result) {
+		result = NospearOnlineDiagnose(file);
+	}
+
 	file.diag_result.result_msg = GetMsgFromErrCode(file.diag_result.result_code);
 	if (result) {
-		CString strInsQuery;
-		strInsQuery.Format(TEXT("UPDATE NOSPEAR_LocalFileList SET DiagnoseDate=(datetime('now', 'localtime')), Hash='%ws', Serverity='%d' WHERE FilePath='%ws';"), file.Getfilehash(), file.diag_result.result_code, file.Getfilepath());
-		nospearDB->ExecuteSqlite(strInsQuery);
+		int NOSPEAR = 1;
+		bool updateDB = true;;
+		switch (file.diag_result.result_code) {
+			case TYPE_NORMAL:
+				NOSPEAR = 2;
+				WriteNospearADS(file.Getfilepath(), 2);
+				break;
+			case TYPE_MALWARE:
+				Quarantine(file.Getfilepath());
+				Notification(L"악성 문서가 탐지되었습니다.", file.Getfilename() + L"을 검역소로 이동하였습니다.");
+				AfxTrace(L"[NOSPEAR::Diagnose] " + file.Getfilename() + L" 검역소로 이동\n");
+				break;
+			case TYPE_SUSPICIOUS:
+				Notification(L"악성 의심 문서가 탐지되었습니다.", file.Getfilename() + L"문서 실행에 주의하세요.");
+				WriteNospearADS(file.Getfilepath(), 1);
+				break;
+			default:
+				//기타 오류 등으로 검사가 진행되지 않았을 경우, DB에 검사 기록을 남기지 않음
+				updateDB = false;
+				break;
+		}
+		if (updateDB) {
+			CString strInsQuery;
+			strInsQuery.Format(TEXT("UPDATE NOSPEAR_LocalFileList SET DiagnoseDate=(datetime('now', 'localtime')), Hash='%ws', Serverity='%d', NOSPEAR='%d' WHERE FilePath='%ws';"), file.Getfilehash(), file.diag_result.result_code, NOSPEAR, file.Getfilepath());
+			nospearDB->ExecuteSqlite(strInsQuery);
+		}
 	}
 	return result;
 }
@@ -373,16 +415,18 @@ bool NOSPEAR::DeleteZoneIdentifierADS(CString filepath) {
 
 bool NOSPEAR::UpdataBlackListDB(){
 	//패턴 업데이트
+	AfxTrace(L"[UpdataBlackListDB] Start BlackList Pattern Update\n");
 	unsigned long inaddr;
-	memset(&dA, 0, sizeof(dA));
-	dA.sin_family = AF_INET;
+	memset(&dA2, 0, sizeof(dA2));
+	dA2.sin_family = AF_INET;
 	inaddr = inet_addr(SERVER_IP.c_str());
 	if (inaddr != INADDR_NONE)
-		memcpy(&dA.sin_addr, &inaddr, sizeof(inaddr));
+		memcpy(&dA2.sin_addr, &inaddr, sizeof(inaddr));
 
-	dA.sin_port = htons(SERVER_Update_PORT);
-	s = socket(AF_INET, SOCK_STREAM, 0);
-	if (connect(s, (sockaddr*)&dA, slen) < 0) {
+	dA2.sin_port = htons(SERVER_Update_PORT);
+	s2 = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+
+	if (connect(s2, (sockaddr*)&dA2, sizeof(sockaddr_in)) < 0) {
 		AfxTrace(TEXT("[NOSPEAR::UpdataBlackListDB] 서버에 연결할 수 없음\n"));
 		return false;
 	}
@@ -399,32 +443,53 @@ bool NOSPEAR::UpdataBlackListDB(){
 		return false;
 	}
 
-	//업데이트를 요청한 시각으로 DB 최신화
+	//업데이트를 요청한 시각으로 DB 최신화(업데이트에 실패하면 다시 timeStamp 변수로 원복
 	nospearDB->ExecuteSqlite(L"update NOSPEAR_VersionInfo set TimeStamp=(datetime('now', 'localtime')) WHERE VersionName='BlackListDB';");
-	getpeername(s, (sockaddr*)&aa, &slen);
 
 	//마지막 패턴 업데이트 일자를 서버로 전송
-	send(s, timeStamp.c_str(), (UINT)timeStamp.size(), 0);
+	send(s2, timeStamp.c_str(), (UINT)timeStamp.size(), 0);
 
 	//4바이트 json 전체 길이 수신
 	unsigned int recv_size = 0;
-	recv(s, (char*)&recv_size, 4, 0);
+	recv(s2, (char*)&recv_size, 4, 0);
 	recv_size = ntohl(recv_size);
-	string json;
 
-	//소켓의 내용을 배열에 저장
-	if (recv_size != 0) {
-		unsigned char* arr = (unsigned char*)malloc(recv_size + 1);
-		recv(s, (char*)arr, recv_size, 0);
-		json = string((char*)arr);
-		ofstream output;
-		output.open(L"temp.txt");
-		output.write((char*)arr, recv_size);
-		output.close();
+	//수신해서 Vector에 저장
+	unsigned char arr[65] = {0, };
+	std::vector<CString> blackList;
+	unsigned int count = 0;
+	int rs = 0;
+	while (count < recv_size) {
+		rs = recv(s2, (char*)arr, 64, 0);
+		if (rs == 64) {
+			arr[64] = '\0';
+			blackList.push_back(CString(arr));
+		}
+		else{
+			int size = rs;
+			int idx = rs;
+			AfxTrace(L"error\n");
+			AfxTrace(TEXT("%d\n"), rs);
+			AfxTrace(CString(arr) + "\n");
+			while (size < 64) {
+				idx = recv(s2, (char*)arr + size, 64 - size, 0);
+				size += idx;
+			}
+			AfxTrace(CString(arr) + "\n");
+		}
+		count++;
+
 	}
 
-	closesocket(s);
+	//DB에 저장
+	std::vector<CString>::iterator it;
+	for (it = blackList.begin(); it != blackList.end(); it++) {
+		nospearDB->ExecuteSqlite(L"INSERT INTO NOSPEAR_BlackList(Hash) VALUES ('" + *it + L"');");
+	}
 
+	closesocket(s2);
+
+	AfxTrace(TEXT("[UpdataBlackListDB] Complete BlackList Pattern Update(size : %d)\n"), recv_size);
 	return true;
 }
 
@@ -484,9 +549,9 @@ void NOSPEAR::ScanLocalFile(CString rootPath) {
 				zoneid = 3;
 				serverity = TYPE_SUSPICIOUS;
 			}
-			//ADS:NOSPEAR값 다른지 확인하는 로직 필요
 			strInsQuery.Format(TEXT("INSERT INTO NOSPEAR_LocalFileList(FilePath, ZoneIdentifier, ProcessName, NOSPEAR, DiagnoseDate, Hash, Serverity, FileType) VALUES ('%ws','%d','No-Spear Client','%d','-', '-', '%d','DOCUMENT');"), path, zoneid, nospear, serverity);
 			int rc = nospearDB->ExecuteSqlite(strInsQuery);
+			//ADS:NOSPEAR값 다른지 확인하는 로직
 			//rc가 19면 이미 들어가 있는 것.
 			if (rc == 0) {
 				count++;
@@ -581,13 +646,4 @@ void NOSPEAR::InQuarantine(CString filepath) {
 		DeleteFile(file.Getfilepath());
 		nospearDB->ExecuteSqlite(L"DELETE FROM NOSPEAR_Quarantine WHERE FilePath='" + filepath + L"';");
 	}
-
-	//NOSPEAR_FILE file(L".\\Quarantine\\" + hash);
-	//sqlite3_select p_selResult = nospearDB->SelectSqlite(L"select FilePath from NOSPEAR_Quarantine WHERE FileHash='" + hash + L"'");
-	//CString OriginalPath;
-	//if (p_selResult.pnRow != 0) {
-	//	OriginalPath = SQLITE::Utf8ToCString(p_selResult.pazResult[1]);
-	//	file.InQuarantine(OriginalPath);
-	//	DeleteFile(file.Getfilepath());
-	//}
  }

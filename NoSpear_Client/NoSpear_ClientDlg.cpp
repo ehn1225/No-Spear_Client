@@ -92,7 +92,6 @@ BEGIN_MESSAGE_MAP(CNoSpearClientDlg, CDialogEx)
 	ON_STN_CLICKED(IDC_setting, &CNoSpearClientDlg::OnStnClickedsetting)
 	ON_STN_CLICKED(IDC_quarantine, &CNoSpearClientDlg::OnStnClickedquarantine)
 	ON_STN_CLICKED(logo_frame, &CNoSpearClientDlg::OnStnClickedframe)
-	ON_BN_CLICKED(IDC_BUTTON1, &CNoSpearClientDlg::OnBnClickedButton1)
 END_MESSAGE_MAP()
 
 BOOL CNoSpearClientDlg::OnInitDialog()
@@ -179,6 +178,13 @@ BOOL CNoSpearClientDlg::OnInitDialog()
 	m_background.CreateSolidBrush(RGB(255, 255, 255));
 
 	AllocForms();
+
+	tooltip.Create(this);
+	tooltip.AddTool(GetDlgItem(IDC_home), L"수동검사");
+	tooltip.AddTool(GetDlgItem(IDC_fileviewer), L"문서 탐색");
+	tooltip.AddTool(GetDlgItem(IDC_quarantine), L"검역소");
+	tooltip.AddTool(GetDlgItem(IDC_setting), L"업데이트 및 설정");
+	tooltip.AddTool(GetDlgItem(logo_frame), L"No-Spear 홈페이지 이동");
 
 	return TRUE;  // 포커스를 컨트롤에 설정하지 않으면 TRUE를 반환합니다.
 }
@@ -292,13 +298,12 @@ void CNoSpearClientDlg::OnDestroy(){
 	if (m_pForm1 != NULL)	{
 		m_pForm1->DestroyWindow();
 	}
-
 	if (m_pForm2 != NULL)	{
 		m_pForm2->DestroyWindow();
 	}	
 	if (m_pForm3 != NULL)	{
 		m_pForm3->DestroyWindow();
-	}	
+	}
 	if (fileListViewer != NULL)	{
 		fileListViewer->DestroyWindow();
 	}
@@ -367,14 +372,6 @@ void CNoSpearClientDlg::OnStnClickedframe(){
 	ShellExecute(this->m_hWnd, TEXT("open"), TEXT("IEXPLORE.EXE"), L"http://4nul.org/", NULL, SW_SHOW);
 }
 
-void CNoSpearClientDlg::OnBnClickedButton1(){
-	//CString filename = L"C:\\Users\\LYC\\OneDrive - 서울과학기술대학교\\바탕 화면\\04_Three Dimensional Viewing.pdf";
-	////client->Quarantine(filename);
-
-	//client->InQuarantine(filename);
-	client->UpdataBlackListDB();
-}
-
 UINT CNoSpearClientDlg::ClientThreadFunc(LPVOID pParam) {
 	STPARAM param = *(STPARAM*)pParam;
 	NOSPEAR* nospear = param.nospear;
@@ -397,4 +394,9 @@ UINT CNoSpearClientDlg::ClientThreadFunc(LPVOID pParam) {
 		AfxTrace(L"Thread Loop\n");
 	}
 	return 0;
+}
+
+BOOL CNoSpearClientDlg::PreTranslateMessage(MSG* pMsg){
+	tooltip.RelayEvent(pMsg);
+	return CDialogEx::PreTranslateMessage(pMsg);
 }

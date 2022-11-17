@@ -68,7 +68,7 @@ BOOL FILELISTVIEWER::OnInitDialog(){
 	tooltip.AddTool(GetDlgItem(IDC_search3), L"PPT 문서 선택");
 	tooltip.AddTool(GetDlgItem(IDC_search4), L"WORD 문서 선택");
 	tooltip.AddTool(GetDlgItem(IDC_search5), L"EXCEL 문서 선택");
-	tooltip.AddTool(GetDlgItem(btn_diagnose), L"체크한 문서를 검사합니다.");
+	tooltip.AddTool(GetDlgItem(btn_select_diagnose), L"체크한 문서를 검사합니다.");
 
 	if (fileViewerDB->DatabaseOpen(L"NOSPEAR")) {
 		AfxTrace(TEXT("[LIVEPROTECT::LIVEPROTECT] Can't Create NOSPEAR_HISTORY DataBase.\n"));
@@ -117,7 +117,6 @@ void FILELISTVIEWER::OnPaint(){
 BEGIN_MESSAGE_MAP(FILELISTVIEWER, CDialogEx)
 	ON_WM_GETMINMAXINFO()
 	ON_CBN_SELCHANGE(IDC_COMBO1, &FILELISTVIEWER::OnCbnSelchangeCombo1)
-	ON_BN_CLICKED(btn_diagnose, &FILELISTVIEWER::OnBnClickeddiagnose)
 	ON_WM_CTLCOLOR()
 	ON_STN_CLICKED(IDC_refreshlist, &FILELISTVIEWER::OnStnClickedrefreshlist)
 	ON_COMMAND_RANGE(IDC_CHECK1, IDC_CHECK5, &FILELISTVIEWER::OnCheckBoxChange)
@@ -140,6 +139,7 @@ BEGIN_MESSAGE_MAP(FILELISTVIEWER, CDialogEx)
 	ON_STN_CLICKED(IDC_search3, &FILELISTVIEWER::OnStnClickedsearch3)
 	ON_STN_CLICKED(IDC_search4, &FILELISTVIEWER::OnStnClickedsearch4)
 	ON_STN_CLICKED(IDC_search5, &FILELISTVIEWER::OnStnClickedsearch5)
+	ON_STN_CLICKED(btn_select_diagnose, &FILELISTVIEWER::OnStnClickedselectdiagnose)
 END_MESSAGE_MAP()
 
 void FILELISTVIEWER::OnGetMinMaxInfo(MINMAXINFO* lpMMI){
@@ -230,24 +230,6 @@ void FILELISTVIEWER::OnCbnSelchangeCombo1(){
 	
 }
 
-void FILELISTVIEWER::OnBnClickeddiagnose(){
-	std::vector<CString> files;
-	for (int i = 0; i < filelistbox.GetItemCount(); i++) {
-		if (filelistbox.GetCheck(i)) {
-			files.push_back(filelistbox.GetItemText(i, 8));
-		}
-	}
-	
-	std::vector<CString>::iterator it;
-	for (it = files.begin(); it != files.end(); it++) {
-		AfxTrace(L"Request Diagnose " + * it + L"\n");
-		nospear_ptr->AppendDiagnoseQueue(*it);
-	}
-	CString tmp;
-	tmp.Format(TEXT("%d개의 문서에 대한 검사를 요청하였습니다."), files.size());
-	nospear_ptr->Notification(L"No-Spear 검사 요청", tmp);
-}
-
 HBRUSH FILELISTVIEWER::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor){
 	HBRUSH hbr = CDialogEx::OnCtlColor(pDC, pWnd, nCtlColor);
 	hbr = (HBRUSH)m_background;
@@ -325,11 +307,11 @@ void FILELISTVIEWER::OnStnClickedrefreshdb() {
 	if (p_selResult.pnRow != 0) {
 		int count = stoi(p_selResult.pazResult[1]);
 		if (count == 0) {
-			AfxMessageBox(L"프로그램의 최초 실행");
+			//AfxMessageBox(L"프로그램의 최초 실행");
 			nospear_ptr->ScanLocalFile(L"C:\\Users");
 		}
 		else {
-			AfxMessageBox(L"처음은 아니네");
+			//AfxMessageBox(L"처음은 아니네");
 			nospear_ptr->ScanLocalFile(L"C:\\Users");
 		}
 	}
@@ -365,9 +347,9 @@ void FILELISTVIEWER::OnManu1() {
 	CString tmp;
 	CString filepath = filelistbox.GetItemText(select_index, 8);
 	nospear_ptr->AppendDiagnoseQueue(filepath);
-	tmp.Format(TEXT("파일명 : %ws\n검사를 요청하였습니다."), filepath);
+	tmp.Format(TEXT("파일명 : %ws\n검사를 요청하였습니다."), PathFindFileName(filepath));
 	nospear_ptr->Notification(L"No-Spear 검사 요청", tmp);
-	nospear_ptr->AutoDiagnose();
+	//nospear_ptr->AutoDiagnose();
 }
 void FILELISTVIEWER::OnManu2_0() {
 	//Set ADS:Zone.Identifier 0
@@ -447,4 +429,23 @@ void FILELISTVIEWER::OnStnClickedsearch5(){
 	CButton* btn = (CButton*)GetDlgItem(IDC_CHECK5);
 	btn->SetCheck(!btn->GetCheck());
 	OnCheckBoxChange(0);
+}
+
+
+void FILELISTVIEWER::OnStnClickedselectdiagnose(){
+	std::vector<CString> files;
+	for (int i = 0; i < filelistbox.GetItemCount(); i++) {
+		if (filelistbox.GetCheck(i)) {
+			files.push_back(filelistbox.GetItemText(i, 8));
+		}
+	}
+
+	std::vector<CString>::iterator it;
+	for (it = files.begin(); it != files.end(); it++) {
+		AfxTrace(L"Request Diagnose " + *it + L"\n");
+		nospear_ptr->AppendDiagnoseQueue(*it);
+	}
+	CString tmp;
+	tmp.Format(TEXT("%d개의 문서에 대한 검사를 요청하였습니다."), files.size());
+	nospear_ptr->Notification(L"No-Spear 검사 요청", tmp);
 }

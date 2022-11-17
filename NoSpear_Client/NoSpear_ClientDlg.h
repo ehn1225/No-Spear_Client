@@ -23,6 +23,7 @@ public:
 
 protected:
 	HICON m_hIcon;
+	CToolTipCtrl tooltip;
 	virtual BOOL OnInitDialog();
 	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
 	afx_msg void OnPaint();
@@ -54,6 +55,5 @@ public:
 	afx_msg void OnStnClickedsetting();
 	afx_msg void OnStnClickedquarantine();
 	afx_msg void OnStnClickedframe();
-
-	afx_msg void OnBnClickedButton1();
+	virtual BOOL PreTranslateMessage(MSG* pMsg);
 };

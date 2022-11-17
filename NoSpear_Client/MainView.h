@@ -26,6 +26,7 @@ protected:
 	CString report_url;
 	CString diagnose_status;
 	NOSPEAR* nospear_ptr = NULL;
+	CToolTipCtrl tooltip;
 public:
 	virtual BOOL Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID, CCreateContext* pContext = NULL);
 	virtual void OnInitialUpdate();
@@ -39,6 +40,7 @@ public:
 	afx_msg void OnStnClickedresultreport();
 	afx_msg void OnBnClickedactivatelive();
 	afx_msg void OnBnClickedinactivatelive();
+	virtual BOOL PreTranslateMessage(MSG* pMsg);
 };
 
 

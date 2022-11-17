@@ -94,6 +94,9 @@
 #define version_now                     1051
 #define version_new                     1052
 #define IDC_quarantine                  1053
+#define btn_select_diagnose             1054
+#define version_pattern                 1055
+#define btn_update_pattren              1056
 #define ID_TRAY_NO                      32771
 #define ID_TRAY_EXIT                    32772
 #define ID_MANU_32773                   32773
@@ -126,9 +129,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        205
+#define _APS_NEXT_RESOURCE_VALUE        207
 #define _APS_NEXT_COMMAND_VALUE         32801
-#define _APS_NEXT_CONTROL_VALUE         1054
+#define _APS_NEXT_CONTROL_VALUE         1057
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

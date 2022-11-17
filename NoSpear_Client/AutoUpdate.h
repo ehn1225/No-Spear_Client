@@ -32,7 +32,6 @@ public:
 	void SetSelfFullPath(CString Path);
 	CString GetSelfFileName();
 	void SetSelfFileName(CString FileName);
-	BOOL AutoUpdate::ApplyAgentUpdate(CString Agent, BOOL ReplaceSelf);
 
 private:
 	bool tempversion;			// indicate this is a temp version

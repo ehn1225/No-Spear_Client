@@ -1,6 +1,6 @@
 ﻿#include "AutoUpdate.h"
-
 class NOSPEAR;
+class SQLITE;
 class SettingView : public CFormView{
 	DECLARE_DYNCREATE(SettingView)
 
@@ -21,6 +21,12 @@ protected:
 	CFont title;
 	NOSPEAR* nospear_ptr = NULL;
 	AutoUpdate au;
+	CString strVersionNow;
+	CString strVersionNew;
+	CString strVersionPattern;
+	SQLITE* settingDB;
+	CToolTipCtrl tooltip;
+	void UpdatePatternInfo();
 
 public:
 	virtual BOOL Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID, CCreateContext* pContext = NULL);
@@ -29,9 +35,9 @@ public:
 	virtual ~SettingView();
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 	virtual void OnDraw(CDC* /*pDC*/);
-	CString strVersionNow;
-	CString strVersionNew;
 	afx_msg void OnBnClickedButton1();
+	virtual BOOL PreTranslateMessage(MSG* pMsg);
+	afx_msg void OnStnClickedupdatepattren();
 };
 
 

@@ -15,6 +15,7 @@ MainView::MainView()
 	, result_report(L"이곳을 클릭하면 검사 결과 보고서를 웹브라우저로 확인할 수 있습니다.")
 	, diagnose_status(L"진행 상태 : 검사 대기")
 	, filepath(L"")
+	, report_url(L"4nul.org")
 {
 
 }
@@ -67,6 +68,12 @@ void MainView::OnInitialUpdate(){
 	GetDlgItem(IDC_STATIC3)->SetFont(&title);
 	nospear_ptr = ((CNoSpearClientDlg*)GetParent())->GetClientPtr();
 	UpdateData(FALSE);
+	tooltip.Create(this);
+	tooltip.AddTool(GetDlgItem(btn_search), L"검사할 파일을 선택합니다");
+	tooltip.AddTool(GetDlgItem(btn_manualDiagnose), L"선택한 파일을 검사합니다");
+	tooltip.AddTool(GetDlgItem(label_result_report), L"여기를 클릭하면 결과 보고서를 웹페이지로 보여줍니다");
+	tooltip.AddTool(GetDlgItem(btn_activateLive), L"실시간 검사를 시작합니다");
+	tooltip.AddTool(GetDlgItem(btn_inactivateLive), L"실시간 검사를 종료합니다");
 }
 
 HBRUSH MainView::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor){
@@ -79,7 +86,7 @@ void MainView::OnStnClickedsearch(){
 	// Manual Diagnose
 	// 수동검사의 파일선택 버튼을 눌렀을 때 작동을 구현
 	//hwp, hwpx, pdf, doc, docx, xls, xlsx
-	CString szFilter = _T("문서 파일 (*.hwp, *.hwpx, *.pdf, *.doc, *.docx, *.xls, *.xlsx) | *.hwp; *.hwpx; *.pdf; *.doc; *.docx; *.xls; *.xlsx|");
+	CString szFilter = _T("문서 파일 (*.hwp, *.hwpx, *.pdf, *.doc, *.docx, *.xls, *.xlsx, *.ppt, *.pptx) | *.hwp; *.hwpx; *.pdf; *.doc; *.docx; *.xls; *.xlsx; *.ppt; *.pptx|");
 	CFileDialog dlg(TRUE, NULL, NULL, OFN_HIDEREADONLY | OFN_FILEMUSTEXIST, szFilter);
 
 	if (IDOK == dlg.DoModal()) {
@@ -149,4 +156,10 @@ void MainView::OnBnClickedinactivatelive(){
 		GetDlgItem(btn_activateLive)->EnableWindow(true);
 		GetDlgItem(btn_inactivateLive)->EnableWindow(false);
 	}
+}
+
+
+BOOL MainView::PreTranslateMessage(MSG* pMsg){
+	tooltip.RelayEvent(pMsg);
+	return CFormView::PreTranslateMessage(pMsg);
 }

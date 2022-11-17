@@ -122,6 +122,7 @@ void QuarantineView::OnDelete() {
 	CString filepath = L".\\Quarantine\\" + hash;
 	DeleteFile(filepath);
 	quarantineDB->ExecuteSqlite(L"DELETE FROM NOSPEAR_Quarantine WHERE FileHash='" + hash + L"';");
+	RefrestList();
 }
 void QuarantineView::OnRecover() {
 	nospear_ptr->InQuarantine(quarantine_list_ctrl.GetItemText(select_index, 3));

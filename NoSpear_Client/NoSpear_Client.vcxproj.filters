@@ -215,5 +215,11 @@
     <Image Include="res\5172964_danger_internet_malware_security_virus_icon (1).ico">
       <Filter>리소스 파일</Filter>
     </Image>
+    <Image Include="res\8725963_file_search_alt_icon.ico">
+      <Filter>리소스 파일</Filter>
+    </Image>
+    <Image Include="res\8726193_redo_icon.ico">
+      <Filter>리소스 파일</Filter>
+    </Image>
   </ItemGroup>
 </Project>

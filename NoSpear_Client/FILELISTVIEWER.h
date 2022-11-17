@@ -54,7 +54,6 @@ public:
 	afx_msg void OnHdnItemdblclickFilelistctrl(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnNMDblclkFilelistctrl(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnCbnSelchangeCombo1();
-	afx_msg void OnBnClickeddiagnose();
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
 	afx_msg void OnStnClickedrefreshlist();
@@ -76,4 +75,5 @@ public:
 	afx_msg void OnStnClickedsearch3();
 	afx_msg void OnStnClickedsearch4();
 	afx_msg void OnStnClickedsearch5();
+	afx_msg void OnStnClickedselectdiagnose();
 };
