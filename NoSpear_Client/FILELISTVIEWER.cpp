@@ -69,6 +69,8 @@ BOOL FILELISTVIEWER::OnInitDialog(){
 	tooltip.AddTool(GetDlgItem(IDC_search4), L"WORD 문서 선택");
 	tooltip.AddTool(GetDlgItem(IDC_search5), L"EXCEL 문서 선택");
 	tooltip.AddTool(GetDlgItem(btn_select_diagnose), L"체크한 문서를 검사합니다.");
+	tooltip.AddTool(GetDlgItem(btn_backup), L"선택한 파일을 백업합니다.");
+	tooltip.AddTool(GetDlgItem(btn_recovery), L"백업한 파일을 복구합니다.");
 
 	if (fileViewerDB->DatabaseOpen(L"NOSPEAR")) {
 		AfxTrace(TEXT("[LIVEPROTECT::LIVEPROTECT] Can't Create NOSPEAR_HISTORY DataBase.\n"));
@@ -140,6 +142,8 @@ BEGIN_MESSAGE_MAP(FILELISTVIEWER, CDialogEx)
 	ON_STN_CLICKED(IDC_search4, &FILELISTVIEWER::OnStnClickedsearch4)
 	ON_STN_CLICKED(IDC_search5, &FILELISTVIEWER::OnStnClickedsearch5)
 	ON_STN_CLICKED(btn_select_diagnose, &FILELISTVIEWER::OnStnClickedselectdiagnose)
+	ON_STN_CLICKED(btn_backup, &FILELISTVIEWER::OnStnClickedbackup)
+	ON_STN_CLICKED(btn_recovery, &FILELISTVIEWER::OnStnClickedrecovery)
 END_MESSAGE_MAP()
 
 void FILELISTVIEWER::OnGetMinMaxInfo(MINMAXINFO* lpMMI){
@@ -244,6 +248,8 @@ BOOL FILELISTVIEWER::PreTranslateMessage(MSG* pMsg){
 void FILELISTVIEWER::OnStnClickedrefreshlist(){
 	LOCALFILELISTDB row;
 	filelist.clear();
+	nospear_ptr->ScanFileAvailability();
+
 	sqlite3_select p_selResult = fileViewerDB->SelectSqlite(L"select * from NOSPEAR_LocalFileList WHERE FileType='DOCUMENT';");
 	if (p_selResult.pnRow != 0) {
 		for (int i = 1; i <= p_selResult.pnRow; i++)		{
@@ -448,4 +454,37 @@ void FILELISTVIEWER::OnStnClickedselectdiagnose(){
 	CString tmp;
 	tmp.Format(TEXT("%d개의 문서에 대한 검사를 요청하였습니다."), files.size());
 	nospear_ptr->Notification(L"No-Spear 검사 요청", tmp);
+}
+
+
+void FILELISTVIEWER::OnStnClickedbackup(){
+	std::vector<CString> files;
+	for (int i = 0; i < filelistbox.GetItemCount(); i++) {
+		if (filelistbox.GetCheck(i)) {
+			files.push_back(filelistbox.GetItemText(i, 8));
+		}
+	}
+
+	std::vector<CString>::iterator it;
+	for (it = files.begin(); it != files.end(); it++) {
+		AfxTrace(L"Request BackUp " + *it + L"\n");
+		nospear_ptr->BackUp(*it);
+	}
+	AfxMessageBox(L"백업이 완료되었습니다.");
+}
+
+
+void FILELISTVIEWER::OnStnClickedrecovery(){
+	// 초기 선택 폴더
+	CString strInitPath = _T("C:\\");
+
+	// 폴더 선택 다이얼로그
+	CFolderPickerDialog Picker(strInitPath, OFN_FILEMUSTEXIST, NULL, 0);
+	if (Picker.DoModal() == IDOK)	{
+		CString strFolderPath = Picker.GetPathName();
+		strFolderPath += "\\NOSPEAR_BACKUP\\";
+		CreateDirectory(strFolderPath, NULL);
+		nospear_ptr->Recovery(strFolderPath);
+		AfxMessageBox(L"파일 복구가 완료되었습니다.\n복구 경로 : " + strFolderPath);
+	}
 }

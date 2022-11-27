@@ -131,6 +131,8 @@ void NOSPEAR::InitNospear(){
 	nospearDB->ExecuteSqlite(L"INSERT INTO NOSPEAR_VersionInfo(VersionName, TimeStamp) VALUES ('BlackListDB', '2022-09-01 00:00:00');");
 	nospearDB->ExecuteSqlite(L"CREATE TABLE IF NOT EXISTS NOSPEAR_Quarantine(FilePath TEXT NOT NULL PRIMARY KEY, FileHash TEXT, TimeStamp TEXT not null DEFAULT (datetime('now', 'localtime')));");
 	nospearDB->ExecuteSqlite(L"CREATE TABLE IF NOT EXISTS NOSPEAR_BlackList(Hash TEXT NOT NULL PRIMARY KEY, TimeStamp TEXT not null DEFAULT (datetime('now', 'localtime')));");
+	nospearDB->ExecuteSqlite(L"CREATE TABLE IF NOT EXISTS NOSPEAR_Backup(FileName TEXT NOT NULL PRIMARY KEY, FileHash TEXT, TimeStamp TEXT not null DEFAULT (datetime('now', 'localtime')));");
+	
 
 	office_file_ext_list.insert(L".doc");
 	office_file_ext_list.insert(L".docx");
@@ -143,6 +145,7 @@ void NOSPEAR::InitNospear(){
 	office_file_ext_list.insert(L".pdf");
 
 	CreateDirectory(L"Quarantine", NULL);
+	CreateDirectory(L"Backup", NULL);
 }
 
 CString NOSPEAR::GetMsgFromErrCode(short err_code){
@@ -247,7 +250,7 @@ bool NOSPEAR::Diagnose(NOSPEAR_FILE& file){
 			case TYPE_MALWARE:
 				Quarantine(file.Getfilepath());
 				Notification(L"악성 문서가 탐지되었습니다.", file.Getfilename() + L"을 검역소로 이동하였습니다.");
-				AfxTrace(L"[NOSPEAR::Diagnose] " + file.Getfilename() + L" 검역소로 이동\n");
+				AfxTrace(L"[NOSPEAR::Diagnose] " + file.Getfilename() + L"은 악성 파일이므로 검역소로 이동하였습니다.\n");
 				break;
 			case TYPE_SUSPICIOUS:
 				Notification(L"악성 의심 문서가 탐지되었습니다.", file.Getfilename() + L"문서 실행에 주의하세요.");
@@ -297,7 +300,7 @@ void NOSPEAR::AutoDiagnose() {
 		if (!bRet && file.diag_result.result_code == -2) {
 			Notification(L"No-Spear 서버 연결 실패", L"파일 검사를 위한 No-Spear 서버 연결에 실패하였습니다.");
 			while (!request_diagnose_queue.empty()) request_diagnose_queue.pop();
-		};
+		}
 		if (bRet) {
 			success++;
 		}
@@ -647,3 +650,33 @@ void NOSPEAR::InQuarantine(CString filepath) {
 		nospearDB->ExecuteSqlite(L"DELETE FROM NOSPEAR_Quarantine WHERE FilePath='" + filepath + L"';");
 	}
  }
+
+void NOSPEAR::BackUp(CString filepath){
+	NOSPEAR_FILE file(filepath);
+	if (file.BackUp()) {
+		nospearDB->ExecuteSqlite(L"REPLACE INTO NOSPEAR_Backup (FileName, FileHash) VALUES ('" + CString(PathFindFileName(filepath)) + "', '" + file.Getfilehash() + L"');");
+	}
+}
+
+void NOSPEAR::Recovery(CString folderPath){
+	sqlite3_select p_selResult = nospearDB->SelectSqlite(L"select FileName, FileHash from NOSPEAR_Backup");
+	if (p_selResult.pnRow != 0) {
+		for (int i = 1; i <= p_selResult.pnRow; i++) {
+			int colCtr = 0;
+			int nCol = 1;
+			int cellPosition = (i * p_selResult.pnColumn) + colCtr;
+			CString fileName = SQLITE::Utf8ToCString(p_selResult.pazResult[cellPosition++]);
+			CString fileHash = SQLITE::Utf8ToCString(p_selResult.pazResult[cellPosition++]);
+			CFileFind pFind;
+			BOOL bRet = pFind.FindFile(L".\\Backup\\" + fileHash);
+			if (bRet == FALSE) {
+				nospearDB->ExecuteSqlite(L"DELETE FROM NOSPEAR_Backup WHERE FileHash='" + fileHash + L"';");
+				AfxTrace(fileName + L" 파일은 유효하지 않음.\n");
+			}
+			else {
+				NOSPEAR_FILE file(L".\\Backup\\" + fileHash);
+				file.Recovery(folderPath + fileName);
+			}
+		}
+	}
+}

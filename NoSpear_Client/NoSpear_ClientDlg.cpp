@@ -375,23 +375,28 @@ void CNoSpearClientDlg::OnStnClickedframe(){
 UINT CNoSpearClientDlg::ClientThreadFunc(LPVOID pParam) {
 	STPARAM param = *(STPARAM*)pParam;
 	NOSPEAR* nospear = param.nospear;
+	const int REFRESH_DB_DELAY = 300; //5분 주기로 반복
+	time_t last_update = 0;
 	while (clientThreadStatus) {
-		Sleep(5000);
-		//DB 동기화 및 정리
-		//nospear->ScanLocalFile(L"C:\\Users");
-		//nospear->ScanFileAvailability();
+		time_t now = time(NULL);
+		if (now - last_update >= REFRESH_DB_DELAY) {
+			//DB 동기화 및 정리
+			nospear->ScanLocalFile(L"C:\\Users");
+			nospear->ScanFileAvailability();
+			//AfxTrace(TEXT("Tick\n"));
+			last_update = now;
+		}
 
+		//Zone.Identifier 붙혀주는 친구
+		nospear->AttachADSOther();
 		
 		//검사 요청 큐에 들어온 애들 검사 처리
 		if (!nospear->IsQueueEmpty()) {
 			nospear->AutoDiagnose();
 		}
 
-		//Zone.Identifier 붙혀주는 친구
-
-
-
 		AfxTrace(L"Thread Loop\n");
+		Sleep(500);
 	}
 	return 0;
 }

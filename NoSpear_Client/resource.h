@@ -35,6 +35,8 @@
 #define IDB_BITMAP2                     200
 #define IDR_MENU1                       204
 #define IDR_Quarantine                  204
+#define IDI_ICON18                      207
+#define IDI_ICON19                      208
 #define btn_selectfile                  1001
 #define btn_uploadfile                  1002
 #define edit_filepath                   1003
@@ -97,6 +99,8 @@
 #define btn_select_diagnose             1054
 #define version_pattern                 1055
 #define btn_update_pattren              1056
+#define btn_backup                      1057
+#define btn_recovery                    1058
 #define ID_TRAY_NO                      32771
 #define ID_TRAY_EXIT                    32772
 #define ID_MANU_32773                   32773
@@ -129,9 +133,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        207
+#define _APS_NEXT_RESOURCE_VALUE        209
 #define _APS_NEXT_COMMAND_VALUE         32801
-#define _APS_NEXT_CONTROL_VALUE         1057
+#define _APS_NEXT_CONTROL_VALUE         1059
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

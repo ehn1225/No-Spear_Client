@@ -18,6 +18,8 @@ public:
 	CString Getfilepath();
 	CString Getfilehash();
 	bool Quarantine();
+	bool BackUp();
+	bool Recovery(CString filepath);
 	bool InQuarantine(CString filepath);
 	bool Checkvalidation();
 	unsigned int Getfilesize();

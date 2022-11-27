@@ -264,8 +264,10 @@
     <Image Include="res\5172964_danger_internet_malware_security_virus_icon (1).ico" />
     <Image Include="res\5172964_danger_internet_malware_security_virus_icon.ico" />
     <Image Include="res\5172965_data_hosting_information_internet_security_icon.ico" />
+    <Image Include="res\5172973_arrow_entrance_in_internet_log_icon.ico" />
     <Image Include="res\5172979_engine_gear_internet_option_security_icon.ico" />
     <Image Include="res\5172998_bug_danger_internet_malware_search_icon.ico" />
+    <Image Include="res\5173025_clock_date_internet_refresh_reload_icon.ico" />
     <Image Include="res\6fbb592aeb02709e0e8c51f809b6614e999eea5ee51f2e1d2006a6ed2cca31bd970b7a977f126bfca350e35be6c76cf8cc34.ico" />
     <Image Include="res\8684047_folder_file_document_reload_refresh_icon.ico" />
     <Image Include="res\8725963_file_search_alt_icon.ico" />

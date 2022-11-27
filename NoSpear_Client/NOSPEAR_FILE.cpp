@@ -93,6 +93,7 @@ bool NOSPEAR_FILE::Quarantine() {
 	fclose(fpwrite);
 	return true;
 }
+
 bool NOSPEAR_FILE::InQuarantine(CString filepath) {
 	FILE* fpread = _wfopen(this->filepath, L"rb");
 	FILE* fpwrite = _wfopen(filepath, L"wb");
@@ -111,4 +112,43 @@ bool NOSPEAR_FILE::InQuarantine(CString filepath) {
 	fclose(fpread);
 	fclose(fpwrite);
 	return true;
+}
+bool NOSPEAR_FILE::BackUp() {
+	FILE* fpread = _wfopen(filepath, L"rb");
+	FILE* fpwrite = _wfopen(L".\\Backup\\" + filehash, L"wb");
+	if (fpread == NULL || fpwrite == NULL)
+		return false;
+
+	unsigned char filebuffer[FILE_BUFFER_SIZE] = { 0, };
+	int readsize = 0;
+
+	while ((readsize = fread(filebuffer, 1, FILE_BUFFER_SIZE, fpread)) != 0) {
+		for (int i = 0; i < readsize; i++)
+			filebuffer[i] = filebuffer[i] ^ 'N';
+		fwrite(filebuffer, 1, readsize, fpwrite);
+	}
+
+	fclose(fpread);
+	fclose(fpwrite);
+	return true;
+}
+bool NOSPEAR_FILE::Recovery(CString filepath) {
+	FILE* fpread = _wfopen(this->filepath, L"rb");
+	FILE* fpwrite = _wfopen(filepath, L"wb");
+	if (fpread == NULL || fpwrite == NULL)
+		return false;
+
+	unsigned char filebuffer[FILE_BUFFER_SIZE] = { 0, };
+	int readsize = 0;
+
+	while ((readsize = fread(filebuffer, 1, FILE_BUFFER_SIZE, fpread)) != 0) {
+		for (int i = 0; i < readsize; i++)
+			filebuffer[i] = filebuffer[i] ^ 'N';
+		fwrite(filebuffer, 1, readsize, fpwrite);
+	}
+
+	fclose(fpread);
+	fclose(fpwrite);
+	return true;
+	return false;
 }

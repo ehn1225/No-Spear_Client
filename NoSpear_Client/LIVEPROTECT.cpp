@@ -368,9 +368,7 @@ LIVEPROTECT::LIVEPROTECT() {
         AfxTrace(TEXT("[LIVEPROTECT::LIVEPROTECT] Can't OPEN NOSPEAR DataBase.\n"));
         return;
     }
-
-
-    
+        
     office_file_ext_list.insert(L".doc");
     office_file_ext_list.insert(L".docx");
     office_file_ext_list.insert(L".xls");
@@ -465,7 +463,8 @@ int LIVEPROTECT::ActivateLiveProtect(){
 int LIVEPROTECT::InActivateLiveProtect(){
     if (threadstatus) {
         threadstatus = false;
-        WaitForMultipleObjectsEx(threadCount, threads, TRUE, INFINITE, FALSE);
+        //https://woo-dev.tistory.com/193 이 글에 따라 굳이 Wait 안하고 CloseHandle을 호출해도 됨
+        //WaitForMultipleObjectsEx(threadCount, threads, TRUE, INFINITE, FALSE);
 
         for (int i = 0; i < threadCount; i++) {
             CloseHandle(threads[i]);

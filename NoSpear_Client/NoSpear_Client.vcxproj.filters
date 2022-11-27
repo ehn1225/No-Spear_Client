@@ -221,5 +221,11 @@
     <Image Include="res\8726193_redo_icon.ico">
       <Filter>리소스 파일</Filter>
     </Image>
+    <Image Include="res\5172973_arrow_entrance_in_internet_log_icon.ico">
+      <Filter>리소스 파일</Filter>
+    </Image>
+    <Image Include="res\5173025_clock_date_internet_refresh_reload_icon.ico">
+      <Filter>리소스 파일</Filter>
+    </Image>
   </ItemGroup>
 </Project>

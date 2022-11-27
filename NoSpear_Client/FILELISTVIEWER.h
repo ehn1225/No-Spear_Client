@@ -76,4 +76,6 @@ public:
 	afx_msg void OnStnClickedsearch4();
 	afx_msg void OnStnClickedsearch5();
 	afx_msg void OnStnClickedselectdiagnose();
+	afx_msg void OnStnClickedbackup();
+	afx_msg void OnStnClickedrecovery();
 };

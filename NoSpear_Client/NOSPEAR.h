@@ -48,6 +48,7 @@ public:
 	bool IsQueueEmpty();
 	void Quarantine(CString filepath);
 	void InQuarantine(CString filepath);
-
+	void BackUp(CString filepath);
+	void Recovery(CString folderPath);
 };
 #endif
