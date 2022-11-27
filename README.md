@@ -31,4 +31,6 @@ Vaccine client
 <h4>2.2.0 : ProtoType 3rd_2(LocalFileList DB, Tray Mode, Notification)</h4>
 <h4>2.3.0 : ProtoType 3rd_3(Local File Viewer, Tab Change, UI Design)</h4>
 <h4>2.4.0 : ProtoType 3rd_4(Live Protect, Diagnose Status, Auto Update, 화면 해상도 문제 수정)</h4>
-
+<h4>2.5.0 : ProtoType 3rd_5(블랙리스트 패턴 업데이트 일부 구현, 검역소)</h4>
+<h4>2.6.0 : ProtoType 4rd_1(블랙리스트 패턴 업데이트)</h4>
+<h4>2.6.1 : ProtoType 4rd_2(파일 백업 및 복구)</h4>
