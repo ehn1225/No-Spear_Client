@@ -107,11 +107,11 @@ void MainView::OnStnClickedmanualdiagnose(){
 	diagnose_status = L"진행 상태 : 검사 진행 중";
 	UpdateData(FALSE);
 	NOSPEAR_FILE file = NOSPEAR_FILE(filepath);
-	nospear_ptr->Diagnose(file);
+	bool result = nospear_ptr->Diagnose(file);
 	result_filename.Format(TEXT("파일명 : %ws"), file.Getfilename());
 	result_text.Format(TEXT("검사 결과 : %ws"), file.diag_result.result_msg);
-	report_url.Format(TEXT("4nul.org/result?hash=%ws"), file.Getfilehash());
-	result_report = L"검사 보고서 : " + report_url;
+	report_url.Format(TEXT("http://4nul.org/#/result?hash=%ws"), file.Getfilehash());
+	result_report = L"검사 보고서 : " + ((result) ? report_url : L"검사 실패");
 	diagnose_status = L"진행 상태 : 검사 완료";
 	UpdateData(FALSE);
 }

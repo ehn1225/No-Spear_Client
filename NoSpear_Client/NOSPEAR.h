@@ -11,9 +11,6 @@ class NOSPEAR {
 	unsigned short SERVER_Diagnose_PORT = 42524;
 	unsigned short SERVER_Update_PORT = 43534;
 	static const short FILE_BUFFER_SIZE = 4096;
-	CString clientUpdateUrl = L"http://4nul.org:3000/";
-	//http://4nul.org:3000/version
-	//http://4nul.org:3000/NoSpear_Client.2.2.3.4.exe
 	void Deletefile(CString filepath);
 	LIVEPROTECT* liveprotect = NULL;
 	SQLITE* nospearDB;

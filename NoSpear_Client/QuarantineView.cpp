@@ -130,8 +130,5 @@ void QuarantineView::OnRecover() {
 }
 void QuarantineView::OnReport() {
 	CString hash = quarantine_list_ctrl.GetItemText(select_index, 1);
-	if (hash != L"-") {
-		CString url = L"4nul.org/result?hash=" + hash;
-		ShellExecute(this->m_hWnd, TEXT("open"), TEXT("IEXPLORE.EXE"), url, NULL, SW_SHOW);
-	}
+	ShellExecute(this->m_hWnd, TEXT("open"), TEXT("IEXPLORE.EXE"), L"http://4nul.org/#/result?hash=" + hash, NULL, SW_SHOW);
 }

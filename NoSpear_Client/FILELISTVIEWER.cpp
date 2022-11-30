@@ -384,17 +384,19 @@ void FILELISTVIEWER::OnManu3_2() {
 }
 
 void FILELISTVIEWER::OnManu4(){
+	//파일탐색기에서 해당 파일이 있는 폴더를 염. 해당 파일을 선택함
 	ShellExecute(NULL, _T("open"), _T("explorer"), _T("/select,") + filelistbox.GetItemText(select_index, 8), NULL, SW_SHOW);
 }
 
 void FILELISTVIEWER::OnManu5(){
+	//검사 보고서 실행. Hash가 없다면 검사를 안한 것이므로 실행하지 않음
 	CString hash = filelistbox.GetItemText(select_index, 5);
 	if (hash != L"-") {
-		CString url = L"4nul.org/result?hash=" + hash;
-		ShellExecute(this->m_hWnd, TEXT("open"), TEXT("IEXPLORE.EXE"), url, NULL, SW_SHOW);
+		ShellExecute(this->m_hWnd, TEXT("open"), TEXT("IEXPLORE.EXE"), L"http://4nul.org/#/result?hash=" + hash, NULL, SW_SHOW);
 	}
 }
 void FILELISTVIEWER::OnManu6() {
+	//검역소로 이동
 	nospear_ptr->Quarantine(filelistbox.GetItemText(select_index, 8));
 }
 
