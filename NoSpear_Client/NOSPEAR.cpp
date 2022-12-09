@@ -530,13 +530,14 @@ void NOSPEAR::ScanLocalFile(CString rootPath) {
 
 		CString ext(iter->path().extension().string().c_str());
 		CString path(iter->path().string().c_str());
-
+		// || ext == L".lnk"
 		if (ext == L".exe") {
 			CString tmp = path;
 			CString tmp_ext;
 			while ((tmp_ext = PathFindExtension(tmp)).GetLength() != 0) {
 				if (IsOfficeFile(tmp_ext)) {
 					Notification(L"문서로 위장한 실행 파일을 발견하였습니다.", path);
+					AfxTrace(TEXT("문서로 위장한 실행 파일을 발견 : %ws\n"), path);
 					break;
 				}
 				AfxTrace(TEXT("Find Ext : %ws\n"), tmp_ext);

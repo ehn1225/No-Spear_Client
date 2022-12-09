@@ -34,3 +34,5 @@ Vaccine client
 <h4>2.5.0 : ProtoType 3rd_5(블랙리스트 패턴 업데이트 일부 구현, 검역소)</h4>
 <h4>2.6.0 : ProtoType 4rd_1(블랙리스트 패턴 업데이트)</h4>
 <h4>2.6.1 : ProtoType 4rd_2(파일 백업 및 복구)</h4>
+<h4>2.6.2 : ProtoType 4rd_3(결과 보고서 확인 로직 수정)</h4>
+<h4>2.6.3 : ProtoType 4rd_4(소스코드 정리 & 경로 오류 수정)</h4>

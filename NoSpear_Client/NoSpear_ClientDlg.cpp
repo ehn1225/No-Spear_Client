@@ -313,9 +313,10 @@ void CNoSpearClientDlg::OnDestroy(){
 	nid.uID = 0;
 	nid.hWnd = GetSafeHwnd();
 	::Shell_NotifyIcon(NIM_DELETE, &nid);
+
 	if (clientThread != NULL) {
 		clientThreadStatus = false;
-		clientThread->SuspendThread();
+		clientThread->ExitInstance();
 		delete clientThread;
 	}
 	

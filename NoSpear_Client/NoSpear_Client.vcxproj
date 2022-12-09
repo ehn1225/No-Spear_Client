@@ -250,18 +250,11 @@
     <None Include="res\NoSpearClient.rc2" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="..\..\개발\아이콘\icons8-microsoft-powerpoint-2019-240.ico" />
     <Image Include="res\186390_refresh_sync_icon.ico" />
-    <Image Include="res\2931145_bullet_list_menu_note_playlist_icon.ico" />
-    <Image Include="res\2931150_building_home_homepage_house_architecture_icon.ico" />
-    <Image Include="res\2931152_adjust_control_gear_settings_setup_icon.ico" />
-    <Image Include="res\2931167_doc_document_file_sheet_text_icon.ico" />
     <Image Include="res\314678_folder_search_icon.ico" />
     <Image Include="res\314709_document_scan_icon.ico" />
-    <Image Include="res\4567745_app_file_interface_internet_page_icon.ico" />
     <Image Include="res\4894514_data_download_cloud_ui_interface_icon.ico" />
     <Image Include="res\5172947_browser_internet_safe_security_shield_icon.ico" />
-    <Image Include="res\5172964_danger_internet_malware_security_virus_icon (1).ico" />
     <Image Include="res\5172964_danger_internet_malware_security_virus_icon.ico" />
     <Image Include="res\5172965_data_hosting_information_internet_security_icon.ico" />
     <Image Include="res\5172973_arrow_entrance_in_internet_log_icon.ico" />
@@ -270,18 +263,10 @@
     <Image Include="res\5173025_clock_date_internet_refresh_reload_icon.ico" />
     <Image Include="res\6fbb592aeb02709e0e8c51f809b6614e999eea5ee51f2e1d2006a6ed2cca31bd970b7a977f126bfca350e35be6c76cf8cc34.ico" />
     <Image Include="res\8684047_folder_file_document_reload_refresh_icon.ico" />
-    <Image Include="res\8725963_file_search_alt_icon.ico" />
-    <Image Include="res\8726193_redo_icon.ico" />
     <Image Include="res\acrobat-reader.ico" />
     <Image Include="res\icons8-microsoft-excel-2019-240 (1).ico" />
-    <Image Include="res\icons8-microsoft-excel-2019-240.bmp" />
-    <Image Include="res\icons8-microsoft-excel-2019-240.ico" />
     <Image Include="res\icons8-microsoft-powerpoint-2019-240 (1).ico" />
-    <Image Include="res\icons8-microsoft-powerpoint-2019-240.bmp" />
-    <Image Include="res\icons8-microsoft-powerpoint-2019-240.ico" />
     <Image Include="res\icons8-microsoft-word-2019-240 (1).ico" />
-    <Image Include="res\icons8-microsoft-word-2019-240.bmp" />
-    <Image Include="res\icons8-microsoft-word-2019-240.ico" />
     <Image Include="res\NoSpear.ico" />
     <Image Include="res\nospear_logo.bmp" />
   </ItemGroup>
