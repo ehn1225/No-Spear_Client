@@ -43,6 +43,8 @@ class LIVEPROTECT{
     static CString GetProcessName(unsigned long pid);
     static bool IsOfficeProgram(unsigned long pid);
     static bool LIVEPROTECT::IsOfficeFile(CString ext);
+    static CString GetNowDate();
+
     HANDLE port, completion;
 
 public:

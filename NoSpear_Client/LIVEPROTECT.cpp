@@ -2,6 +2,7 @@
 #include "NoSpear_ClientDlg.h"
 #include "LIVEPROTECT.h"
 #include "resource.h"
+#include "NOSPEAR_FILE.h"
 #define WM_TRAY_NOTIFYICACTION (WM_USER + 10)
 
 #pragma comment(lib,"fltLib.lib")
@@ -49,9 +50,16 @@ bool LIVEPROTECT::WriteNospearADS(CString filepath, unsigned short value){
         AfxTrace(TEXT("WriteNospearADS 부착 실패 %d\n"), value);
         return false;
     }
+    NOSPEAR_FILE file(filepath);
     CString str;
-    str.Format(TEXT("%d"), value);
+    str.Format(TEXT("%d\n"), value);
     ads_stream.WriteString(str);
+    ads_stream.WriteString(L"[NOSPEAR FILE INFO]\n");
+    ads_stream.WriteString(L"FileName=" + file.Getfilename() + L"\n");
+    ads_stream.WriteString(L"RegidentNumber=" + file.GetfileRegNumber() + L"\n");
+    ads_stream.WriteString(L"Hash=" + file.Getfilehash() + L"\n");
+    ads_stream.WriteString(L"RegisterDate=" + GetNowDate() + L"\n");
+    ads_stream.Close();
     AfxTrace(TEXT("WriteNospearADS 부착 성공 %d\n"), value);
     return true;
 }
@@ -386,6 +394,9 @@ LIVEPROTECT::LIVEPROTECT() {
     office_program_list.insert(L"scalc.exe");          //LibreOffice Excel
     office_program_list.insert(L"swriter.exe");        //LibreOffice Word
     office_program_list.insert(L"simpress.exe");       //LibreOffice PowerPoint
+
+    setlocale(LC_ALL, "Korean");
+
 }
 
 LIVEPROTECT::~LIVEPROTECT() {
@@ -478,4 +489,11 @@ int LIVEPROTECT::InActivateLiveProtect(){
         AfxTrace(TEXT("[LIVEPROTECT::InActivateLiveProtect] Not Activate!!\n"));
         return 1;
     }
+}
+CString LIVEPROTECT::GetNowDate() {
+    time_t timer = time(NULL);
+    struct tm* t = localtime(&timer);
+    CString date;
+    date.Format(TEXT("%04d-%02d-%02d"), t->tm_year + 1900, t->tm_mon + 1, t->tm_mday);
+    return date;
 }

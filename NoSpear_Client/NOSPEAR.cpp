@@ -20,15 +20,6 @@ sockaddr_in dA;
 
 SOCKET s2;
 sockaddr_in dA2;
-void NOSPEAR::Deletefile(CString filepath){
-	CFileFind pFind;
-	BOOL bRet = pFind.FindFile(filepath);
-	if (bRet == TRUE) {
-		if (DeleteFile(filepath) == TRUE) {
-			AfxMessageBox(_T("삭제 완료"));
-		}
-	}
-}
 
 bool NOSPEAR::NospearOnlineDiagnose(NOSPEAR_FILE& file){
 	AfxTrace(TEXT("[NOSPEAR::NospearOnlineDiagnose] 파일 업로드 시작\n"));
@@ -146,6 +137,8 @@ void NOSPEAR::InitNospear(){
 
 	CreateDirectory(L"Quarantine", NULL);
 	CreateDirectory(L"Backup", NULL);
+
+	setlocale(LC_ALL, "Korean");
 }
 
 CString NOSPEAR::GetMsgFromErrCode(short err_code){
@@ -369,6 +362,7 @@ unsigned short NOSPEAR::ReadNospearADS(CString filepath) {
 		return -1;
 	}
 }
+
 bool NOSPEAR::WriteNospearADS(CString filepath, unsigned short value) {
 	//value 값으로 ADS:NOSPEAR 생성
 	CString strInsQuery;
@@ -381,9 +375,17 @@ bool NOSPEAR::WriteNospearADS(CString filepath, unsigned short value) {
 		AfxTrace(TEXT("WriteNospearADS 부착 실패 %d\n"), value);
 		return false;
 	}
+	NOSPEAR_FILE file(filepath);
 	CString str;
-	str.Format(TEXT("%d"), value);
+	str.Format(TEXT("%d\n"), value);
 	ads_stream.WriteString(str);
+	ads_stream.WriteString(L"[NOSPEAR FILE INFO]\n");
+	ads_stream.WriteString(L"FileName=" + file.Getfilename() + L"\n");
+	ads_stream.WriteString(L"RegidentNumber=" + file.GetfileRegNumber() + L"\n");
+	ads_stream.WriteString(L"Hash=" + file.Getfilehash() + L"\n");
+	ads_stream.WriteString(L"RegisterDate=" + GetNowDate() + L"\n");
+	ads_stream.Close();
+
 	AfxTrace(TEXT("WriteNospearADS 부착 성공 %d\n"), value);
 
 	return true;
@@ -680,4 +682,12 @@ void NOSPEAR::Recovery(CString folderPath){
 			}
 		}
 	}
+}
+
+CString NOSPEAR::GetNowDate() {
+	time_t timer = time(NULL);
+	struct tm* t = localtime(&timer);
+	CString date;
+	date.Format(TEXT("%04d-%02d-%02d"), t->tm_year + 1900, t->tm_mon + 1, t->tm_mday);
+	return date;
 }

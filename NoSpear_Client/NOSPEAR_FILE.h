@@ -24,5 +24,5 @@ public:
 	bool Checkvalidation();
 	unsigned int Getfilesize();
 	DIAGNOSE_RESULT diag_result;
-
+	CString GetfileRegNumber();
 };

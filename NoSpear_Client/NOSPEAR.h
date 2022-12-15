@@ -11,7 +11,6 @@ class NOSPEAR {
 	unsigned short SERVER_Diagnose_PORT = 42524;
 	unsigned short SERVER_Update_PORT = 43534;
 	static const short FILE_BUFFER_SIZE = 4096;
-	void Deletefile(CString filepath);
 	LIVEPROTECT* liveprotect = NULL;
 	SQLITE* nospearDB;
 	bool live_protect_status = false;
@@ -21,6 +20,7 @@ class NOSPEAR {
 	void InitNospear();
 	std::set<CString> office_file_ext_list;
 	bool IsOfficeFile(CString ext);
+	CString GetNowDate();
 public:
 	NOSPEAR();
 	~NOSPEAR();

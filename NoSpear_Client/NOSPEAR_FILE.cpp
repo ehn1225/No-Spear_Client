@@ -152,3 +152,15 @@ bool NOSPEAR_FILE::Recovery(CString filepath) {
 	return true;
 	return false;
 }
+
+CString NOSPEAR_FILE::GetfileRegNumber() {
+	struct tm* clock;
+	struct _stat attrib;
+	_wstat(filepath, &attrib);
+
+	clock = localtime(&(attrib.st_ctime));
+	CString result;
+	result.Format(TEXT("%d%02d%02d-%02d%02d%02d"), clock->tm_year + 1900, clock->tm_mon + 1, clock->tm_mday, clock->tm_hour, clock->tm_min, clock->tm_sec);
+
+	return result;
+}
