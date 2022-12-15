@@ -36,3 +36,4 @@ Vaccine client
 <h4>2.6.1 : ProtoType 4rd_2(파일 백업 및 복구)</h4>
 <h4>2.6.2 : ProtoType 4rd_3(결과 보고서 확인 로직 수정)</h4>
 <h4>2.6.3 : ProtoType 4rd_4(소스코드 정리 & 경로 오류 수정)</h4>
+<h4>2.6.4 : ProtoType 4rd_5(ADS:NOSPEAR 내용 수정)</h4>
