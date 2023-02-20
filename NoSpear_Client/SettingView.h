@@ -26,6 +26,7 @@ protected:
 	CString strVersionPattern;
 	SQLITE* settingDB;
 	CToolTipCtrl tooltip;
+	CString strVersionURL = L"http://localhost/version"; //최신 버전 정보를 받을 수 있는 홈페이지("2.4.6.0"과 같이 버전 문자열이 있으면 됨.)
 	void UpdatePatternInfo();
 
 public:

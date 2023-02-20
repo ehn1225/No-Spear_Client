@@ -381,7 +381,7 @@ bool NOSPEAR::WriteNospearADS(CString filepath, unsigned short value) {
 	ads_stream.WriteString(str);
 	ads_stream.WriteString(L"[NOSPEAR FILE INFO]\n");
 	ads_stream.WriteString(L"FileName=" + file.Getfilename() + L"\n");
-	ads_stream.WriteString(L"RegidentNumber=" + file.GetfileRegNumber() + L"\n");
+	ads_stream.WriteString(L"ResidentNumber=" + file.GetfileRegNumber() + L"\n");
 	ads_stream.WriteString(L"Hash=" + file.Getfilehash() + L"\n");
 	ads_stream.WriteString(L"RegisterDate=" + GetNowDate() + L"\n");
 	ads_stream.Close();

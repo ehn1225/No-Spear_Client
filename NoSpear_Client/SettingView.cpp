@@ -63,7 +63,6 @@ BOOL SettingView::Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dw
 
 void SettingView::OnInitialUpdate() {
 	CFormView::OnInitialUpdate();
-	//title.CreateFontW(30, 20, 0, 0, 700, 0, 0, 0, 0, OUT_DEFAULT_PRECIS, 0, DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE, L"Malgun Gothic Semilight");
 	title.CreatePointFont(120, L"Malgun Gothic Semilight");
 	GetDlgItem(IDC_STATIC)->SetFont(&title);
 	GetDlgItem(IDC_STATIC2)->SetFont(&title);
@@ -77,8 +76,7 @@ void SettingView::OnInitialUpdate() {
 	CString version_online = L"";
 	CString version_offline = L"";
 	HINTERNET hInet = InternetOpen(UPDATECHECK_BROWSER_STRING, INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, NULL);
-	HINTERNET hUrl = InternetOpenUrl(hInet, CString("http://4nul.org:3000/version"), NULL, -1L,
-	//HINTERNET hUrl = InternetOpenUrl(hInet, CString("http://localhost"), NULL, -1L,
+	HINTERNET hUrl = InternetOpenUrl(hInet, strVersionURL, NULL, -1L,
 		INTERNET_FLAG_RELOAD | INTERNET_FLAG_PRAGMA_NOCACHE |
 		INTERNET_FLAG_NO_CACHE_WRITE | WININET_API_FLAG_ASYNC, NULL);
 	if (hUrl) {

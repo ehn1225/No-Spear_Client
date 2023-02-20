@@ -7,9 +7,9 @@ class SQLITE;
 
 class NOSPEAR {
 	NOTIFYICONDATA nid;
-	std::string SERVER_IP = "15.164.98.211";
-	unsigned short SERVER_Diagnose_PORT = 42524;
-	unsigned short SERVER_Update_PORT = 43534;
+	std::string SERVER_IP = "127.0.0.1";		//백신서버주소
+	unsigned short SERVER_Diagnose_PORT = 42524;	//백신서버포트
+	unsigned short SERVER_Update_PORT = 43534;		//백신서버의 업데이트 포트
 	static const short FILE_BUFFER_SIZE = 4096;
 	LIVEPROTECT* liveprotect = NULL;
 	SQLITE* nospearDB;
