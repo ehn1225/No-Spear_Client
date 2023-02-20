@@ -2,7 +2,8 @@
 <h1>Best of the Best 11th Team Project</h1>
 No-Spear Vaccine Client Program<br>
 문서형 악성코드 탐지 솔루션 클라이언트 프로그램<br>
-2023-01-07<br>
+※검사서버와 업데이트 서버가 중단된 관계로 프로그램 최초 실행이 오래걸립니다. (약 1분 소요)<br>
+2023-02-20<br>
 
 <h2>개발 환경</h2>
 <ul>
@@ -70,7 +71,7 @@ ex) notepad hello.txt:Zone.Identifier<br>
 클라이언트 프로그램 업데이트 : https://www.codeproject.com/Articles/1205548/An-efficient-way-for-automatic-updating<br>
 OpenSSL - SHA256 : https://cypsw.tistory.com/70<br>
 소켓 파일 업로드 : https://codingwell.tistory.com/59<br>
-SQLite : https://mangsby.com/blog/programming/c/c-c-sqlite-%EB%8D%B0%EC%9D%B4%ED%84%B0%EB%B2%A0%EC%9D%B4%EC%8A%A4-%EC%82%AC%EC%9A%A9%ED%95%98%EA%B8%B0-1-%EA%B8%B0%EB%B3%B8-%EB%B2%88%EC%97%AD/<br>
+SQLite : https://mangsby.com/blog/programming/c/c-c-sqlite-데이터베이스-사용하기-1-기본-번역/<br>
 파일에 접근하는 Process의 PID : https://doexercise.github.io/post/WindowsDriver/<br>
 미니필터 드라이버 예제 코드 이해 : https://geun-yeong.tistory.com/60<br>
 IRP_MJ_CREATE(IFS) : https://learn.microsoft.com/ko-kr/windows-hardware/drivers/ifs/irp-mj-create?source=recommendations<br>
