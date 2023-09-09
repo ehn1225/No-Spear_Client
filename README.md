@@ -86,7 +86,7 @@
 - 2.1.0 : ProtoType 3rd_1 (파일 연산 미니필터 드라이버 연동, 파일 변경 이력 기능 추가)
 - 2.2.0 : ProtoType 3rd_2 (LocalFileList DB, Tray Mode, Notification 기능 추가)
 - 2.3.0 : ProtoType 3rd_3 (Local File Viewer, Tab Change, UI Design)
-- 2.4.0 : ProtoType 3rd_4 (실시간 문서 열람 제어 수정, 검사 결과에 따른 열람 제어, 자동 업데이트, 화면 해상도 문제 수정)
+- 2.4.0 : ProtoType 3rd_4 (실시간 문서 열람 제어, 자동 업데이트, 화면 해상도 문제 수정)
 - 2.5.0 : ProtoType 3rd_5 (블랙리스트 패턴 업데이트 일부 구현, 검역소 기능 추가)
 - 2.6.0 : ProtoType 4th_1 (소켓을 이용한 블랙리스트 패턴 업데이트 구현 및 DB 저장 기능 구현)
 - 2.6.1 : ProtoType 4th_2 (랜섬웨어 대비 문서 백업 및 복구 기능 구현)
