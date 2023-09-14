@@ -35,17 +35,20 @@
 ## 실행 화면 및 기능
 - 메인 화면
 	- 수동 검사 및 실시간 감시 활성화 가능
- 	- <img src="https://github.com/ehn1225/ehn1225/assets/5174517/324435be-668d-49b3-88f3-f470ada68b7b"  width="700"/>
+ 	- <img src="https://github.com/ehn1225/ehn1225/assets/5174517/324435be-668d-49b3-88f3-f470ada68b7b" width="700"/>
+  	- 검사 보고서 확인
+  	- <img src="https://github.com/ehn1225/No-Spear_Client/assets/5174517/badfc4d6-5896-42a6-bb62-1463195e1147" width="700"/>
+
 - 문서 관리 기능
 	- 문서 파일 확장자 유형별 필터 기능
  	- 컴퓨터 내의 모든 문서 파일을 표시하고, 각 파일을 관리할 수 있음.
-   	- <img src="https://github.com/ehn1225/ehn1225/assets/5174517/75ce7154-e500-44c9-b51f-a57561f15a05"  width="700"/>
+   	- <img src="https://github.com/ehn1225/ehn1225/assets/5174517/75ce7154-e500-44c9-b51f-a57561f15a05" width="700"/>
 - 검역소
 	- 문서 파일이 악성으로 의심되거나 악성으로 판단된 경우, 검역소로 격리하여 별도로 관리
-  	- <img src="https://github.com/ehn1225/ehn1225/assets/5174517/86064866-7cfb-4174-a660-63eed7763b93"  width="700"/>
+  	- <img src="https://github.com/ehn1225/ehn1225/assets/5174517/86064866-7cfb-4174-a660-63eed7763b93" width="700"/>
 
 - 프로그램 업데이트 및 백신 패턴 업데이트
-	- <img src="https://github.com/ehn1225/ehn1225/assets/5174517/df53b90c-0e93-411d-9397-4beb45012c8a"  width="700"/>
+	- <img src="https://github.com/ehn1225/ehn1225/assets/5174517/df53b90c-0e93-411d-9397-4beb45012c8a" width="700"/>
 
 ## 검사 방법
 1. 서버 주소 확인(기본 설정 ip : 127.0.0.1, port : 42524)
